@@ -221,9 +221,16 @@ module DataSelectors = struct
       x
     | Array (_, orig) ->
       Int (Z.of_int orig)
+
+  let firsts = function
+    | List l ->
+      List (List.map first l)
+    | _ ->
+      raise (Error "firsts: list expected")
         
   let init env =
-    Env.add_routine env "first" { nargs = 1; kind = Proc1 first }
+    Env.add_routine env "first" { nargs = 1; kind = Proc1 first };
+    Env.add_routine env "firsts" { nargs = 1; kind = Proc1 firsts }
 end
 
 module Predicates = struct
