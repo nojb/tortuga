@@ -291,6 +291,16 @@ module DataSelectors = struct
       List.nth l (Random.int (List.length l))
     | _ ->
       raise (Error "pick: LIST expected")
+
+  let quoted = function
+    | List _ as a -> a
+    | Int n ->
+      let s = Z.to_string n in
+      Word ("\"" ^ s)
+    | Word w ->
+      Word ("\"" ^ w)
+    | _ ->
+      raise (Error "quoted: LIST or WORD expected")
         
   let init env =
     Env.add_routine env "first" { nargs = 1; kind = Proc1 first };
@@ -298,7 +308,8 @@ module DataSelectors = struct
     Env.add_routine env "last" { nargs = 1; kind = Proc1 last };
     Env.add_routine env "butfirst" { nargs = 1; kind = Proc1 butfirst };
     Env.add_routine env "item" { nargs = 2; kind = Proc2 item };
-    Env.add_routine env "pick" { nargs = 1; kind = Proc1 pick }
+    Env.add_routine env "pick" { nargs = 1; kind = Proc1 pick };
+    Env.add_routine env "quoted" { nargs = 1; kind = Proc1 quoted }
 end
 
 module Predicates = struct
