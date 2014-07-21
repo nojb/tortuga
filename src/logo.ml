@@ -315,11 +315,11 @@ module Eval = struct
         Stream.junk strm;
         dispatch env proc strm false
       | _ ->
-        let result = !!(expression env strm) in
+        let result = expression env strm in
         match Stream.peek strm with
         | Some (Word ")") ->
           Stream.junk strm;
-          fun () -> Some result
+          fun () -> Some !!result
         | Some _ ->
           raise (Error "expected ')', saw somethign else")
         | None ->
