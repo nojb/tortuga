@@ -1,3 +1,5 @@
+let _ = Random.self_init ()
+    
 type atom =
   | Int of Z.t
   | Word of string
@@ -281,13 +283,22 @@ module DataSelectors = struct
       List.nth l (index-1)
     | Array (a, orig) ->
       a.(index-orig)
+
+  let pick = function
+    | List [] ->
+      raise (Error "pick: empty list")
+    | List l ->
+      List.nth l (Random.int (List.length l))
+    | _ ->
+      raise (Error "pick: LIST expected")
         
   let init env =
     Env.add_routine env "first" { nargs = 1; kind = Proc1 first };
     Env.add_routine env "firsts" { nargs = 1; kind = Proc1 firsts };
     Env.add_routine env "last" { nargs = 1; kind = Proc1 last };
     Env.add_routine env "butfirst" { nargs = 1; kind = Proc1 butfirst };
-    Env.add_routine env "item" { nargs = 2; kind = Proc2 item }
+    Env.add_routine env "item" { nargs = 2; kind = Proc2 item };
+    Env.add_routine env "pick" { nargs = 1; kind = Proc1 pick }
 end
 
 module Predicates = struct
