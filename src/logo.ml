@@ -709,11 +709,15 @@ module Eval = struct
     in
     Env.(add_routine env name { nargs = List.length inputs; kind = Usern body })
 
-  let toplevel env strm =
+  let rec toplevel env strm =
     match Stream.peek strm with
     | Some (Word w) when String.uppercase w = "TO" ->
       Stream.junk strm;
-      to_ env strm
-    | _ ->
-      command env strm
+      to_ env strm;
+      toplevel env strm
+    | Some _ ->
+      command env strm;
+      toplevel env strm
+    | None ->
+      ()
 end
