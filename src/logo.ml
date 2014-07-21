@@ -132,6 +132,16 @@ let sexpr = function
   | Word w -> w
   | _ -> failwith "sexpr"
 
+let aexpr = function
+  | Int n -> n
+  | Word w -> Z.of_string w
+  | _ -> failwith "aexpr"
+
+let iexpr = function
+  | Int n -> Z.to_int n
+  | Word w -> int_of_string w
+  | _ -> failwith "iexpr"
+
 module Constructors = struct
   let word things =
     try
@@ -258,12 +268,26 @@ module DataSelectors = struct
       List rest
     | _ ->
       raise (Error "butfirst: expected WORD or LIST")
+
+  let item index thing =
+    let index = try iexpr index with _ -> raise (Error "INDEX must be number") in
+    match thing with
+    | Int n ->
+      let s = Z.to_string n in
+      Word (String.make 1 s.[index-1])
+    | Word w ->
+      Word (String.make 1 w.[index-1])
+    | List l ->
+      List.nth l (index-1)
+    | Array (a, orig) ->
+      a.(index-orig)
         
   let init env =
     Env.add_routine env "first" { nargs = 1; kind = Proc1 first };
     Env.add_routine env "firsts" { nargs = 1; kind = Proc1 firsts };
     Env.add_routine env "last" { nargs = 1; kind = Proc1 last };
-    Env.add_routine env "butfirst" { nargs = 1; kind = Proc1 butfirst }
+    Env.add_routine env "butfirst" { nargs = 1; kind = Proc1 butfirst };
+    Env.add_routine env "item" { nargs = 2; kind = Proc2 item }
 end
 
 module Predicates = struct
