@@ -36,6 +36,7 @@ let minus_word =
 exception Error of string
 
 type routine_kind =
+  | Proc0 of (unit -> atom)
   | Proc2 of (atom -> atom -> atom)
   | Procn of (atom list -> atom)
   
@@ -157,12 +158,19 @@ module Constructors = struct
       else
         raise (Error "fput: first arg must be a character")
 
+  let gensym =
+    let count = ref 0 in
+    fun () ->
+      incr count;
+      Word ("G" ^ string_of_int !count)
+
   let init env =
     Env.add_routine env "word" { nargs = 2; kind = Procn word };
     Env.add_routine env "list" { nargs = 2; kind = Procn list };
     Env.add_routine env "sentence" { nargs = 2; kind = Procn sentence };
     Env.add_routine env "se" { nargs = 2; kind = Procn sentence };
-    Env.add_routine env "fput" { nargs = 2; kind = Proc2 fput }
+    Env.add_routine env "fput" { nargs = 2; kind = Proc2 fput };
+    Env.add_routine env "gensym" { nargs = 0; kind = Proc0 gensym }
 end
 
 module Predicates = struct
@@ -398,11 +406,13 @@ module Eval = struct
       let r = Env.get_routine env proc in
       let args = getargs r.nargs natural in
       match r.kind, args with
+      | Proc0 f, [] ->
+        fun () -> Some (f ())
       | Proc2 f, [arg1; arg2] ->
         fun () -> Some (f !!arg1 !!arg2)
       | Procn f, args ->
         fun () -> Some (f (List.map (!!) args))
-      | Proc2 _, _ ->
+      | _, _ ->
         raise (Error "bad arity")
     with
     | Not_found ->
