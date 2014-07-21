@@ -143,11 +143,26 @@ module Constructors = struct
   let sentence args =
     List (List.concat (List.map (function List l -> l | _ as a -> [a]) args))
 
+  let fput thing list =
+    match thing, list with
+    | _, List l -> List (thing :: l)
+    | Array _, _
+    | _, Array _ ->
+      raise (Error "fput: bad types")
+    | _ ->
+      let s1 = sexpr thing in
+      let s2 = sexpr list in
+      if String.length s1 = 1 then
+        Word (s1 ^ s2)
+      else
+        raise (Error "fput: first arg must be a character")
+
   let init env =
     Env.add_routine env "word" { nargs = 2; kind = Procn word };
     Env.add_routine env "list" { nargs = 2; kind = Procn list };
     Env.add_routine env "sentence" { nargs = 2; kind = Procn sentence };
     Env.add_routine env "se" { nargs = 2; kind = Procn sentence };
+    Env.add_routine env "fput" { nargs = 2; kind = Proc2 fput }
 end
 
 module Predicates = struct
