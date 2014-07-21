@@ -227,10 +227,27 @@ module DataSelectors = struct
       List (List.map first l)
     | _ ->
       raise (Error "firsts: list expected")
+
+  let last = function
+    | Int n ->
+      let s = Z.to_string n in
+      let l = String.length s in
+      Word (String.make 1 (s.[l-1]))
+    | Word w ->
+      let l = String.length w in
+      Word (String.make 1 (w.[l-1]))
+    | List [] ->
+      raise (Error "last: empty list")
+    | List lst ->
+      let l = List.length lst in
+      List.nth lst (l-1)
+    | _ ->
+      raise (Error "last: LIST or WORD expected")
         
   let init env =
     Env.add_routine env "first" { nargs = 1; kind = Proc1 first };
-    Env.add_routine env "firsts" { nargs = 1; kind = Proc1 firsts }
+    Env.add_routine env "firsts" { nargs = 1; kind = Proc1 firsts };
+    Env.add_routine env "last" { nargs = 1; kind = Proc1 last }
 end
 
 module Predicates = struct
