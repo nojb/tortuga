@@ -159,6 +159,20 @@ module Constructors = struct
       else
         raise (Error "fput: first arg must be a character")
 
+  let lput thing list =
+    match thing, list with
+    | _, List l -> List (l @ [thing])
+    | Array _, _
+    | _, Array _ ->
+      raise (Error "lput: bad types")
+    | _ ->
+      let s1 = sexpr thing in
+      let s2 = sexpr list in
+      if String.length s1 = 1 then
+        Word (s2 ^ s1)
+      else
+        raise (Error "lput: first arg must be a character")
+
   let reverse = function
     | List l -> List (List.rev l)
     | _ ->
@@ -176,6 +190,7 @@ module Constructors = struct
     Env.add_routine env "sentence" { nargs = 2; kind = Procn sentence };
     Env.add_routine env "se" { nargs = 2; kind = Procn sentence };
     Env.add_routine env "fput" { nargs = 2; kind = Proc2 fput };
+    Env.add_routine env "lput" { nargs = 2; kind = Proc2 lput };
     Env.add_routine env "reverse" { nargs = 1; kind = Proc1 reverse };
     Env.add_routine env "gensym" { nargs = 0; kind = Proc0 gensym }
 end
