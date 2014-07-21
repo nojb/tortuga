@@ -50,6 +50,8 @@ let signed_literal = '-'? number_literal
 let operator = "<=" | ">=" | "<>" | ['+' '-' '*' '/' '%' '^' '=' '<' '>' '[' ']' '{' '}' '(' ')']
 
 rule parse_atoms acc leading_space = parse
+  | '.'
+    { List.rev acc }
   | space+
     { parse_atoms acc true lexbuf }
   | ';' [^ '\n']*
@@ -73,7 +75,7 @@ rule parse_atoms acc leading_space = parse
   | operator
     { parse_atoms (Word (Lexing.lexeme lexbuf) :: acc) false lexbuf }
   | eof
-    { List.rev acc }
+    { raise Exit } (* List.rev acc *)
   | _ as c
     { unexpected c }
 
