@@ -37,24 +37,25 @@ let minus_word =
 
 exception Error of string
 
-type routine_kind =
-  | Proc0 of (unit -> atom)
-  | Proc1 of (atom -> atom)
-  | Proc2 of (atom -> atom -> atom)
-  | Procn of (atom list -> atom)
-  
-type routine = {
-  nargs : int;
-  kind : routine_kind
-}
-
 module Env : sig
-  type t
+  type routine_kind =
+    | Proc0 of (unit -> atom)
+    | Proc1 of (atom -> atom)
+    | Proc2 of (atom -> atom -> atom)
+    | Procn of (atom list -> atom)
+    | Usern of (t -> atom list -> atom option)
+    | Cmdn of (atom list -> unit)
+  
+  and routine = {
+    nargs : int;
+    kind : routine_kind
+  }
+
+  and t
 
   val create : unit -> t
-    
-  val push_scope : t -> unit
-  val pop_scope : t -> unit
+
+  val with_scope : t -> (unit -> 'a) -> 'a
   val add_routine : t -> string -> routine -> unit
   val has_routine : t -> string -> bool
   val get_routine : t -> string -> routine
@@ -73,7 +74,20 @@ end = struct
   
   module H = Hashtbl.Make (NoCaseString)
 
-  type t = {
+  type routine_kind =
+    | Proc0 of (unit -> atom)
+    | Proc1 of (atom -> atom)
+    | Proc2 of (atom -> atom -> atom)
+    | Procn of (atom list -> atom)
+    | Usern of (t -> atom list -> atom option)
+    | Cmdn of (atom list -> unit)
+  
+  and routine = {
+    nargs : int;
+    kind : routine_kind
+  }
+  
+  and t = {
     routines : routine H.t;
     globals : atom H.t;
     mutable locals : atom H.t list
@@ -90,6 +104,12 @@ end = struct
 
   let pop_scope env =
     env.locals <- List.tl env.locals
+
+  let with_scope env f =
+    push_scope env;
+    let ret = try f () with exn -> pop_scope env; raise exn in
+    pop_scope env;
+    ret
 
   let add_routine env name r =
     H.add env.routines name r
@@ -203,15 +223,15 @@ module Constructors = struct
       Word ("G" ^ string_of_int !count)
 
   let init env =
-    Env.add_routine env "word" { nargs = 2; kind = Procn word };
-    Env.add_routine env "list" { nargs = 2; kind = Procn list };
-    Env.add_routine env "sentence" { nargs = 2; kind = Procn sentence };
-    Env.add_routine env "se" { nargs = 2; kind = Procn sentence };
-    Env.add_routine env "fput" { nargs = 2; kind = Proc2 fput };
-    Env.add_routine env "lput" { nargs = 2; kind = Proc2 lput };
-    Env.add_routine env "combine" { nargs = 2; kind = Proc2 combine };
-    Env.add_routine env "reverse" { nargs = 1; kind = Proc1 reverse };
-    Env.add_routine env "gensym" { nargs = 0; kind = Proc0 gensym }
+    Env.(add_routine env "word" { nargs = 2; kind = Procn word });
+    Env.(add_routine env "list" { nargs = 2; kind = Procn list });
+    Env.(add_routine env "sentence" { nargs = 2; kind = Procn sentence });
+    Env.(add_routine env "se" { nargs = 2; kind = Procn sentence });
+    Env.(add_routine env "fput" { nargs = 2; kind = Proc2 fput });
+    Env.(add_routine env "lput" { nargs = 2; kind = Proc2 lput });
+    Env.(add_routine env "combine" { nargs = 2; kind = Proc2 combine });
+    Env.(add_routine env "reverse" { nargs = 1; kind = Proc1 reverse });
+    Env.(add_routine env "gensym" { nargs = 0; kind = Proc0 gensym })
 end
 
 module DataSelectors = struct
@@ -298,13 +318,64 @@ module DataSelectors = struct
       raise (Error "quoted: LIST or WORD expected")
         
   let init env =
-    Env.add_routine env "first" { nargs = 1; kind = Proc1 first };
-    Env.add_routine env "firsts" { nargs = 1; kind = Proc1 firsts };
-    Env.add_routine env "last" { nargs = 1; kind = Proc1 last };
-    Env.add_routine env "butfirst" { nargs = 1; kind = Proc1 butfirst };
-    Env.add_routine env "item" { nargs = 2; kind = Proc2 item };
-    Env.add_routine env "pick" { nargs = 1; kind = Proc1 pick };
-    Env.add_routine env "quoted" { nargs = 1; kind = Proc1 quoted }
+    Env.(add_routine env "first" { nargs = 1; kind = Proc1 first });
+    Env.(add_routine env "firsts" { nargs = 1; kind = Proc1 firsts });
+    Env.(add_routine env "last" { nargs = 1; kind = Proc1 last });
+    Env.(add_routine env "butfirst" { nargs = 1; kind = Proc1 butfirst });
+    Env.(add_routine env "item" { nargs = 2; kind = Proc2 item });
+    Env.(add_routine env "pick" { nargs = 1; kind = Proc1 pick });
+    Env.(add_routine env "quoted" { nargs = 1; kind = Proc1 quoted })
+end
+
+module Transmitters = struct
+  let print things =
+    let rec pr top = function
+      | Int n -> print_int n
+      | Word w -> print_string w
+      | List [] -> if top then () else print_string "[]"
+      | List (x :: rest) ->
+        if top then begin
+          pr false x;
+          List.iter (fun x -> print_char ' '; pr false x) rest
+        end else begin
+          print_char '[';
+          pr false x;
+          List.iter (fun x -> print_char ' '; pr false x) rest;
+          print_char ']'
+        end
+      | Array ([| |], 1) ->
+        print_string "{}"
+      | Array ([| |], orig) ->
+        print_string "{}@";
+        print_int orig
+      | Array (a, 1) ->
+        print_char '{';
+        pr false a.(0);
+        for i = 1 to Array.length a - 1 do
+          print_char ' ';
+          pr false a.(i)
+        done;
+        print_char '}'
+      | Array (a, orig) ->
+        print_char '{';
+        pr false a.(0);
+        for i = 1 to Array.length a - 1 do
+          print_char ' ';
+          pr false a.(i)
+        done;
+        print_string "}@";
+        print_int orig
+    in
+    match things with
+    | [] ->
+      print_newline ()
+    | x :: rest ->
+      pr true x;
+      List.iter (fun x -> print_char ' '; pr true x) rest;
+      print_newline ()
+    
+  let init env =
+    Env.(add_routine env "print" { nargs = 1; kind = Cmdn print })
 end
 
 module Predicates = struct
@@ -388,6 +459,11 @@ end
 let (!!) f = f ()               
 
 module Eval = struct
+  exception Output of atom
+  
+  let stringfrom pos str =
+    String.sub str pos (String.length str - pos)
+
   let rec expression (env : Env.t) (strm : atom Stream.t) : unit -> atom =
     relational_expression env strm
 
@@ -467,7 +543,6 @@ module Eval = struct
       in
       loop 0
     in
-    let stringfrom pos str = String.sub str pos (String.length str - pos) in
     match Stream.peek strm with
     | Some (Int _) ->
       assert false
@@ -540,21 +615,51 @@ module Eval = struct
     in
     try
       let r = Env.get_routine env proc in
-      let args = getargs r.nargs natural in
-      match r.kind, args with
-      | Proc0 f, [] ->
+      let args = getargs r.Env.nargs natural in
+      match r.Env.kind, args with
+      | Env.Proc0 f, [] ->
         fun () -> Some (f ())
-      | Proc1 f, [arg] ->
+      | Env.Proc1 f, [arg] ->
         fun () -> Some (f !!arg)
-      | Proc2 f, [arg1; arg2] ->
+      | Env.Proc2 f, [arg1; arg2] ->
         fun () -> Some (f !!arg1 !!arg2)
-      | Procn f, args ->
+      | Env.Procn f, args ->
         fun () -> Some (f (List.map (!!) args))
+      | Env.Usern f, args ->
+        fun () -> f env (List.map (!!) args)
+      | Env.Cmdn f, args ->
+        fun () -> f (List.map (!!) args); None
       | _, _ ->
         raise (Error "bad arity")
     with
     | Not_found ->
       raise (Error ("Don't know how to " ^ String.uppercase proc))
+
+  let parse_to strm =
+    let name = try sexpr (Stream.next strm) with _ -> raise (Error "TO: expected WORD") in
+    (* if not isident name then raise (Error "TO: expected IDENT"); *)
+    let rec readinputs () =
+      match Stream.peek strm with
+      | Some (Word w) when String.length w > 0 && w.[0] = ':' ->
+        Stream.junk strm;
+        stringfrom 1 w :: readinputs ()
+      | _ ->
+        []
+    in
+    let inputs = readinputs () in
+    let rec readbody () =
+      match Stream.peek strm with
+      | Some (Word w) when String.uppercase w = "END" ->
+        Stream.junk strm;
+        []
+      | Some a ->
+        Stream.junk strm;
+        a :: readbody ()
+      | None ->
+        raise (Error "TO: expected END")
+    in
+    let body = readbody () in
+    (name, inputs, body)
 
   let command env strm =
     match Stream.peek strm with
@@ -563,9 +668,41 @@ module Eval = struct
       let ret = apply env w strm in
       begin match !!ret with
         | None -> ()
-        | Some _ ->
+        | Some a ->
           raise (Error ("Don't know what to do with ..."))
       end
     | _ ->
       raise (Error ("Bad head"))
+
+  let rec execute env strm =
+    match Stream.peek strm with
+    | Some _ ->
+      command env strm;
+      execute env strm
+    | None ->
+      ()
+
+  let to_ env strm =
+    let name, inputs, body = parse_to strm in
+    let body env args =
+      List.iter2 (fun input arg -> Env.add_var env input arg) inputs args;
+      try
+        execute env (Stream.of_list body);
+        None
+      with
+      | Output result ->
+        Some result
+    in
+    let body env args =
+      Env.with_scope env (fun () -> body env args)
+    in
+    Env.(add_routine env name { nargs = List.length inputs; kind = Usern body })
+
+  let toplevel env strm =
+    match Stream.peek strm with
+    | Some (Word w) when String.uppercase w = "TO" ->
+      Stream.junk strm;
+      to_ env strm
+    | _ ->
+      command env strm
 end
