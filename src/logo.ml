@@ -37,6 +37,7 @@ exception Error of string
 
 type routine_kind =
   | Proc0 of (unit -> atom)
+  | Proc1 of (atom -> atom)
   | Proc2 of (atom -> atom -> atom)
   | Procn of (atom list -> atom)
   
@@ -158,6 +159,11 @@ module Constructors = struct
       else
         raise (Error "fput: first arg must be a character")
 
+  let reverse = function
+    | List l -> List (List.rev l)
+    | _ ->
+      raise (Error "reverse: expected a list")
+
   let gensym =
     let count = ref 0 in
     fun () ->
@@ -170,6 +176,7 @@ module Constructors = struct
     Env.add_routine env "sentence" { nargs = 2; kind = Procn sentence };
     Env.add_routine env "se" { nargs = 2; kind = Procn sentence };
     Env.add_routine env "fput" { nargs = 2; kind = Proc2 fput };
+    Env.add_routine env "reverse" { nargs = 1; kind = Proc1 reverse };
     Env.add_routine env "gensym" { nargs = 0; kind = Proc0 gensym }
 end
 
@@ -408,6 +415,8 @@ module Eval = struct
       match r.kind, args with
       | Proc0 f, [] ->
         fun () -> Some (f ())
+      | Proc1 f, [arg] ->
+        fun () -> Some (f !!arg)
       | Proc2 f, [arg1; arg2] ->
         fun () -> Some (f !!arg1 !!arg2)
       | Procn f, args ->
