@@ -1,5 +1,5 @@
 type atom =
-  | Int of Z.t
+  | Int of int
   | Word of string
   | List of atom list
   | Array of atom array * int

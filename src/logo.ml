@@ -1,13 +1,13 @@
 let _ = Random.self_init ()
-    
+
 type atom =
-  | Int of Z.t
+  | Int of int
   | Word of string
   | List of atom list
   | Array of atom array * int
 
 let rec pp ppf = function
-  | Int n -> Z.pp_print ppf n
+  | Int n -> Format.pp_print_int ppf n
   | Word s -> Format.pp_print_string ppf s
   | List l ->
     let rec printlist ppf = function
@@ -130,17 +130,12 @@ end = struct
 end
 
 let sexpr = function
-  | Int n -> Z.to_string n
+  | Int n -> string_of_int n
   | Word w -> w
   | _ -> failwith "sexpr"
 
-let aexpr = function
-  | Int n -> n
-  | Word w -> Z.of_string w
-  | _ -> failwith "aexpr"
-
 let iexpr = function
-  | Int n -> Z.to_int n
+  | Int n -> n
   | Word w -> int_of_string w
   | _ -> failwith "iexpr"
 
@@ -222,7 +217,7 @@ end
 module DataSelectors = struct
   let first = function
     | Int n ->
-      Word (String.make 1 (Z.to_string n).[0])
+      Word (String.make 1 (string_of_int n).[0])
     | Word "" ->
       raise (Error "first: empty word")
     | Word w ->
@@ -232,7 +227,7 @@ module DataSelectors = struct
     | List (x :: _) ->
       x
     | Array (_, orig) ->
-      Int (Z.of_int orig)
+      Int orig
 
   let firsts = function
     | List l ->
@@ -242,7 +237,7 @@ module DataSelectors = struct
 
   let last = function
     | Int n ->
-      let s = Z.to_string n in
+      let s = string_of_int n in
       let l = String.length s in
       Word (String.make 1 (s.[l-1]))
     | Word w ->
@@ -258,7 +253,7 @@ module DataSelectors = struct
 
   let butfirst = function
     | Int n ->
-      let s = Z.to_string n in
+      let s = string_of_int n in
       let l = String.length s in
       Word (String.sub s 1 (l-1))
     | Word w ->
@@ -275,7 +270,7 @@ module DataSelectors = struct
     let index = try iexpr index with _ -> raise (Error "INDEX must be number") in
     match thing with
     | Int n ->
-      let s = Z.to_string n in
+      let s = string_of_int n in
       Word (String.make 1 s.[index-1])
     | Word w ->
       Word (String.make 1 w.[index-1])
@@ -295,7 +290,7 @@ module DataSelectors = struct
   let quoted = function
     | List _ as a -> a
     | Int n ->
-      let s = Z.to_string n in
+      let s = string_of_int n in
       Word ("\"" ^ s)
     | Word w ->
       Word ("\"" ^ w)
@@ -315,7 +310,7 @@ end
 module Predicates = struct
   let rec equalaux a b =
     match a, b with
-    | Int n, Int m -> Z.equal n m
+    | Int n, Int m -> n = m
     | Word w1, Word w2 -> w1 == w2
     | List l1, List l2 -> List.length l1 = List.length l2 && List.for_all2 equalaux l1 l2
     | Array (a1, orig1), Array (a2, orig2) -> a1 == a2
@@ -329,63 +324,65 @@ module Predicates = struct
 end
 
 module NumericPredicates = struct
-  let z_of_string name w =
-    try Z.of_string w with _ -> raise (Error (name ^ ": bad types"))
-
   let compaux name op a b =
-    match a, b with
-    | Int n, Int m ->
-      if op n m then true_word else false_word
-    | Int n, Word w ->
-      if op n (z_of_string name w) then true_word else false_word
-    | Word w, Int n ->
-      if op (z_of_string name w) n then true_word else false_word
-    | Word w1, Word w2 ->
-      if op (z_of_string name w1) (z_of_string name w2) then true_word else false_word
+    try match a, b with
+      | Int n, Int m ->
+        if op n m then true_word else false_word
+      | Int n, Word w ->
+        if op n (int_of_string w) then true_word else false_word
+      | Word w, Int n ->
+        if op (int_of_string w) n then true_word else false_word
+      | Word w1, Word w2 ->
+        if op (int_of_string w1) (int_of_string w2) then true_word else false_word
+      | _ ->
+        raise Exit
+    with
     | _ ->
       raise (Error (name ^ ": bad types"))
 
-  let greaterp = compaux "greaterp" Z.gt
-  let greaterequalp = compaux "greaterequalp" Z.geq
-  let lessp = compaux "lessp" Z.lt
-  let lessequalp = compaux "lessequalp" Z.leq
+  let greaterp = compaux "greaterp" (>)
+  let greaterequalp = compaux "greaterequalp" (>=)
+  let lessp = compaux "lessp" (<)
+  let lessequalp = compaux "lessequalp" (<=)
 end
 
 module Arithmetic = struct
-  let z_of_string name str =
-    try Z.of_string str with _ -> raise (Error (name ^ ": bad types"))
-
   let binaux name op a b =
-    match a, b with
-    | Int n, Int m ->
-      Int (op n m)
-    | Int n, Word word
-    | Word word, Int n ->
-      Int (op n (z_of_string name word))
-    | Word word1, Word word2 ->
-      Int (op (z_of_string name word1) (z_of_string name word2))
-    | _ ->
-      raise (Error (name ^ ": bad types"))
+    try match a, b with
+      | Int n, Int m ->
+        Int (op n m)
+      | Int n, Word word
+      | Word word, Int n ->
+        Int (op n (int_of_string word))
+      | Word word1, Word word2 ->
+        Int (op (int_of_string word1) (int_of_string word2))
+      | _ ->
+        raise Exit
+    with
+    | _ -> raise (Error (name ^ ": bad types"))
 
-  let sum2 = binaux "sum" Z.add
+  let sum2 = binaux "sum" (+)
 
-  let difference = binaux "difference" Z.sub
+  let difference = binaux "difference" (-)
 
-  let product2 = binaux "product" Z.mul
+  let product2 = binaux "product" ( * )
 
-  let quotient2 = binaux "quotient" Z.div
+  let quotient2 = binaux "quotient" (/)
 
-  let remainder = binaux "remainder" Z.rem
+  let remainder = binaux "remainder" (mod)
 
-  let power = binaux "power" (fun a b -> Z.pow a (Z.to_int b))
+  let power = binaux "power" (fun a b -> truncate (float a ** float b))
 
-  let minus = function
-    | Int n ->
-      Int (Z.neg n)
-    | Word w ->
-      Int (Z.neg (z_of_string "minus" w))
-    | _ ->
-      raise (Error "minus: bad type")
+  let minus n =
+    try match n with
+      | Int n ->
+        Int (-n)
+      | Word w ->
+        Int (- (int_of_string w))
+      | _ ->
+        raise Exit
+    with
+    | _ -> raise (Error "minus: bad type")
 end
 
 let (!!) f = f ()               
@@ -481,7 +478,7 @@ module Eval = struct
     | Some (Word w) ->
       Stream.junk strm;
       if isnumber w then
-        let n = Z.of_string w in
+        let n = int_of_string w in
         fun () -> Int n
       else if w.[0] = '\"' then
         let w = stringfrom 1 w in
