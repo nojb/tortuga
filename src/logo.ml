@@ -137,8 +137,17 @@ module Constructors = struct
     with
     | _ -> raise (Error "word: expected string")
 
+  let list things =
+    List things
+
+  let sentence args =
+    List (List.concat (List.map (function List l -> l | _ as a -> [a]) args))
+
   let init env =
-    Env.add_routine env "word" { nargs = 2; kind = Procn word }
+    Env.add_routine env "word" { nargs = 2; kind = Procn word };
+    Env.add_routine env "list" { nargs = 2; kind = Procn list };
+    Env.add_routine env "sentence" { nargs = 2; kind = Procn sentence };
+    Env.add_routine env "se" { nargs = 2; kind = Procn sentence };
 end
 
 module Predicates = struct
