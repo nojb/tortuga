@@ -11,6 +11,7 @@ let main () =
   Logo.Constructors.init env;
   Logo.DataSelectors.init env;
   Logo.Transmitters.init env;
+  Logo.Control.init env;
   let rec loop () =
     Format.fprintf Format.std_formatter "> @?";
     let lexbuf = Lexing.from_channel stdin in
@@ -19,6 +20,8 @@ let main () =
       Logo.Eval.toplevel env strm;
       loop ()
     with
+    | Logo.Error err ->
+      Format.fprintf Format.std_formatter "%s@." err
     | e ->
       Format.fprintf Format.std_formatter "error!@.";
       loop ()

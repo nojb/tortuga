@@ -36,7 +36,8 @@ let minus_word =
   Word "minus"
 
 exception Error of string
-
+exception Output of atom
+  
 module Env : sig
   type routine_kind =
     | Proc0 of (unit -> atom)
@@ -44,6 +45,7 @@ module Env : sig
     | Proc2 of (atom -> atom -> atom)
     | Procn of (atom list -> atom)
     | Usern of (t -> atom list -> atom option)
+    | Cmd1 of (atom -> unit)
     | Cmdn of (atom list -> unit)
   
   and routine = {
@@ -80,6 +82,7 @@ end = struct
     | Proc2 of (atom -> atom -> atom)
     | Procn of (atom list -> atom)
     | Usern of (t -> atom list -> atom option)
+    | Cmd1 of (atom -> unit)
     | Cmdn of (atom list -> unit)
   
   and routine = {
@@ -456,11 +459,17 @@ module Arithmetic = struct
     | _ -> raise (Error "minus: bad type")
 end
 
+module Control = struct
+  let output thing =
+    raise (Output thing)
+      
+  let init env =
+    Env.(add_routine env "output" { nargs = 1; kind = Cmd1 output })
+end
+
 let (!!) f = f ()               
 
 module Eval = struct
-  exception Output of atom
-  
   let stringfrom pos str =
     String.sub str pos (String.length str - pos)
 
@@ -627,6 +636,8 @@ module Eval = struct
         fun () -> Some (f (List.map (!!) args))
       | Env.Usern f, args ->
         fun () -> f env (List.map (!!) args)
+      | Env.Cmd1 f, [arg] ->
+        fun () -> f !!arg; None
       | Env.Cmdn f, args ->
         fun () -> f (List.map (!!) args); None
       | _, _ ->

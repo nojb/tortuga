@@ -6,6 +6,9 @@ type atom =
 
 val pp : Format.formatter -> atom -> unit
 
+exception Error of string
+exception Output of atom
+
 module Env : sig
   type t
   val create : unit -> t
@@ -20,6 +23,10 @@ module DataSelectors : sig
 end
 
 module Transmitters : sig
+  val init : Env.t -> unit
+end
+
+module Control : sig
   val init : Env.t -> unit
 end
   
