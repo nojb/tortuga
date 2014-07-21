@@ -173,6 +173,17 @@ module Constructors = struct
       else
         raise (Error "lput: first arg must be a character")
 
+  let combine thing1 thing2 =
+    match thing1, thing2 with
+    | _, List l -> List (thing1 :: l)
+    | _, Array _
+    | Array _, _ ->
+      raise (Error "combine: bad types")
+    | _ ->
+      let s1 = sexpr thing1 in
+      let s2 = sexpr thing2 in
+      Word (s1 ^ s2)
+
   let reverse = function
     | List l -> List (List.rev l)
     | _ ->
@@ -191,6 +202,7 @@ module Constructors = struct
     Env.add_routine env "se" { nargs = 2; kind = Procn sentence };
     Env.add_routine env "fput" { nargs = 2; kind = Proc2 fput };
     Env.add_routine env "lput" { nargs = 2; kind = Proc2 lput };
+    Env.add_routine env "combine" { nargs = 2; kind = Proc2 combine };
     Env.add_routine env "reverse" { nargs = 1; kind = Proc1 reverse };
     Env.add_routine env "gensym" { nargs = 0; kind = Proc0 gensym }
 end
