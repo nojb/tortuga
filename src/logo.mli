@@ -10,6 +10,10 @@ module Env : sig
   type t
   val create : unit -> t
 end
+
+module Constructors : sig
+  val init : Env.t -> unit
+end
   
 module Eval : sig
   (* exception Bye *)

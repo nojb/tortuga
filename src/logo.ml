@@ -36,7 +36,8 @@ let minus_word =
 exception Error of string
 
 type routine_kind =
-  | Proc2 of (atom -> atom -> atom option)
+  | Proc2 of (atom -> atom -> atom)
+  | Procn of (atom list -> atom)
   
 type routine = {
   nargs : int;
@@ -50,6 +51,7 @@ module Env : sig
     
   val push_scope : t -> unit
   val pop_scope : t -> unit
+  val add_routine : t -> string -> routine -> unit
   val has_routine : t -> string -> bool
   val get_routine : t -> string -> routine
   val add_global : t -> string -> atom -> unit
@@ -85,6 +87,9 @@ end = struct
   let pop_scope env =
     env.locals <- List.tl env.locals
 
+  let add_routine env name r =
+    H.add env.routines name r
+
   let has_routine env name =
     H.mem env.routines name
 
@@ -118,6 +123,22 @@ end = struct
         try H.find top name with | Not_found -> loop rest
     in
     loop env.locals
+end
+
+let sexpr = function
+  | Int n -> Z.to_string n
+  | Word w -> w
+  | _ -> failwith "sexpr"
+
+module Constructors = struct
+  let word things =
+    try
+      Word (String.concat "" (List.map sexpr things))
+    with
+    | _ -> raise (Error "word: expected string")
+
+  let init env =
+    Env.add_routine env "word" { nargs = 2; kind = Procn word }
 end
 
 module Predicates = struct
@@ -332,7 +353,9 @@ module Eval = struct
       if natural then
         let rec loop i =
           if i >= len then []
-          else expression env strm :: loop (i+1)
+          else
+            let arg1 = expression env strm in
+            arg1 :: loop (i+1)
         in
         loop 0
       else
@@ -342,7 +365,8 @@ module Eval = struct
             Stream.junk strm;
             []
           | _ ->
-            expression env strm :: loop ()
+            let arg1 = expression env strm in
+            arg1 :: loop ()
         in
         loop ()
     in
@@ -351,7 +375,9 @@ module Eval = struct
       let args = getargs r.nargs natural in
       match r.kind, args with
       | Proc2 f, [arg1; arg2] ->
-        fun () -> f !!arg1 !!arg2
+        fun () -> Some (f !!arg1 !!arg2)
+      | Procn f, args ->
+        fun () -> Some (f (List.map (!!) args))
       | Proc2 _, _ ->
         raise (Error "bad arity")
     with
