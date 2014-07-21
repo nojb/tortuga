@@ -8,6 +8,7 @@ val pp : Format.formatter -> atom -> unit
 
 exception Error of string
 exception Output of atom
+exception Bye
 
 module Env : sig
   type t

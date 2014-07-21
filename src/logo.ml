@@ -37,6 +37,7 @@ let minus_word =
 
 exception Error of string
 exception Output of atom
+exception Bye
   
 module Env : sig
   type routine_kind =
@@ -45,6 +46,7 @@ module Env : sig
     | Proc2 of (atom -> atom -> atom)
     | Procn of (atom list -> atom)
     | Usern of (t -> atom list -> atom option)
+    | Cmd0 of (unit -> unit)
     | Cmd1 of (atom -> unit)
     | Cmdn of (atom list -> unit)
   
@@ -82,6 +84,7 @@ end = struct
     | Proc2 of (atom -> atom -> atom)
     | Procn of (atom list -> atom)
     | Usern of (t -> atom list -> atom option)
+    | Cmd0 of (unit -> unit)
     | Cmd1 of (atom -> unit)
     | Cmdn of (atom list -> unit)
   
@@ -462,9 +465,13 @@ end
 module Control = struct
   let output thing =
     raise (Output thing)
+
+  let bye () =
+    raise Bye
       
   let init env =
-    Env.(add_routine env "output" { nargs = 1; kind = Cmd1 output })
+    Env.(add_routine env "output" { nargs = 1; kind = Cmd1 output });
+    Env.(add_routine env "bye" { nargs = 0; kind = Cmd0 bye })
 end
 
 let (!!) f = f ()               
@@ -636,6 +643,8 @@ module Eval = struct
         fun () -> Some (f (List.map (!!) args))
       | Env.Usern f, args ->
         fun () -> f env (List.map (!!) args)
+      | Env.Cmd0 f, [] ->
+        fun () -> f (); None
       | Env.Cmd1 f, [arg] ->
         fun () -> f !!arg; None
       | Env.Cmdn f, args ->
