@@ -9,7 +9,8 @@ let parse_atoms lexbuf =
 let main () =
   let lexbuf = Lexing.from_channel stdin in
   let strm = Stream.of_list (parse_atoms lexbuf) in
-  Stream.iter (fun atom -> Format.fprintf Format.std_formatter "%a,@ " Logo.pp atom) strm
+  let env = Logo.Env.create () in
+  Format.fprintf Format.std_formatter "Result: %a@." Logo.pp (Logo.Eval.expression env strm ())
 
 let _ =
   print_endline "Welcome to OCaml-Logo";

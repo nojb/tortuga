@@ -1,9 +1,8 @@
-(* module Atom = struct *)
-  type atom =
-    | Int of Z.t
-    | Word of string
-    | List of atom list
-    | Array of atom array * int
+type atom =
+  | Int of Z.t
+  | Word of string
+  | List of atom list
+  | Array of atom array * int
 
 let rec pp ppf = function
   | Int n -> Z.pp_print ppf n
@@ -23,244 +22,352 @@ let rec pp ppf = function
       end else
         Format.fprintf ppf "%a" pp a.(i)
     in
-    Format.fprintf ppf "@[<1>{%a}@%i@]" (printarr 0) a orig
+    Format.fprintf ppf "@[<1>{%a}@@%i@]" (printarr 0) a orig
 
-  (* let true = *)
-    (* Word "true" *)
+let true_word =
+  Word "true"
 
-  (* let false = *)
-    (* Word "false" *)
-(* end *)
+let false_word =
+  Word "false"
 
-(* exception Error of string *)
+let minus_word =
+  Word "minus"
 
-(* module Env = struct *)
-(*   module StringMap = Map.Make (String) *)
+exception Error of string
 
-(*   type 'a t = { *)
-(*     env_globals : (string, 'a) Hashtbl.t; *)
-(*     env_bindings : 'a StringMap.t *)
-(*   } *)
-
-(*   val create () = { env_globals = Hashtbl.create 17; env_bindings = StringMap.empty } *)
-
-(*   let add_local name value tbl = *)
-(*     { tbl with env_bindings = StringMap.add name value tbl.env_bindings } *)
-
-(*   let add_global tbl name value = *)
-(*     Hashtbl.add tbl.env_globals name value *)
-(* end *)
-
-(* module Primitive = struct *)
-(*   type t = *)
-(*     | Primitive0 of (unit -> atom) *)
-(*     | Primitive1 of (atom -> atom) *)
-(*     | Primitive2 of (atom -> atom -> atom) *)
-(*     | Primitive3 of (atom -> atom -> atom -> atom) *)
-(*     | Primitiven of (atom list -> atom) *)
-(*     | Special1 of (expr -> atom) *)
-(*     | Special2 of (expr -> expr -> atom) *)
-(*     | Special3 of (expr -> expr -> expr -> atom) *)
-(*     | Specialn of (expr list -> atom) *)
-(* end *)
-
-(* module Predicates = struct *)
-(*   let rec equalaux a b = *)
-(*     match a, b with *)
-(*     | Int n, Int m -> Z.equal n m *)
-(*     | Word w1, Word w2 -> w1 == w2 *)
-(*     | List l1, List l2 -> List.length l1 = List.length l2 && List.for_all equalaux l1 l2 *)
-(*     | Array (a1, orig1), Array (a2, orig2) -> a1 == a2 *)
-(*     | _ -> false *)
-
-(*   let equalp a b = *)
-(*     if equalaux a b then Atom.true else Atom.false *)
-
-(*   let notequalp a b = *)
-(*     if equalaux a b then Atom.false else Atom.true *)
-(* end *)
-
-(* module NumericPredicates = struct *)
-(*   let z_of_string name w = *)
-(*     try Z.of_string w with _ -> raise (Error (name ^ ": bad types")) *)
-
-(*   let compaux name op a b = *)
-(*     match a, b with *)
-(*     | Int n, Int m -> *)
-(*       if op name n m then Atom.true else Atom.false *)
-(*     | Int n, Word w -> *)
-(*       if op name n (z_of_string w) then Atom.true else Atom.false *)
-(*     | Word w, Int n -> *)
-(*       if op name (Z.of_string w) n then Atom.true else Atom.false *)
-(*     | Word w1, Word w2 -> *)
-(*       if op name (Z.of_string w1) (Z.of_string w2) then Atom.true else Atom.false *)
-(*     | _ -> *)
-(*       raise (Error (name ^ ": bad types")) *)
-
-(*   let greaterp = compaux "greaterp" Z.gt *)
-(*   let greaterequalp = compaux "greaterequalp" Z.geq *)
-(*   let lessp = compaux "lessp" Z.lt *)
-(*   let lessequalp = compaux "lessequalp" Z.leq       *)
-(* end *)
-
-(* module Arithmetic = struct *)
-(*   let z_of_string name str = *)
-(*     try Z.of_string str with _ -> raise (Error (name ^ ": bad types")) *)
-
-(*   let binaux name op a b = *)
-(*     match a, b with *)
-(*     | Int n, Int m -> *)
-(*       Int (imp n m) *)
-(*     | Int n, Word word *)
-(*     | Word word, Int n -> *)
-(*       Int (imp n (z_of_string name word)) *)
-(*     | Word word1, Word word2 -> *)
-(*       Int (imp (z_of_string name word1) (z_of_string name word2)) *)
-(*     | _ -> *)
-(*       raise (Error (name ^ ": bad types")) *)
-
-(*   let sum2 = binaux "sum" Z.add *)
-
-(*   let difference = binaux "difference" Z.sub *)
-
-(*   let product2 = binaux "product" Z.mul *)
-
-(*   let quotient2 = binaux "quotient" Z.div *)
-
-(*   let remainder = binaux "remainder" Z.rem *)
-
-(*   let power = binaux "power" (fun a b -> Z.pow a (Z.to_int b)) *)
-
-(*   let minus = function *)
-(*     | Int n -> *)
-(*       Int (Z.neg n) *)
-(*     | Word w -> *)
-(*       Int (Z.neg (z_of_string "minus" w)) *)
-(*     | _ -> *)
-(*       raise (Error "minus: bad type") *)
-(* end *)
-
-(* module Eval = struct *)
-(*   let apply2 proc arg1 arg2 = *)
-(*     0 *)
-
-(*   let quote atom = *)
-(*     0 *)
-
-(*   let getvar env name = *)
-(*     0 *)
+type routine_kind =
+  | Proc2 of (atom -> atom -> atom option)
   
-(*   let rec expression env strm = *)
-(*     relational_expression env strm *)
-      
-(*   and relational_expression env = *)
-(*     let lhs = additive_expression env strm in *)
-(*     let rec app op = *)
-(*       Stream.junk strm; *)
-(*       let rhs = additive_expression env strm in *)
-(*       loop (apply2 op lhs rhs) *)
-(*     and loop lhs = *)
-(*       match Stream.peek strm with *)
-(*       | Some (Word "=") -> app Predicates.equalp *)
-(*       | Some (Word "<") -> app NumericPredicates.lessp *)
-(*       | Some (Word ">") -> app NumericPredicates.greaterp *)
-(*       | Some (Word "<=") -> app NumericPredicates.lessequalp *)
-(*       | Some (Word ">=") -> app NumericPredicates.greaterequalp *)
-(*       | Some (Word "<>") -> app Predicates.notequalp *)
-(*       | Some _ | None -> lhs *)
-(*     in *)
-(*     loop lhs *)
+type routine = {
+  nargs : int;
+  kind : routine_kind
+}
 
-(*   and additive_expression env strm = *)
-(*     let lhs = multiplicative_expression env strm in *)
-(*     let rec app op = *)
-(*       Stream.junk strm; *)
-(*       let rhs = multiplicative_expression env strm in *)
-(*       loop (apply2 op lhs rhs) *)
-(*     and loop lhs = *)
-(*       match Stream.peek strm with *)
-(*       | Some (Word "+") -> app Arithmetic.sum2 *)
-(*       | Some (Word "-") -> app Arithmetic.difference *)
-(*       | Some _ | None -> lhs *)
-(*     in *)
-(*     loop lhs *)
+module Env : sig
+  type t
 
-(*   and multiplicative_expression env strm = *)
-(*     let lhs = power_expression env strm in *)
-(*     let rec app op = *)
-(*       Stream.junk strm; *)
-(*       let rhs = power_expression env strm in *)
-(*       loop (apply2 op lhs rhs) *)
-(*     and loop lhs = *)
-(*       match Stream.peek strm with *)
-(*       | Some (Word "*") -> app Arithmetic.product2 *)
-(*       | Some (Word "/") -> app Arithmetic.quotient2 *)
-(*       | Some (Word "%") -> app Arithmetic.remainder *)
-(*       | Some _ | None -> lhs *)
-(*     in *)
-(*     loop lhs *)
+  val create : unit -> t
+    
+  val push_scope : t -> unit
+  val pop_scope : t -> unit
+  val has_routine : t -> string -> bool
+  val get_routine : t -> string -> routine
+  val add_global : t -> string -> atom -> unit
+  val add_var : t -> string -> atom -> unit
+  val get_global : t -> string -> atom
+  val get_var : t -> string -> atom
+end = struct
+  module NoCaseString = struct
+    type t = string
+    let equal s1 s2 =
+      String.uppercase s1 = String.uppercase s2
+    let hash s =
+      Hashtbl.hash (String.uppercase s)
+  end
+  
+  module H = Hashtbl.Make (NoCaseString)
 
-(*   and power_expression env strm = *)
-(*     let lhs = unary_expression env strm in *)
-(*     let rec loop lhs = *)
-(*       match Stream.peek strm with *)
-(*       | Some (Word "^") -> *)
-(*         Stream.junk strm; *)
-(*         let rhs = unary_expression env strm in *)
-(*         loop (apply2 Arithmetic.power lhs rhs) *)
-(*       | Some _ | None -> lhs *)
-(*     in *)
-(*     loop lhs *)
+  type t = {
+    routines : routine H.t;
+    globals : atom H.t;
+    mutable locals : atom H.t list
+  }
 
-(*   and unary_expression env strm = *)
-(*     match Stream.peek strm with *)
-(*     | Word unary when unary == unary_minus -> *)
-(*       Stream.junk strm; *)
-(*       let rhs = unary_expression env strm in *)
-(*       apply1 Arithmetic.minus rhs *)
-(*     | _ -> *)
-(*       final_expression strm *)
-      
-(*   and final_expression env strm = *)
-(*     match Stream.peek strm with *)
-(*     | Some (Int _) -> *)
-(*       assert false *)
-(*     | Some (List _ as atom) *)
-(*     | Some (Array _ as atom) -> *)
-(*       Stream.junk strm; *)
-(*       quote atom *)
-(*     | Some (Word w) -> *)
-(*       Stream.junk strm; *)
-(*       if is_number w then Atom (Int (Z.of_string w)) *)
-(*       else if w.[0] = '\"' then Atom (Word (String.sub w 1 (String.length w - 1))) *)
-(*       else if w.[0] = ':' then *)
-(*         let varname = String.sub w 1 (String.length w - 1) in *)
-(*         getvar env varname *)
-(*       else if w = "(" then *)
-(*         let nextisword strm = *)
-(*           match Stream.peek strm with *)
-(*           | Some (Word proc) -> *)
-(*             if Env.has_proc proc env then Some proc else None *)
-(*           | Some _ | None -> None *)
-(*         in *)
-(*         begin match nextisword strm with *)
-(*           | Some proc -> *)
-(*             apply proc strm false *)
-(*           | None -> *)
-(*             let result = expression env strm in *)
-(*             match Stream.peek strm with *)
-(*             | Some (Word ")") -> *)
-(*               Stream.junk strm; *)
-(*               result *)
-(*             | Some _ -> *)
-(*               error *)
-(*             | None -> *)
-(*               expected ")" *)
-(*         end *)
-(*     | None -> *)
-(*       error "eof" *)
-        
-(*   and apply env proc strm = *)
-(*     match Stream.peek strm with *)
-(*     |  *)
-(* end *)
+  let create () = {
+    routines = H.create 17;
+    globals = H.create 17;
+    locals = []
+  }
+
+  let push_scope env =
+    env.locals <- H.create 17 :: env.locals
+
+  let pop_scope env =
+    env.locals <- List.tl env.locals
+
+  let has_routine env name =
+    H.mem env.routines name
+
+  let get_routine env name =
+    H.find env.routines name
+  
+  let add_global env name data =
+    H.add env.globals name data
+
+  let add_var env name data =
+    match env.locals with
+    | [] ->
+      add_global env name data
+    | top :: _ ->
+      H.add top name data
+
+  let get_global env name =
+    try
+      H.find env.globals name
+    with
+    | Not_found ->
+      let a = List [] in
+      H.add env.globals name a;
+      a
+
+  let get_var env name =
+    let rec loop = function
+      | [] ->
+        get_global env name
+      | top :: rest ->
+        try H.find top name with | Not_found -> loop rest
+    in
+    loop env.locals
+end
+
+module Predicates = struct
+  let rec equalaux a b =
+    match a, b with
+    | Int n, Int m -> Z.equal n m
+    | Word w1, Word w2 -> w1 == w2
+    | List l1, List l2 -> List.length l1 = List.length l2 && List.for_all2 equalaux l1 l2
+    | Array (a1, orig1), Array (a2, orig2) -> a1 == a2
+    | _ -> false
+
+  let equalp a b =
+    if equalaux a b then true_word else false_word
+
+  let notequalp a b =
+    if equalaux a b then false_word else true_word
+end
+
+module NumericPredicates = struct
+  let z_of_string name w =
+    try Z.of_string w with _ -> raise (Error (name ^ ": bad types"))
+
+  let compaux name op a b =
+    match a, b with
+    | Int n, Int m ->
+      if op n m then true_word else false_word
+    | Int n, Word w ->
+      if op n (z_of_string name w) then true_word else false_word
+    | Word w, Int n ->
+      if op (z_of_string name w) n then true_word else false_word
+    | Word w1, Word w2 ->
+      if op (z_of_string name w1) (z_of_string name w2) then true_word else false_word
+    | _ ->
+      raise (Error (name ^ ": bad types"))
+
+  let greaterp = compaux "greaterp" Z.gt
+  let greaterequalp = compaux "greaterequalp" Z.geq
+  let lessp = compaux "lessp" Z.lt
+  let lessequalp = compaux "lessequalp" Z.leq
+end
+
+module Arithmetic = struct
+  let z_of_string name str =
+    try Z.of_string str with _ -> raise (Error (name ^ ": bad types"))
+
+  let binaux name op a b =
+    match a, b with
+    | Int n, Int m ->
+      Int (op n m)
+    | Int n, Word word
+    | Word word, Int n ->
+      Int (op n (z_of_string name word))
+    | Word word1, Word word2 ->
+      Int (op (z_of_string name word1) (z_of_string name word2))
+    | _ ->
+      raise (Error (name ^ ": bad types"))
+
+  let sum2 = binaux "sum" Z.add
+
+  let difference = binaux "difference" Z.sub
+
+  let product2 = binaux "product" Z.mul
+
+  let quotient2 = binaux "quotient" Z.div
+
+  let remainder = binaux "remainder" Z.rem
+
+  let power = binaux "power" (fun a b -> Z.pow a (Z.to_int b))
+
+  let minus = function
+    | Int n ->
+      Int (Z.neg n)
+    | Word w ->
+      Int (Z.neg (z_of_string "minus" w))
+    | _ ->
+      raise (Error "minus: bad type")
+end
+
+let (!!) f = f ()               
+
+module Eval = struct
+  let rec expression (env : Env.t) (strm : atom Stream.t) : unit -> atom =
+    relational_expression env strm
+
+  and relational_expression env strm =
+    let lhs = additive_expression env strm in
+    let rec app op =
+      Stream.junk strm;
+      let rhs = additive_expression env strm in
+      loop (fun () -> op !!lhs !!rhs)
+    and loop lhs =
+      match Stream.peek strm with
+      | Some (Word "=") -> app Predicates.equalp
+      | Some (Word "<") -> app NumericPredicates.lessp
+      | Some (Word ">") -> app NumericPredicates.greaterp
+      | Some (Word "<=") -> app NumericPredicates.lessequalp
+      | Some (Word ">=") -> app NumericPredicates.greaterequalp
+      | Some (Word "<>") -> app Predicates.notequalp
+      | _ -> lhs
+    in
+    loop lhs
+
+  and additive_expression env strm =
+    let lhs = multiplicative_expression env strm in
+    let rec app op =
+      Stream.junk strm;
+      let rhs = multiplicative_expression env strm in
+      loop (fun () -> op !!lhs !!rhs)
+    and loop lhs =
+      match Stream.peek strm with
+      | Some (Word "+") -> app Arithmetic.sum2
+      | Some (Word "-") -> app Arithmetic.difference
+      | _ -> lhs
+    in
+    loop lhs
+
+  and multiplicative_expression env strm =
+    let lhs = power_expression env strm in
+    let rec app op =
+      Stream.junk strm;
+      let rhs = power_expression env strm in
+      loop (fun () -> op !!lhs !!rhs)
+    and loop lhs =
+      match Stream.peek strm with
+      | Some (Word "*") -> app Arithmetic.product2
+      | Some (Word "/") -> app Arithmetic.quotient2
+      | Some (Word "%") -> app Arithmetic.remainder
+      | _ -> lhs
+    in
+    loop lhs
+
+  and power_expression env strm =
+    let lhs = unary_expression env strm in
+    let rec loop lhs =
+      match Stream.peek strm with
+      | Some (Word "^") ->
+        Stream.junk strm;
+        let rhs = unary_expression env strm in
+        loop (fun () -> Arithmetic.power !!lhs !!rhs)
+      | _ -> lhs
+    in
+    loop lhs
+
+  and unary_expression env strm =
+    match Stream.peek strm with
+    | Some w when w == minus_word ->
+      Stream.junk strm;
+      let rhs = unary_expression env strm in
+      fun () -> Arithmetic.minus !!rhs
+    | _ ->
+      final_expression env strm
+
+  and final_expression env strm =
+    let isnumber w =
+      let rec loop i =
+        if i >= String.length w then true
+        else match w.[i] with '0'..'9' -> loop (i+1) | _ -> false
+      in
+      loop 0
+    in
+    let stringfrom pos str = String.sub str pos (String.length str - pos) in
+    match Stream.peek strm with
+    | Some (Int _) ->
+      assert false
+    | Some (List _ as atom)
+    | Some (Array _ as atom) ->
+      Stream.junk strm;
+      fun () -> atom
+    | Some (Word w) ->
+      Stream.junk strm;
+      if isnumber w then
+        let n = Z.of_string w in
+        fun () -> Int n
+      else if w.[0] = '\"' then
+        let w = stringfrom 1 w in
+        fun () -> Word w
+      else if w.[0] = ':' then
+        let w = stringfrom 1 w in
+        fun () -> Env.get_var env w
+      else
+        let ret = apply env w strm in
+        begin fun () ->
+          match !!ret with
+          | Some a -> a
+          | None ->
+            raise (Error "expected result !")
+        end
+    | None ->
+      assert false
+
+  and apply env w strm : unit -> atom option =
+    if w = "(" then
+      match Stream.peek strm with
+      | Some (Word proc) when Env.has_routine env proc ->
+        Stream.junk strm;
+        dispatch env proc strm false
+      | _ ->
+        let result = !!(expression env strm) in
+        match Stream.peek strm with
+        | Some (Word ")") ->
+          Stream.junk strm;
+          fun () -> Some result
+        | Some _ ->
+          raise (Error "expected ')', saw somethign else")
+        | None ->
+          raise (Error "expected ')'")
+    else
+      dispatch env w strm true
+
+  and dispatch env proc strm natural =
+    let getargs len natural =
+      if natural then
+        let rec loop i =
+          if i >= len then []
+          else expression env strm :: loop (i+1)
+        in
+        loop 0
+      else
+        let rec loop () =
+          match Stream.peek strm with
+          | Some (Word ")") ->
+            Stream.junk strm;
+            []
+          | _ ->
+            expression env strm :: loop ()
+        in
+        loop ()
+    in
+    try
+      let r = Env.get_routine env proc in
+      let args = getargs r.nargs natural in
+      match r.kind, args with
+      | Proc2 f, [arg1; arg2] ->
+        fun () -> f !!arg1 !!arg2
+      | Proc2 _, _ ->
+        raise (Error "bad arity")
+    with
+    | Not_found ->
+      raise (Error ("Don't know how to " ^ String.uppercase proc))
+
+  let command env strm =
+    match Stream.peek strm with
+    | Some (Word w) ->
+      Stream.junk strm;
+      let ret = apply env w strm in
+      begin match !!ret with
+        | None -> ()
+        | Some _ ->
+          raise (Error ("Don't know what to do with ..."))
+      end
+    | _ ->
+      raise (Error ("Bad head"))
+end
