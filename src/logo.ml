@@ -243,11 +243,27 @@ module DataSelectors = struct
       List.nth lst (l-1)
     | _ ->
       raise (Error "last: LIST or WORD expected")
+
+  let butfirst = function
+    | Int n ->
+      let s = Z.to_string n in
+      let l = String.length s in
+      Word (String.sub s 1 (l-1))
+    | Word w ->
+      let l = String.length w in
+      Word (String.sub w 1 (l-1))
+    | List [] ->
+      raise (Error "butfirst: empty list")
+    | List (_ :: rest) ->
+      List rest
+    | _ ->
+      raise (Error "butfirst: expected WORD or LIST")
         
   let init env =
     Env.add_routine env "first" { nargs = 1; kind = Proc1 first };
     Env.add_routine env "firsts" { nargs = 1; kind = Proc1 firsts };
-    Env.add_routine env "last" { nargs = 1; kind = Proc1 last }
+    Env.add_routine env "last" { nargs = 1; kind = Proc1 last };
+    Env.add_routine env "butfirst" { nargs = 1; kind = Proc1 butfirst }
 end
 
 module Predicates = struct
