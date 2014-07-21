@@ -207,6 +207,25 @@ module Constructors = struct
     Env.add_routine env "gensym" { nargs = 0; kind = Proc0 gensym }
 end
 
+module DataSelectors = struct
+  let first = function
+    | Int n ->
+      Word (String.make 1 (Z.to_string n).[0])
+    | Word "" ->
+      raise (Error "first: empty word")
+    | Word w ->
+      Word (String.make 1 w.[0])
+    | List [] ->
+      raise (Error "first: empty list")
+    | List (x :: _) ->
+      x
+    | Array (_, orig) ->
+      Int (Z.of_int orig)
+        
+  let init env =
+    Env.add_routine env "first" { nargs = 1; kind = Proc1 first }
+end
+
 module Predicates = struct
   let rec equalaux a b =
     match a, b with

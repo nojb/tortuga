@@ -14,6 +14,10 @@ end
 module Constructors : sig
   val init : Env.t -> unit
 end
+
+module DataSelectors : sig
+  val init : Env.t -> unit
+end
   
 module Eval : sig
   (* exception Bye *)
