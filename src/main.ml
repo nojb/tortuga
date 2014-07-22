@@ -38,7 +38,8 @@ let main () =
       | Logo.Error err ->
         Format.fprintf Format.std_formatter "%s.@." err
       | exn ->
-        Format.fprintf Format.std_formatter "internal error: %s@." (Printexc.to_string exn)
+        Format.fprintf Format.std_formatter "internal error: %s@.Backtrace:@.%s@."
+          (Printexc.to_string exn) (Printexc.get_backtrace ())
     end;
     loop ()
   in

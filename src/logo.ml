@@ -712,37 +712,38 @@ module Eval = struct
         in
         loop []
     in
-    try
-      let r = Env.get_routine env proc in
-      getargs r.Env.nargs natural begin fun args ->
-          match r.Env.kind, args with
-          | Env.Proc0 f, [] ->
-            k (Some (f ()))
-          | Env.Proc1 f, [arg] ->
-            k (Some (f arg))
-          | Env.Proc12 f, [arg] ->
-            k (Some (f arg ()))
-          | Env.Proc12 f, [arg1; arg2] ->
-            k (Some (f arg1 ~opt:arg2 ()))
-          | Env.Proc2 f, [arg1; arg2] ->
-            k (Some (f arg1 arg2))
-          | Env.Procn f, args ->
-            k (Some (f args))
-          | Env.Cmd0 f, [] ->
-            f (); k None
-          | Env.Cmd1 f, [arg] ->
-            f arg; k None
-          | Env.Cmdn f, args ->
-            f args; k None
-          | Env.Pcontn f, args ->
-            f env args k
-          | _, _ ->
-            raise (Error "bad arity")
-      end
-    with
-    | Not_found ->
-      raise (Error ("Don't know how to " ^ String.uppercase proc))
-
+    let r =
+      try
+        Env.get_routine env proc
+      with
+      | Not_found -> raise (Error ("Don't know how to " ^ String.uppercase proc))
+    in
+    getargs r.Env.nargs natural begin fun args ->
+      match r.Env.kind, args with
+      | Env.Proc0 f, [] ->
+        k (Some (f ()))
+      | Env.Proc1 f, [arg] ->
+        k (Some (f arg))
+      | Env.Proc12 f, [arg] ->
+        k (Some (f arg ()))
+      | Env.Proc12 f, [arg1; arg2] ->
+        k (Some (f arg1 ~opt:arg2 ()))
+      | Env.Proc2 f, [arg1; arg2] ->
+        k (Some (f arg1 arg2))
+      | Env.Procn f, args ->
+        k (Some (f args))
+      | Env.Cmd0 f, [] ->
+        f (); k None
+      | Env.Cmd1 f, [arg] ->
+        f arg; k None
+      | Env.Cmdn f, args ->
+        f args; k None
+      | Env.Pcontn f, args ->
+        f env args k
+      | _, _ ->
+        raise (Error "bad arity")
+    end
+    
   let parse_to strm =
     let name = try sexpr (Stream.next strm) with _ -> raise (Error "TO: expected WORD") in
     (* if not isident name then raise (Error "TO: expected IDENT"); *)
