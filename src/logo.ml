@@ -148,7 +148,6 @@ type routine_kind =
   | Proc12 of (atom -> ?opt:atom -> unit -> atom)
   | Proc2 of (atom -> atom -> atom)
   | Procn of (atom list -> atom)
-  (* | Usern of (t -> atom list -> atom option) *)
   | Cmd0 of (unit -> unit)
   | Cmd1 of (atom -> unit)
   | Cmdn of (atom list -> unit)
@@ -303,18 +302,18 @@ Outputs a unique word each time it's invoked.  The words are of the form G1, G2,
 etc."
 
   let init env =
-    Env.(add_routine env "word" { nargs = 2; kind = Procn word });
-    Env.(add_routine env "list" { nargs = 2; kind = Procn list });
-    Env.(add_routine env "sentence" { nargs = 2; kind = Procn sentence });
-    Env.(add_routine env "se" { nargs = 2; kind = Procn sentence });
-    Env.(add_routine env "fput" { nargs = 2; kind = Proc2 fput });
-    Env.(add_routine env "lput" { nargs = 2; kind = Proc2 lput });
-    Env.(add_routine env "array" { nargs = 1; kind = Proc12 array });
-    Env.(add_routine env "combine" { nargs = 2; kind = Proc2 combine });
-    Env.(add_routine env "listtoarray" { nargs = 1; kind = Proc12 listtoarray });
-    Env.(add_routine env "arraytolist" { nargs = 1; kind = Proc1 arraytolist });
-    Env.(add_routine env "reverse" { nargs = 1; kind = Proc1 reverse });
-    Env.(add_routine env "gensym" { nargs = 0; kind = Proc0 gensym })
+    Env.add_routine env "word" { nargs = 2; kind = Procn word };
+    Env.add_routine env "list" { nargs = 2; kind = Procn list };
+    Env.add_routine env "sentence" { nargs = 2; kind = Procn sentence };
+    Env.add_routine env "se" { nargs = 2; kind = Procn sentence };
+    Env.add_routine env "fput" { nargs = 2; kind = Proc2 fput };
+    Env.add_routine env "lput" { nargs = 2; kind = Proc2 lput };
+    Env.add_routine env "array" { nargs = 1; kind = Proc12 array };
+    Env.add_routine env "combine" { nargs = 2; kind = Proc2 combine };
+    Env.add_routine env "listtoarray" { nargs = 1; kind = Proc12 listtoarray };
+    Env.add_routine env "arraytolist" { nargs = 1; kind = Proc1 arraytolist };
+    Env.add_routine env "reverse" { nargs = 1; kind = Proc1 reverse };
+    Env.add_routine env "gensym" { nargs = 0; kind = Proc0 gensym }
 end
 
 module DataSelectors = struct
@@ -401,13 +400,13 @@ module DataSelectors = struct
       raise (Error "quoted: LIST or WORD expected")
         
   let init env =
-    Env.(add_routine env "first" { nargs = 1; kind = Proc1 first });
-    Env.(add_routine env "firsts" { nargs = 1; kind = Proc1 firsts });
-    Env.(add_routine env "last" { nargs = 1; kind = Proc1 last });
-    Env.(add_routine env "butfirst" { nargs = 1; kind = Proc1 butfirst });
-    Env.(add_routine env "item" { nargs = 2; kind = Proc2 item });
-    Env.(add_routine env "pick" { nargs = 1; kind = Proc1 pick });
-    Env.(add_routine env "quoted" { nargs = 1; kind = Proc1 quoted })
+    Env.add_routine env "first" { nargs = 1; kind = Proc1 first };
+    Env.add_routine env "firsts" { nargs = 1; kind = Proc1 firsts };
+    Env.add_routine env "last" { nargs = 1; kind = Proc1 last };
+    Env.add_routine env "butfirst" { nargs = 1; kind = Proc1 butfirst };
+    Env.add_routine env "item" { nargs = 2; kind = Proc2 item };
+    Env.add_routine env "pick" { nargs = 1; kind = Proc1 pick };
+    Env.add_routine env "quoted" { nargs = 1; kind = Proc1 quoted }
 end
 
 module Transmitters = struct
@@ -458,7 +457,7 @@ module Transmitters = struct
       print_newline ()
     
   let init env =
-    Env.(add_routine env "print" { nargs = 1; kind = Cmdn print })
+    Env.add_routine env "print" { nargs = 1; kind = Cmdn print }
 end
 
 module Predicates = struct
@@ -550,7 +549,7 @@ module Control = struct
       
   let init env =
     Env.add_routine env "output" { nargs = 1; kind = Pcontn output };
-    Env.(add_routine env "bye" { nargs = 0; kind = Cmd0 bye })
+    Env.add_routine env "bye" { nargs = 0; kind = Cmd0 bye }
 end
 
 module Eval = struct
