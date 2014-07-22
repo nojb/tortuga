@@ -47,6 +47,39 @@ let rec pp ppf = function
     in
     Format.fprintf ppf "@[<1>{%a}@@%i@]" (printarr 0) a orig
 
+let rec bprint b = function
+  | Int n -> Buffer.add_string b (string_of_int n)
+  | Word w -> Buffer.add_string b w
+  | List [] -> Buffer.add_string b "[]"
+  | List (x :: xs) ->
+    Buffer.add_char b '[';
+    bprint b x;
+    List.iter (fun x -> Buffer.add_char b ' '; bprint b x) xs
+  | Array ([| |], orig) ->
+    Buffer.add_string b "{}@";
+    Buffer.add_string b (string_of_int orig)
+  | Array (a, orig) ->
+    Buffer.add_char b '{';
+    bprint b a.(0);
+    for i = 1 to Array.length a - 1 do
+      Buffer.add_char b ' ';
+      bprint b a.(i)
+    done;
+    Buffer.add_string b "}@";
+    Buffer.add_string b (string_of_int orig)
+
+let stringify_list l =
+  match l with
+  | [] -> ""
+  | x :: xs ->
+    let b = Buffer.create 17 in
+    bprint b x;
+    List.iter (fun x -> Buffer.add_char b ' '; bprint b x) xs;
+    Buffer.contents b
+
+let stringify a =
+  stringify_list [a]
+  
 let true_word =
   Word "true"
 
