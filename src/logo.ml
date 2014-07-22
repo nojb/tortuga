@@ -60,19 +60,19 @@ exception Error of string
 exception Bye
 
 module Env : sig
-  type 'routine t
+  type 'r t
 
-  val create : unit -> 'routine t
+  val create : unit -> 'r t
 
-  val new_scope : 'routine t -> (atom -> unit) -> 'routine t
-  val add_routine : 'routine t -> string -> 'routine -> unit
-  val has_routine : 'routine t -> string -> bool
-  val get_routine : 'routine t -> string -> 'routine
-  val add_global : 'routine t -> string -> atom -> unit
-  val add_var : 'routine t -> string -> atom -> unit
-  val get_global : 'routine t -> string -> atom
-  val get_var : 'routine t -> string -> atom
-  val output : 'routine t -> atom -> unit
+  val new_scope : 'r t -> (atom option -> unit) -> 'r t
+  val add_routine : 'r t -> string -> 'r -> unit
+  val has_routine : 'r t -> string -> bool
+  val get_routine : 'r t -> string -> 'r
+  val add_global : 'r t -> string -> atom -> unit
+  val add_var : 'r t -> string -> atom -> unit
+  val get_global : 'r t -> string -> atom
+  val get_var : 'r t -> string -> atom
+  val output : 'r t -> atom option -> unit
 end = struct
   module NoCaseString = struct
     type t = string
@@ -88,7 +88,7 @@ end = struct
     routines : 'routine H.t;
     globals : atom H.t;
     locals : atom H.t list;
-    output : atom -> unit
+    output : atom option -> unit
   }
 
   let create () = {
@@ -539,15 +539,21 @@ module Arithmetic = struct
 end
 
 module Control = struct
+  let stop env things _ =
+    match things with
+    | [] -> Env.output env None
+    | _ -> raise (Error "stop: bad arity")
+             
   let output env things _ =
     match things with
-    | a :: [] -> Env.output env a
+    | a :: [] -> Env.output env (Some a)
     | _ -> raise (Error "output: bad arity")
 
   let bye () =
     raise Bye
       
   let init env =
+    Env.add_routine env "stop" { nargs = 0; kind = Pcontn stop };
     Env.add_routine env "output" { nargs = 1; kind = Pcontn output };
     Env.add_routine env "bye" { nargs = 0; kind = Cmd0 bye }
 end
@@ -766,7 +772,7 @@ module Eval = struct
   let to_ env strm =
     let name, inputs, body = parse_to strm in
     let body env args k =
-      let env = Env.new_scope env (fun a -> k (Some a)) in
+      let env = Env.new_scope env k in
       List.iter2 (Env.add_var env) inputs args;
       let rec step strm =
         match Stream.peek strm with
