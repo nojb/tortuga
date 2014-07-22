@@ -581,47 +581,47 @@ module Eval = struct
 
   and relational_expression env strm =
     let lhs = additive_expression env strm in
-    let rec app op =
+    let rec app op lhs =
       Stream.junk strm;
       let rhs = additive_expression env strm in
       loop (fun () -> op !!lhs !!rhs)
     and loop lhs =
       match Stream.peek strm with
-      | Some (Word "=") -> app Predicates.equalp
-      | Some (Word "<") -> app NumericPredicates.lessp
-      | Some (Word ">") -> app NumericPredicates.greaterp
-      | Some (Word "<=") -> app NumericPredicates.lessequalp
-      | Some (Word ">=") -> app NumericPredicates.greaterequalp
-      | Some (Word "<>") -> app Predicates.notequalp
+      | Some (Word "=") -> app Predicates.equalp lhs
+      | Some (Word "<") -> app NumericPredicates.lessp lhs
+      | Some (Word ">") -> app NumericPredicates.greaterp lhs
+      | Some (Word "<=") -> app NumericPredicates.lessequalp lhs
+      | Some (Word ">=") -> app NumericPredicates.greaterequalp lhs
+      | Some (Word "<>") -> app Predicates.notequalp lhs
       | _ -> lhs
     in
     loop lhs
 
   and additive_expression env strm =
     let lhs = multiplicative_expression env strm in
-    let rec app op =
+    let rec app op lhs =
       Stream.junk strm;
       let rhs = multiplicative_expression env strm in
       loop (fun () -> op !!lhs !!rhs)
     and loop lhs =
       match Stream.peek strm with
-      | Some (Word "+") -> app Arithmetic.sum2
-      | Some (Word "-") -> app Arithmetic.difference
+      | Some (Word "+") -> app Arithmetic.sum2 lhs
+      | Some (Word "-") -> app Arithmetic.difference lhs
       | _ -> lhs
     in
     loop lhs
 
   and multiplicative_expression env strm =
     let lhs = power_expression env strm in
-    let rec app op =
+    let rec app op lhs =
       Stream.junk strm;
       let rhs = power_expression env strm in
       loop (fun () -> op !!lhs !!rhs)
     and loop lhs =
       match Stream.peek strm with
-      | Some (Word "*") -> app Arithmetic.product2
-      | Some (Word "/") -> app Arithmetic.quotient2
-      | Some (Word "%") -> app Arithmetic.remainder
+      | Some (Word "*") -> app Arithmetic.product2 lhs
+      | Some (Word "/") -> app Arithmetic.quotient2 lhs
+      | Some (Word "%") -> app Arithmetic.remainder lhs
       | _ -> lhs
     in
     loop lhs
