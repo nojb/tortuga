@@ -570,84 +570,77 @@ module Control = struct
     Env.(add_routine env "bye" { nargs = 0; kind = Cmd0 bye })
 end
 
-let (!!) f = f ()               
-
 module Eval = struct
   let stringfrom pos str =
     String.sub str pos (String.length str - pos)
 
-  let rec expression (env : Env.t) (strm : atom Stream.t) : unit -> atom =
+  let rec expression (env : Env.t) (strm : atom Stream.t) =
     relational_expression env strm
 
-  and relational_expression env strm =
-    let lhs = additive_expression env strm in
-    let rec app op lhs =
-      Stream.junk strm;
-      let rhs = additive_expression env strm in
-      loop (fun () -> op !!lhs !!rhs)
-    and loop lhs =
-      match Stream.peek strm with
-      | Some (Word "=") -> app Predicates.equalp lhs
-      | Some (Word "<") -> app NumericPredicates.lessp lhs
-      | Some (Word ">") -> app NumericPredicates.greaterp lhs
-      | Some (Word "<=") -> app NumericPredicates.lessequalp lhs
-      | Some (Word ">=") -> app NumericPredicates.greaterequalp lhs
-      | Some (Word "<>") -> app Predicates.notequalp lhs
-      | _ -> lhs
-    in
-    loop lhs
+  and relational_expression env strm k =
+    additive_expression env strm (fun lhs ->
+        let rec app op lhs =
+          Stream.junk strm;
+          additive_expression env strm (fun rhs -> loop (op lhs rhs))
+        and loop lhs =
+          match Stream.peek strm with
+          | Some (Word "=") -> app Predicates.equalp lhs
+          | Some (Word "<") -> app NumericPredicates.lessp lhs
+          | Some (Word ">") -> app NumericPredicates.greaterp lhs
+          | Some (Word "<=") -> app NumericPredicates.lessequalp lhs
+          | Some (Word ">=") -> app NumericPredicates.greaterequalp lhs
+          | Some (Word "<>") -> app Predicates.notequalp lhs
+          | _ -> k lhs
+        in
+        loop lhs)
 
-  and additive_expression env strm =
-    let lhs = multiplicative_expression env strm in
-    let rec app op lhs =
-      Stream.junk strm;
-      let rhs = multiplicative_expression env strm in
-      loop (fun () -> op !!lhs !!rhs)
-    and loop lhs =
-      match Stream.peek strm with
-      | Some (Word "+") -> app Arithmetic.sum2 lhs
-      | Some (Word "-") -> app Arithmetic.difference lhs
-      | _ -> lhs
-    in
-    loop lhs
+  and additive_expression env strm k =
+    multiplicative_expression env strm (fun lhs ->
+        let rec app op lhs =
+          Stream.junk strm;
+          multiplicative_expression env strm (fun rhs -> loop (op lhs rhs))
+        and loop lhs =
+          match Stream.peek strm with
+          | Some (Word "+") -> app Arithmetic.sum2 lhs
+          | Some (Word "-") -> app Arithmetic.difference lhs
+          | _ -> k lhs
+        in
+        loop lhs)
 
-  and multiplicative_expression env strm =
-    let lhs = power_expression env strm in
-    let rec app op lhs =
-      Stream.junk strm;
-      let rhs = power_expression env strm in
-      loop (fun () -> op !!lhs !!rhs)
-    and loop lhs =
-      match Stream.peek strm with
-      | Some (Word "*") -> app Arithmetic.product2 lhs
-      | Some (Word "/") -> app Arithmetic.quotient2 lhs
-      | Some (Word "%") -> app Arithmetic.remainder lhs
-      | _ -> lhs
-    in
-    loop lhs
+  and multiplicative_expression env strm k =
+    power_expression env strm (fun lhs ->
+        let rec app op lhs =
+          Stream.junk strm;
+          power_expression env strm (fun rhs -> loop (op lhs rhs))
+        and loop lhs =
+          match Stream.peek strm with
+          | Some (Word "*") -> app Arithmetic.product2 lhs
+          | Some (Word "/") -> app Arithmetic.quotient2 lhs
+          | Some (Word "%") -> app Arithmetic.remainder lhs
+          | _ -> k lhs
+        in
+        loop lhs)
 
-  and power_expression env strm =
-    let lhs = unary_expression env strm in
-    let rec loop lhs =
-      match Stream.peek strm with
-      | Some (Word "^") ->
-        Stream.junk strm;
-        let rhs = unary_expression env strm in
-        loop (fun () -> Arithmetic.power !!lhs !!rhs)
-      | _ -> lhs
-    in
-    loop lhs
+  and power_expression env strm k =
+    unary_expression env strm (fun lhs ->
+        let rec loop lhs =
+          match Stream.peek strm with
+          | Some (Word "^") ->
+            Stream.junk strm;
+            unary_expression env strm (fun rhs -> loop (Arithmetic.power lhs rhs))
+          | _ -> k lhs
+        in
+        loop lhs)
 
-  and unary_expression env strm =
+  and unary_expression env strm k =
     match Stream.peek strm with
     | Some w when w == minus_word ->
       Stream.junk strm;
-      let rhs = unary_expression env strm in
-      fun () -> Arithmetic.minus !!rhs
+      unary_expression env strm (fun rhs -> k (Arithmetic.minus rhs))
     | _ ->
-      final_expression env strm
+      final_expression env strm k
 
-  and final_expression env strm =
+  and final_expression env strm k =
     let isnumber w =
       let rec loop i =
         if i >= String.length w then true
@@ -661,96 +654,91 @@ module Eval = struct
     | Some (List _ as atom)
     | Some (Array _ as atom) ->
       Stream.junk strm;
-      fun () -> atom
+      k atom
     | Some (Word w) ->
       Stream.junk strm;
       if isnumber w then
         let n = int_of_string w in
-        fun () -> Int n
+        k (Int n)
       else if w.[0] = '\"' then
         let w = stringfrom 1 w in
-        fun () -> Word w
+        k (Word w)
       else if w.[0] = ':' then
         let w = stringfrom 1 w in
-        fun () -> Env.get_var env w
+        k (Env.get_var env w)
       else
-        let ret = apply env w strm in
-        begin fun () ->
-          match !!ret with
-          | Some a -> a
-          | None ->
-            raise (Error "expected result !")
-        end
+        apply env w strm (function
+            | Some a -> k a
+            | None -> raise (Error "expected result !"))
     | None ->
       assert false
 
-  and apply env w strm : unit -> atom option =
+  and apply env w strm k =
     if w = "(" then
       match Stream.peek strm with
       | Some (Word proc) when Env.has_routine env proc ->
         Stream.junk strm;
-        dispatch env proc strm false
+        dispatch env proc strm false k
       | _ ->
-        let result = expression env strm in
-        match Stream.peek strm with
-        | Some (Word ")") ->
-          Stream.junk strm;
-          fun () -> Some !!result
-        | Some _ ->
-          raise (Error "expected ')', saw somethign else")
-        | None ->
-          raise (Error "expected ')'")
+        expression env strm (fun result ->
+            match Stream.peek strm with
+            | Some (Word ")") ->
+              Stream.junk strm;
+              k (Some result)
+            | Some _ ->
+              raise (Error "expected ')', saw somethign else")
+            | None ->
+              raise (Error "expected ')'"))
     else
-      dispatch env w strm true
+      dispatch env w strm true k
 
-  and dispatch env proc strm natural =
-    let getargs len natural =
+  and dispatch env proc strm natural k =
+    let getargs len natural k =
       if natural then
-        let rec loop i =
-          if i >= len then []
+        let rec loop acc i =
+          if i >= len then k (List.rev acc)
           else
-            let arg1 = expression env strm in
-            arg1 :: loop (i+1)
+            expression env strm (fun arg1 -> loop (arg1 :: acc) (i+1))
         in
-        loop 0
+        loop [] 0
       else
-        let rec loop () =
+        let rec loop acc =
           match Stream.peek strm with
           | Some (Word ")") ->
             Stream.junk strm;
-            []
+            k (List.rev acc)
           | _ ->
-            let arg1 = expression env strm in
-            arg1 :: loop ()
+            expression env strm (fun arg1 -> loop (arg1 :: acc))
         in
-        loop ()
+        loop []
     in
     try
       let r = Env.get_routine env proc in
-      let args = getargs r.Env.nargs natural in
-      match r.Env.kind, args with
-      | Env.Proc0 f, [] ->
-        fun () -> Some (f ())
-      | Env.Proc1 f, [arg] ->
-        fun () -> Some (f !!arg)
-      | Env.Proc12 f, [arg] ->
-        fun () -> Some (f !!arg ())
-      | Env.Proc12 f, [arg1; arg2] ->
-        fun () -> Some (f !!arg1 ~opt:!!arg2 ())
-      | Env.Proc2 f, [arg1; arg2] ->
-        fun () -> Some (f !!arg1 !!arg2)
-      | Env.Procn f, args ->
-        fun () -> Some (f (List.map (!!) args))
-      | Env.Usern f, args ->
-        fun () -> f env (List.map (!!) args)
-      | Env.Cmd0 f, [] ->
-        fun () -> f (); None
-      | Env.Cmd1 f, [arg] ->
-        fun () -> f !!arg; None
-      | Env.Cmdn f, args ->
-        fun () -> f (List.map (!!) args); None
-      | _, _ ->
-        raise (Error "bad arity")
+      getargs r.Env.nargs natural begin fun args ->
+          match r.Env.kind, args with
+          | Env.Proc0 f, [] ->
+            k (Some (f ()))
+          | Env.Proc1 f, [arg] ->
+            k (Some (f arg))
+          | Env.Proc12 f, [arg] ->
+            k (Some (f arg ()))
+          | Env.Proc12 f, [arg1; arg2] ->
+            k (Some (f arg1 ~opt:arg2 ()))
+          | Env.Proc2 f, [arg1; arg2] ->
+            k (Some (f arg1 arg2))
+          | Env.Procn f, args ->
+            k (Some (f args))
+          | Env.Usern f, args ->
+            k (f env args)
+          | Env.Cmd0 f, [] ->
+            f (); k None
+          | Env.Cmd1 f, [arg] ->
+            f arg; k None
+          | Env.Cmdn f, args ->
+            f args; k None
+          | _, _ ->
+            raise (Error "bad arity")
+      end
     with
     | Not_found ->
       raise (Error ("Don't know how to " ^ String.uppercase proc))
@@ -781,24 +769,21 @@ module Eval = struct
     let body = readbody () in
     (name, inputs, body)
 
-  let command env strm =
+  let command env strm k =
     match Stream.peek strm with
     | Some (Word w) ->
       Stream.junk strm;
-      let ret = apply env w strm in
-      begin match !!ret with
-        | None -> ()
-        | Some a ->
-          raise (Error ("Don't know what to do with ..."))
-      end
+      apply env w strm
+        (function
+          | None -> k ()
+          | Some a -> raise (Error ("Don't know what to do with ...")))
     | _ ->
       raise (Error ("Bad head"))
 
   let rec execute env strm =
     match Stream.peek strm with
     | Some _ ->
-      command env strm;
-      execute env strm
+      command env strm (fun () -> execute env strm)
     | None ->
       ()
 
@@ -825,7 +810,7 @@ module Eval = struct
       to_ env strm;
       toplevel env strm
     | Some _ ->
-      command env strm;
+      command env strm (fun () -> ());
       toplevel env strm
     | None ->
       ()
