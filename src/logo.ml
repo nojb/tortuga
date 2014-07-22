@@ -81,7 +81,7 @@ module Env : sig
 
   val create : unit -> t
 
-  val with_scope : t -> (unit -> 'a) -> 'a
+  val new_scope : t -> t
   val add_routine : t -> string -> routine -> unit
   val has_routine : t -> string -> bool
   val get_routine : t -> string -> routine
@@ -119,7 +119,7 @@ end = struct
   and t = {
     routines : routine H.t;
     globals : atom H.t;
-    mutable locals : atom H.t list
+    locals : atom H.t list
   }
 
   let create () = {
@@ -128,17 +128,8 @@ end = struct
     locals = []
   }
 
-  let push_scope env =
-    env.locals <- H.create 17 :: env.locals
-
-  let pop_scope env =
-    env.locals <- List.tl env.locals
-
-  let with_scope env f =
-    push_scope env;
-    let ret = try f () with exn -> pop_scope env; raise exn in
-    pop_scope env;
-    ret
+  let new_scope env =
+    { env with locals = H.create 17 :: env.locals }
 
   let add_routine env name r =
     H.add env.routines name r
@@ -790,16 +781,14 @@ module Eval = struct
   let to_ env strm =
     let name, inputs, body = parse_to strm in
     let body env args =
-      List.iter2 (fun input arg -> Env.add_var env input arg) inputs args;
+      let env = Env.new_scope env in
+      List.iter2 (Env.add_var env) inputs args;
       try
         execute env (Stream.of_list body);
         None
       with
       | Output result ->
         Some result
-    in
-    let body env args =
-      Env.with_scope env (fun () -> body env args)
     in
     Env.(add_routine env name { nargs = List.length inputs; kind = Usern body })
 
