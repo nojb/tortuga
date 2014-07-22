@@ -31,28 +31,30 @@ exception Error of string
 exception Bye
 
 module Env : sig
-  type t
-  val create : unit -> t
+  type 'r t
+  val create : unit -> 'r t
 end
 
+type routine
+
 module Constructors : sig
-  val init : Env.t -> unit
+  val init : routine Env.t -> unit
 end
 
 module DataSelectors : sig
-  val init : Env.t -> unit
+  val init : routine Env.t -> unit
 end
 
 module Transmitters : sig
-  val init : Env.t -> unit
+  val init : routine Env.t -> unit
 end
 
 module Control : sig
-  val init : Env.t -> unit
+  val init : routine Env.t -> unit
 end
   
 module Eval : sig
-  val expression : Env.t -> atom Stream.t -> (atom -> unit) -> unit
-  val command : Env.t -> atom Stream.t -> (unit -> unit) -> unit
-  val toplevel : Env.t -> atom Stream.t -> unit
+  val expression : routine Env.t -> atom Stream.t -> (atom -> unit) -> unit
+  val command : routine Env.t -> atom Stream.t -> (unit -> unit) -> unit
+  val toplevel : routine Env.t -> atom Stream.t -> unit
 end

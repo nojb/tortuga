@@ -58,38 +58,21 @@ let minus_word =
 
 exception Error of string
 exception Bye
-  
+
 module Env : sig
-  type routine_kind =
-    | Proc0 of (unit -> atom)
-    | Proc1 of (atom -> atom)
-    | Proc12 of (atom -> ?opt:atom -> unit -> atom)
-    | Proc2 of (atom -> atom -> atom)
-    | Procn of (atom list -> atom)
-    (* | Usern of (t -> atom list -> atom option) *)
-    | Cmd0 of (unit -> unit)
-    | Cmd1 of (atom -> unit)
-    | Cmdn of (atom list -> unit)
-    | Pcontn of (t -> atom list -> (atom option -> unit) -> unit)
-  
-  and routine = {
-    nargs : int;
-    kind : routine_kind
-  }
+  type 'routine t
 
-  and t
+  val create : unit -> 'routine t
 
-  val create : unit -> t
-
-  val new_scope : t -> (atom -> unit) -> t
-  val add_routine : t -> string -> routine -> unit
-  val has_routine : t -> string -> bool
-  val get_routine : t -> string -> routine
-  val add_global : t -> string -> atom -> unit
-  val add_var : t -> string -> atom -> unit
-  val get_global : t -> string -> atom
-  val get_var : t -> string -> atom
-  val output : t -> atom -> unit
+  val new_scope : 'routine t -> (atom -> unit) -> 'routine t
+  val add_routine : 'routine t -> string -> 'routine -> unit
+  val has_routine : 'routine t -> string -> bool
+  val get_routine : 'routine t -> string -> 'routine
+  val add_global : 'routine t -> string -> atom -> unit
+  val add_var : 'routine t -> string -> atom -> unit
+  val get_global : 'routine t -> string -> atom
+  val get_var : 'routine t -> string -> atom
+  val output : 'routine t -> atom -> unit
 end = struct
   module NoCaseString = struct
     type t = string
@@ -101,25 +84,8 @@ end = struct
   
   module H = Hashtbl.Make (NoCaseString)
 
-  type routine_kind =
-    | Proc0 of (unit -> atom)
-    | Proc1 of (atom -> atom)
-    | Proc12 of (atom -> ?opt:atom -> unit -> atom)
-    | Proc2 of (atom -> atom -> atom)
-    | Procn of (atom list -> atom)
-    (* | Usern of (t -> atom list -> atom option) *)
-    | Cmd0 of (unit -> unit)
-    | Cmd1 of (atom -> unit)
-    | Cmdn of (atom list -> unit)
-    | Pcontn of (t -> atom list -> (atom option -> unit) -> unit)
-  
-  and routine = {
-    nargs : int;
-    kind : routine_kind
-  }
-  
-  and t = {
-    routines : routine H.t;
+  type 'routine t = {
+    routines : 'routine H.t;
     globals : atom H.t;
     locals : atom H.t list;
     output : atom -> unit
@@ -175,6 +141,23 @@ end = struct
   let output env a =
     env.output a
 end
+
+type routine_kind =
+  | Proc0 of (unit -> atom)
+  | Proc1 of (atom -> atom)
+  | Proc12 of (atom -> ?opt:atom -> unit -> atom)
+  | Proc2 of (atom -> atom -> atom)
+  | Procn of (atom list -> atom)
+  (* | Usern of (t -> atom list -> atom option) *)
+  | Cmd0 of (unit -> unit)
+  | Cmd1 of (atom -> unit)
+  | Cmdn of (atom list -> unit)
+  | Pcontn of (routine Env.t -> atom list -> (atom option -> unit) -> unit)
+  
+and routine = {
+  nargs : int;
+  kind : routine_kind
+}
 
 let sexpr = function
   | Int n -> string_of_int n
@@ -566,7 +549,7 @@ module Control = struct
     raise Bye
       
   let init env =
-    Env.add_routine env "output" { Env.nargs = 1; kind = Env.Pcontn output };
+    Env.add_routine env "output" { nargs = 1; kind = Pcontn output };
     Env.(add_routine env "bye" { nargs = 0; kind = Cmd0 bye })
 end
 
@@ -574,7 +557,7 @@ module Eval = struct
   let stringfrom pos str =
     String.sub str pos (String.length str - pos)
 
-  let rec expression (env : Env.t) (strm : atom Stream.t) =
+  let rec expression env strm =
     relational_expression env strm
 
   and relational_expression env strm k =
@@ -718,27 +701,27 @@ module Eval = struct
       with
       | Not_found -> raise (Error ("Don't know how to " ^ String.uppercase proc))
     in
-    getargs r.Env.nargs natural begin fun args ->
-      match r.Env.kind, args with
-      | Env.Proc0 f, [] ->
+    getargs r.nargs natural begin fun args ->
+      match r.kind, args with
+      | Proc0 f, [] ->
         k (Some (f ()))
-      | Env.Proc1 f, [arg] ->
+      | Proc1 f, [arg] ->
         k (Some (f arg))
-      | Env.Proc12 f, [arg] ->
+      | Proc12 f, [arg] ->
         k (Some (f arg ()))
-      | Env.Proc12 f, [arg1; arg2] ->
+      | Proc12 f, [arg1; arg2] ->
         k (Some (f arg1 ~opt:arg2 ()))
-      | Env.Proc2 f, [arg1; arg2] ->
+      | Proc2 f, [arg1; arg2] ->
         k (Some (f arg1 arg2))
-      | Env.Procn f, args ->
+      | Procn f, args ->
         k (Some (f args))
-      | Env.Cmd0 f, [] ->
+      | Cmd0 f, [] ->
         f (); k None
-      | Env.Cmd1 f, [arg] ->
+      | Cmd1 f, [arg] ->
         f arg; k None
-      | Env.Cmdn f, args ->
+      | Cmdn f, args ->
         f args; k None
-      | Env.Pcontn f, args ->
+      | Pcontn f, args ->
         f env args k
       | _, _ ->
         raise (Error "bad arity")
