@@ -56,6 +56,6 @@ module Eval : sig
   (* exception Bye *)
   (* exception Stop *)
   val expression : Env.t -> atom Stream.t -> (atom -> unit) -> unit
-  val command : Env.t -> atom Stream.t -> (unit -> unit) -> unit
+  val command : Env.t -> atom Stream.t -> unit
   val toplevel : Env.t -> atom Stream.t -> unit
 end

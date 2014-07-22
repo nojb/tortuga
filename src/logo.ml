@@ -760,13 +760,13 @@ module Eval = struct
     let body = readbody () in
     (name, inputs, body)
 
-  let command env strm k =
+  let command env strm =
     match Stream.peek strm with
     | Some (Word w) ->
       Stream.junk strm;
       apply env w strm
         (function
-          | None -> k ()
+          | None -> ()
           | Some a -> raise (Error ("Don't know what to do with ...")))
     | _ ->
       raise (Error ("Bad head"))
@@ -774,7 +774,8 @@ module Eval = struct
   let rec execute env strm =
     match Stream.peek strm with
     | Some _ ->
-      command env strm (fun () -> execute env strm)
+      command env strm;
+      execute env strm
     | None ->
       ()
 
@@ -787,8 +788,7 @@ module Eval = struct
         execute env (Stream.of_list body);
         None
       with
-      | Output result ->
-        Some result
+      | Output result -> Some result
     in
     Env.(add_routine env name { nargs = List.length inputs; kind = Usern body })
 
@@ -799,7 +799,7 @@ module Eval = struct
       to_ env strm;
       toplevel env strm
     | Some _ ->
-      command env strm (fun () -> ());
+      command env strm;
       toplevel env strm
     | None ->
       ()
