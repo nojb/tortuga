@@ -64,6 +64,7 @@ module Env : sig
   type routine_kind =
     | Proc0 of (unit -> atom)
     | Proc1 of (atom -> atom)
+    | Proc12 of (atom -> ?opt:atom -> unit -> atom)
     | Proc2 of (atom -> atom -> atom)
     | Procn of (atom list -> atom)
     | Usern of (t -> atom list -> atom option)
@@ -102,6 +103,7 @@ end = struct
   type routine_kind =
     | Proc0 of (unit -> atom)
     | Proc1 of (atom -> atom)
+    | Proc12 of (atom -> ?opt:atom -> unit -> atom)
     | Proc2 of (atom -> atom -> atom)
     | Procn of (atom list -> atom)
     | Usern of (t -> atom list -> atom option)
@@ -213,6 +215,13 @@ module Constructors = struct
       else
         raise (Error "fput: first arg must be a character")
 
+  let fput_doc =
+    "fput THING LIST
+
+Outputs LIST with one extra member, THING, at the beginning.  If LIST is a word,
+then THING must be a one-letter word, and 'fput THING LIST' is equivalent to
+'word THING LIST'."
+
   let lput thing list =
     match thing, list with
     | _, List l -> List (l @ [thing])
@@ -227,6 +236,31 @@ module Constructors = struct
       else
         raise (Error "lput: first arg must be a character")
 
+  let lput_doc =
+    "lput THING LIST
+
+Outputs LIST with one extra member, THING, at the end.  If LIST is a word, then
+THING must be a one-letter word, and 'lput THING LIST' is equivalent to 'word
+LIST THING'."
+
+  let array size ?(opt = Int 1) () =
+    let size = try iexpr size with _ -> raise (Error "array: SIZE must be a number") in
+    let origin = try iexpr opt with _ -> raise (Error "array: ORIGIN must be a number") in
+    if size < 0 then raise (Error "array: SIZE must be a positive integer");
+    Array (Array.create size (List []), origin)
+
+  let array_doc =
+    "array SIZE
+(array SIZE ORIGIN)
+
+Outputs an array of SIZE members (must be a positive integer), each of which
+initially is an empty list.  Array members can be selected with 'item' and
+changed with 'setitem'.  The first member of the array is member number 1 unless
+an ORIGIN input (must be an integer) is given, in which case the first member of
+the array has ORIGIN as its index.  (Typically 0 is used as ORIGIN if anything.)
+Arrays are printed by 'print' and friends, and can be typed in, inside curly
+braces; indicate an origin with {a b c}@0."
+
   let combine thing1 thing2 =
     match thing1, thing2 with
     | _, List l -> List (thing1 :: l)
@@ -238,16 +272,54 @@ module Constructors = struct
       let s2 = sexpr thing2 in
       Word (s1 ^ s2)
 
+  let listtoarray list ?(opt = Int 1) () =
+    let origin = try iexpr opt with _ -> raise (Error "listtoarray: ORIGIN must be a number") in
+    match list with
+    | List l -> Array (Array.of_list l, origin)
+    | _ -> raise (Error "listtoarray: LIST must be a list")
+
+  let listtoarray_doc =
+    "listtoarray LIST
+(listtoarray LIST ORIGIN)
+
+Outputs an array of the same size as the LIST, whose members are the members of
+LIST.  The first member of the array is member number 1 unless an ORIGIN input
+(must be an integer) is given, in which case the first member of the array has
+ORIGIN as its index."
+
+  let arraytolist = function
+    | Array (a, _) ->
+      List (Array.to_list a)
+    | _ ->
+      raise (Error "arraytolist: ARRAY must be an array")
+  
+  let arraytolist_doc =
+    "arraytolist ARRAY
+
+Outputs a list whose members are the members of ARRAY.  The first member of the
+output is the first member of the array, regardless of the array's origin."
+
   let reverse = function
     | List l -> List (List.rev l)
     | _ ->
       raise (Error "reverse: expected a list")
+
+  let reverse_doc =
+    "reverse LIST
+
+Outputs a list whose members are the members of LIST, in reverse order."
 
   let gensym =
     let count = ref 0 in
     fun () ->
       incr count;
       Word ("G" ^ string_of_int !count)
+
+  let gensym_doc =
+    "gensym
+
+Outputs a unique word each time it's invoked.  The words are of the form G1, G2,
+etc."
 
   let init env =
     Env.(add_routine env "word" { nargs = 2; kind = Procn word });
@@ -256,7 +328,10 @@ module Constructors = struct
     Env.(add_routine env "se" { nargs = 2; kind = Procn sentence });
     Env.(add_routine env "fput" { nargs = 2; kind = Proc2 fput });
     Env.(add_routine env "lput" { nargs = 2; kind = Proc2 lput });
+    Env.(add_routine env "array" { nargs = 1; kind = Proc12 array });
     Env.(add_routine env "combine" { nargs = 2; kind = Proc2 combine });
+    Env.(add_routine env "listtoarray" { nargs = 1; kind = Proc12 listtoarray });
+    Env.(add_routine env "arraytolist" { nargs = 1; kind = Proc1 arraytolist });
     Env.(add_routine env "reverse" { nargs = 1; kind = Proc1 reverse });
     Env.(add_routine env "gensym" { nargs = 0; kind = Proc0 gensym })
 end
@@ -658,6 +733,10 @@ module Eval = struct
         fun () -> Some (f ())
       | Env.Proc1 f, [arg] ->
         fun () -> Some (f !!arg)
+      | Env.Proc12 f, [arg] ->
+        fun () -> Some (f !!arg ())
+      | Env.Proc12 f, [arg1; arg2] ->
+        fun () -> Some (f !!arg1 ~opt:!!arg2 ())
       | Env.Proc2 f, [arg1; arg2] ->
         fun () -> Some (f !!arg1 !!arg2)
       | Env.Procn f, args ->
