@@ -75,7 +75,7 @@ let get_pos t =
 let turn r t =
   { t with angle = t.angle -. Float.rad_of_deg r }
 
-let arc gangle r t =
+let arc angle r t =
   let src = V2.(t.point + of_polar (v r t.angle)) in
   let dst = V2.add t.point (V2.of_polar (V2.v r (t.angle -. Float.rad_of_deg angle))) in
   let base = if t.penup then I.void else I.const (Color.with_a t.color t.alpha) in

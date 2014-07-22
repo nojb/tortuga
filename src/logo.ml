@@ -73,6 +73,7 @@ module Env : sig
   val get_global : 'r t -> string -> atom
   val get_var : 'r t -> string -> atom
   val output : 'r t -> atom option -> unit
+  val update_turtle : 'r t -> (Turtle.t -> Turtle.t) -> unit
 end = struct
   module NoCaseString = struct
     type t = string
@@ -88,14 +89,16 @@ end = struct
     routines : 'routine H.t;
     globals : atom H.t;
     locals : atom H.t list;
-    output : atom option -> unit
+    output : atom option -> unit;
+    mutable turtle : Turtle.t
   }
 
   let create () = {
     routines = H.create 17;
     globals = H.create 17;
     locals = [];
-    output = (fun _ -> raise (Error "output: not inside a function"))
+    output = (fun _ -> raise (Error "output: not inside a function"));
+    turtle = Turtle.fresh
   }
 
   let new_scope env output =
@@ -140,6 +143,9 @@ end = struct
 
   let output env a =
     env.output a
+
+  let update_turtle env f =
+    env.turtle <- f env.turtle
 end
 
 type routine_kind =
