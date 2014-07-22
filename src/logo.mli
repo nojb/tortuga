@@ -28,7 +28,6 @@ type atom =
 val pp : Format.formatter -> atom -> unit
 
 exception Error of string
-exception Output of atom
 exception Bye
 
 module Env : sig
@@ -53,9 +52,7 @@ module Control : sig
 end
   
 module Eval : sig
-  (* exception Bye *)
-  (* exception Stop *)
   val expression : Env.t -> atom Stream.t -> (atom -> unit) -> unit
-  val command : Env.t -> atom Stream.t -> unit
+  val command : Env.t -> atom Stream.t -> (unit -> unit) -> unit
   val toplevel : Env.t -> atom Stream.t -> unit
 end

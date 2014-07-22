@@ -57,7 +57,6 @@ let minus_word =
   Word "minus"
 
 exception Error of string
-exception Output of atom
 exception Bye
   
 module Env : sig
@@ -67,10 +66,11 @@ module Env : sig
     | Proc12 of (atom -> ?opt:atom -> unit -> atom)
     | Proc2 of (atom -> atom -> atom)
     | Procn of (atom list -> atom)
-    | Usern of (t -> atom list -> atom option)
+    (* | Usern of (t -> atom list -> atom option) *)
     | Cmd0 of (unit -> unit)
     | Cmd1 of (atom -> unit)
     | Cmdn of (atom list -> unit)
+    | Pcontn of (t -> atom list -> (atom option -> unit) -> unit)
   
   and routine = {
     nargs : int;
@@ -81,7 +81,7 @@ module Env : sig
 
   val create : unit -> t
 
-  val new_scope : t -> t
+  val new_scope : t -> (atom -> unit) -> t
   val add_routine : t -> string -> routine -> unit
   val has_routine : t -> string -> bool
   val get_routine : t -> string -> routine
@@ -89,6 +89,7 @@ module Env : sig
   val add_var : t -> string -> atom -> unit
   val get_global : t -> string -> atom
   val get_var : t -> string -> atom
+  val output : t -> atom -> unit
 end = struct
   module NoCaseString = struct
     type t = string
@@ -106,10 +107,11 @@ end = struct
     | Proc12 of (atom -> ?opt:atom -> unit -> atom)
     | Proc2 of (atom -> atom -> atom)
     | Procn of (atom list -> atom)
-    | Usern of (t -> atom list -> atom option)
+    (* | Usern of (t -> atom list -> atom option) *)
     | Cmd0 of (unit -> unit)
     | Cmd1 of (atom -> unit)
     | Cmdn of (atom list -> unit)
+    | Pcontn of (t -> atom list -> (atom option -> unit) -> unit)
   
   and routine = {
     nargs : int;
@@ -119,17 +121,19 @@ end = struct
   and t = {
     routines : routine H.t;
     globals : atom H.t;
-    locals : atom H.t list
+    locals : atom H.t list;
+    output : atom -> unit
   }
 
   let create () = {
     routines = H.create 17;
     globals = H.create 17;
-    locals = []
+    locals = [];
+    output = (fun _ -> raise (Error "output: not inside a function"))
   }
 
-  let new_scope env =
-    { env with locals = H.create 17 :: env.locals }
+  let new_scope env output =
+    { env with locals = H.create 17 :: env.locals; output }
 
   let add_routine env name r =
     H.add env.routines name r
@@ -167,6 +171,9 @@ end = struct
         try H.find top name with | Not_found -> loop rest
     in
     loop env.locals
+
+  let output env a =
+    env.output a
 end
 
 let sexpr = function
@@ -550,14 +557,16 @@ module Arithmetic = struct
 end
 
 module Control = struct
-  let output thing =
-    raise (Output thing)
+  let output env things _ =
+    match things with
+    | a :: [] -> Env.output env a
+    | _ -> raise (Error "output: bad arity")
 
   let bye () =
     raise Bye
       
   let init env =
-    Env.(add_routine env "output" { nargs = 1; kind = Cmd1 output });
+    Env.add_routine env "output" { Env.nargs = 1; kind = Env.Pcontn output };
     Env.(add_routine env "bye" { nargs = 0; kind = Cmd0 bye })
 end
 
@@ -660,7 +669,7 @@ module Eval = struct
       else
         apply env w strm (function
             | Some a -> k a
-            | None -> raise (Error "expected result !"))
+            | None -> raise (Error (w ^ ": expected result !")))
     | None ->
       assert false
 
@@ -719,14 +728,14 @@ module Eval = struct
             k (Some (f arg1 arg2))
           | Env.Procn f, args ->
             k (Some (f args))
-          | Env.Usern f, args ->
-            k (f env args)
           | Env.Cmd0 f, [] ->
             f (); k None
           | Env.Cmd1 f, [arg] ->
             f arg; k None
           | Env.Cmdn f, args ->
             f args; k None
+          | Env.Pcontn f, args ->
+            f env args k
           | _, _ ->
             raise (Error "bad arity")
       end
@@ -760,37 +769,32 @@ module Eval = struct
     let body = readbody () in
     (name, inputs, body)
 
-  let command env strm =
+  let command env strm k =
     match Stream.peek strm with
     | Some (Word w) ->
       Stream.junk strm;
       apply env w strm
         (function
-          | None -> ()
+          | None -> k ()
           | Some a -> raise (Error ("Don't know what to do with ...")))
     | _ ->
       raise (Error ("Bad head"))
 
-  let rec execute env strm =
-    match Stream.peek strm with
-    | Some _ ->
-      command env strm;
-      execute env strm
-    | None ->
-      ()
-
   let to_ env strm =
     let name, inputs, body = parse_to strm in
-    let body env args =
-      let env = Env.new_scope env in
+    let body env args k =
+      let env = Env.new_scope env (fun a -> k (Some a)) in
       List.iter2 (Env.add_var env) inputs args;
-      try
-        execute env (Stream.of_list body);
-        None
-      with
-      | Output result -> Some result
+      let rec step strm =
+        match Stream.peek strm with
+        | Some _ ->
+          command env strm (fun () -> step strm)
+        | None ->
+          k None
+      in
+      step (Stream.of_list body)
     in
-    Env.(add_routine env name { nargs = List.length inputs; kind = Usern body })
+    Env.(add_routine env name { nargs = List.length inputs; kind = Pcontn body })
 
   let rec toplevel env strm =
     match Stream.peek strm with
@@ -799,7 +803,7 @@ module Eval = struct
       to_ env strm;
       toplevel env strm
     | Some _ ->
-      command env strm;
+      command env strm (fun () -> ());
       toplevel env strm
     | None ->
       ()
