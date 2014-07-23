@@ -23,23 +23,6 @@ open Gg
 open Vg
 open LogoTypes
 
-let blank = Color.black
-let blue = Color.blue
-let lime = Color.v_srgbi 191 255 0
-let cyan = Color.v_srgbi 0 255 255
-let red = Color.red
-let magenta = Color.v_srgbi 255 0 255
-let yellow = Color.v_srgbi 255 255 0
-let white = Color.white
-let brown = Color.v_srgbi 150 75 0
-let tan = Color.v_srgbi 210 180 140
-let green = Color.green
-let aquamarine = Color.v_srgbi 127 255 212
-let salmon = Color.v_srgbi 250 128 114
-let purple = Color.v_srgbi 128 0 128
-let orange = Color.v_srgbi 255 127 0
-let gray = Color.v_srgbi 128 128 128
-
 let fresh_turtle = {
   point = V2.zero;
   angle = Float.pi_div_2;

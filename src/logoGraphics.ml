@@ -19,40 +19,33 @@
    IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
    CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. *)
 
-type atom =
-  | Int of int
-  | Word of string
-  | List of atom list
-  | Array of atom array * int
-
-exception Error of string
-    
-type turtle = {
-  point : Gg.V2.t;
-  angle : float;
-  image : Vg.image;
-  (* outline : P.outline; *)
-  penup : bool;
-  color : Gg.Color.t;
-  alpha : float
-}
-
-module H : Hashtbl.S with type key = string
-
-type env = {
-  routines : routine H.t;
-  globals : atom H.t;
-  locals : atom H.t list;
-  output : atom option -> unit;
-  mutable turtle : turtle
-}
-
-and routine =
-  | Pf0 of (unit -> atom option)
-  | Pf1 of (atom -> atom option)
-  | Pf2 of (atom -> atom -> atom option)
-  | Pfn of int * (atom list -> atom option)
-  | Pf12 of (atom -> ?opt:atom -> unit -> atom option)
-  | Pfc1 of (env -> atom -> (atom option -> unit) -> unit)
-  | Pfcn of int * (env -> atom list -> (atom option -> unit) -> unit)
+open Gg
+open LogoTypes
+open LogoAtom
+open LogoTurtle
+open LogoEnv
   
+let blank = Color.black
+let blue = Color.blue
+let lime = Color.v_srgbi 191 255 0
+let cyan = Color.v_srgbi 0 255 255
+let red = Color.red
+let magenta = Color.v_srgbi 255 0 255
+let yellow = Color.v_srgbi 255 255 0
+let white = Color.white
+let brown = Color.v_srgbi 150 75 0
+let tan = Color.v_srgbi 210 180 140
+let green = Color.green
+let aquamarine = Color.v_srgbi 127 255 212
+let salmon = Color.v_srgbi 250 128 114
+let purple = Color.v_srgbi 128 0 128
+let orange = Color.v_srgbi 255 127 0
+let gray = Color.v_srgbi 128 128 128
+
+let forward dist turtle =
+  let dist = iexpr dist in
+  move (float dist) turtle
+    
+let init env =
+  set_pft1 env "forward" forward;
+  set_pft1 env "fd" forward

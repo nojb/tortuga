@@ -38,6 +38,9 @@ let new_exit env output =
 let output env a =
   env.output a
 
+let update_turtle env f =
+  env.turtle <- f env.turtle
+
 let set_routine env name r =
   H.add env.routines name r
 
@@ -70,6 +73,9 @@ let set_cfn env name nargs f =
 
 let set_pfcn env name nargs f =
   set_routine env name (Pfcn (nargs, f))
+
+let set_pft1 env name f =
+  set_routine env name (Pfc1 (fun env arg k -> update_turtle env (f arg); k None))
 
 let has_routine env name =
   H.mem env.routines name
@@ -104,6 +110,3 @@ let get_var env name =
       try H.find top name with | Not_found -> loop rest
   in
   loop env.locals
-
-let update_turtle env f =
-  env.turtle <- f env.turtle

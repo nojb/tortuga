@@ -19,40 +19,23 @@
    IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
    CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. *)
 
-type atom =
-  | Int of int
-  | Word of string
-  | List of atom list
-  | Array of atom array * int
+open LogoTypes
 
-exception Error of string
-    
-type turtle = {
-  point : Gg.V2.t;
-  angle : float;
-  image : Vg.image;
-  (* outline : P.outline; *)
-  penup : bool;
-  color : Gg.Color.t;
-  alpha : float
-}
-
-module H : Hashtbl.S with type key = string
-
-type env = {
-  routines : routine H.t;
-  globals : atom H.t;
-  locals : atom H.t list;
-  output : atom option -> unit;
-  mutable turtle : turtle
-}
-
-and routine =
-  | Pf0 of (unit -> atom option)
-  | Pf1 of (atom -> atom option)
-  | Pf2 of (atom -> atom -> atom option)
-  | Pfn of int * (atom list -> atom option)
-  | Pf12 of (atom -> ?opt:atom -> unit -> atom option)
-  | Pfc1 of (env -> atom -> (atom option -> unit) -> unit)
-  | Pfcn of int * (env -> atom list -> (atom option -> unit) -> unit)
+val blank : Gg.color
+val blue : Gg.color
+val lime : Gg.color
+val cyan : Gg.color
+val red : Gg.color
+val magenta : Gg.color
+val yellow : Gg.color
+val white : Gg.color
+val brown : Gg.color
+val tan : Gg.color
+val green : Gg.color
+val aquamarine : Gg.color
+val salmon : Gg.color
+val purple : Gg.color
+val orange : Gg.color
+val gray : Gg.color
   
+val init : env -> unit

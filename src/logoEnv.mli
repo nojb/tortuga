@@ -26,6 +26,7 @@ val create_env : unit -> env
 val new_frame : env -> env
 val new_exit : env -> (atom option -> unit) -> env
 val output : env -> atom option -> unit
+val update_turtle : env -> (turtle -> turtle) -> unit
 
 val set_routine : env -> string -> routine -> unit
 
@@ -39,6 +40,7 @@ val set_cf1 : env -> string -> (atom -> unit) -> unit
 val set_cf2 : env -> string -> (atom -> atom -> unit) -> unit
 val set_cfn : env -> string -> int -> (atom list -> unit) -> unit
 val set_pfcn : env -> string -> int -> (env -> atom list -> (atom option -> unit) -> unit) -> unit
+val set_pft1 : env -> string -> (atom -> turtle -> turtle) -> unit
   
 val has_routine : env -> string -> bool
 val get_routine : env -> string -> routine
@@ -48,5 +50,3 @@ val get_global : env -> string -> atom
 
 val set_var : env -> string -> atom -> unit
 val get_var : env -> string -> atom
-
-val update_turtle : env -> (turtle -> turtle) -> unit

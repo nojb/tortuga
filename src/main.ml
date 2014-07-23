@@ -30,6 +30,7 @@ let make_env () =
   LogoPrim.Transmitters.init env;
   LogoPrim.Control.init env;
   LogoWork.init env;
+  LogoGraphics.init env;
   env
 
 let main () =
