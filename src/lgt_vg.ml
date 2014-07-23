@@ -83,7 +83,7 @@ let arc angle r =
   (* let image = outline >> I.blend t.image in *)
   (* { t with image } *)
 
-let clear_screen () =
+let clean_screen () =
   t := { !t with point = V2.zero; image = I.void }
 
 (* let render t out = *)

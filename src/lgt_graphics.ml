@@ -71,5 +71,5 @@ let arc angle r =
   (* let image = outline >> I.blend t.image in *)
   (* { t with image } *)
 
-let clear_screen () =
+let clean_screen () =
   G.clear_graph ()

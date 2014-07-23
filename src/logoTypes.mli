@@ -36,7 +36,7 @@ module type TURTLE = sig
   val move : int -> unit
   val turn : int -> unit
   val arc : int -> int -> unit
-  val clear_screen : unit -> unit
+  val clean_screen : unit -> unit
   (* val render : turtle -> out_channel -> unit *)
 end
 

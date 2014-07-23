@@ -88,7 +88,15 @@ let setheading (module T : TURTLE) h =
 let home (module T : TURTLE) =
   T.set_pos 0 0;
   T.set_heading 0
-  
+
+let clean (module T : TURTLE) =
+  T.clean_screen ()
+
+let clearscreen (module T : TURTLE) =
+  T.set_pos 0 0;
+  T.set_heading 0;
+  T.clean_screen ()
+
 (* let render (module T : TURTLE) name = *)
 (*   let name = try sexpr name with _ -> raise (Error "render: bad args") in *)
 (*   let out = open_out_bin (name ^ ".pdf") in *)
@@ -110,6 +118,9 @@ let init env =
   set_pft1 env "setx" setx;
   set_pft1 env "sety" sety;
   set_pft1 env "setheading" setheading;
-  set_pft0 env "home" home
+  set_pft0 env "home" home;
 
+  set_pft0 env "clean" clean;
+  set_pft0 env "clearscreen" clearscreen
+    
   (* set_pft1 env "render" render *)
