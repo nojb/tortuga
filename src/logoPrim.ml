@@ -329,6 +329,16 @@ module Control = struct
       raise (Error "run: LIST expected")
     | _ ->
       raise (Error "run: bad arity")
+
+  let runresult env things k =
+    match things with
+    | List list :: [] ->
+      execute env (reparse list)
+        (function None -> k (Some (List [])) | Some a -> k (Some (List [a])))
+    | _ :: [] ->
+      raise (Error "runresult: LIST expected")
+    | _ ->
+      raise (Error "runresult: bad arity")
         
   let stop env things _ =
     match things with
@@ -344,8 +354,9 @@ module Control = struct
     raise Bye
       
   let init env =
-    set_pcntn env "run" 1 run;
-    set_pcntn env "stop" 0 stop;
-    set_pcntn env "output" 1 output;
+    set_pfcn env "run" 1 run;
+    set_pfcn env "runresult" 1 runresult;
+    set_pfcn env "stop" 0 stop;
+    set_pfcn env "output" 1 output;
     set_cf0 env "bye" bye
 end

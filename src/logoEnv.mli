@@ -38,7 +38,7 @@ val set_cf0 : env -> string -> (unit -> unit) -> unit
 val set_cf1 : env -> string -> (atom -> unit) -> unit
 val set_cf2 : env -> string -> (atom -> atom -> unit) -> unit
 val set_cfn : env -> string -> int -> (atom list -> unit) -> unit
-val set_pcntn : env -> string -> int -> (env -> atom list -> (atom option -> unit) -> unit) -> unit
+val set_pfcn : env -> string -> int -> (env -> atom list -> (atom option -> unit) -> unit) -> unit
   
 val has_routine : env -> string -> bool
 val get_routine : env -> string -> routine

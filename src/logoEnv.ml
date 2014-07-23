@@ -68,7 +68,7 @@ let set_cf2 env name f =
 let set_cfn env name nargs f =
   set_routine env name (Pfn (nargs, fun args -> f args; None))
 
-let set_pcntn env name nargs f =
+let set_pfcn env name nargs f =
   set_routine env name (Pfcn (nargs, f))
 
 let has_routine env name =

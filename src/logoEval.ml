@@ -255,7 +255,7 @@ let to_ env strm =
     List.iter2 (set_var env) inputs args;
     execute env (Stream.of_list body) k
   in
-  set_pcntn env name (List.length inputs) body
+  set_pfcn env name (List.length inputs) body
 
 let rec toplevel env strm =
   match Stream.peek strm with
