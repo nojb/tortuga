@@ -104,7 +104,7 @@ and final_expression env strm k =
     loop 0
   in
   match Stream.peek strm with
-  | Some (Int _) ->
+  | Some (Num _) ->
     assert false
   | Some (List _ as atom)
   | Some (Array _ as atom) ->
@@ -113,8 +113,8 @@ and final_expression env strm k =
   | Some (Word w) ->
     Stream.junk strm;
     if isnumber w then
-      let n = int_of_string w in
-      k (Int n)
+      let n = float_of_string w in
+      k (Num n)
     else if w.[0] = '\"' then
       let w = stringfrom 1 w in
       k (Word w)

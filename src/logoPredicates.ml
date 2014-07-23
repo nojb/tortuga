@@ -25,7 +25,7 @@ open LogoAtom
 module Predicates = struct
   let rec equalaux a b =
     match a, b with
-    | Int n, Int m -> n = m
+    | Num n, Num m -> n = m
     | Word w1, Word w2 -> w1 == w2
     | List l1, List l2 -> List.length l1 = List.length l2 && List.for_all2 equalaux l1 l2
     | Array (a1, orig1), Array (a2, orig2) -> a1 == a2
@@ -40,20 +40,10 @@ end
 
 module NumericPredicates = struct
   let compaux name op a b =
-    try match a, b with
-      | Int n, Int m ->
-        if op n m then true_word else false_word
-      | Int n, Word w ->
-        if op n (int_of_string w) then true_word else false_word
-      | Word w, Int n ->
-        if op (int_of_string w) n then true_word else false_word
-      | Word w1, Word w2 ->
-        if op (int_of_string w1) (int_of_string w2) then true_word else false_word
-      | _ ->
-        raise Exit
-    with
-    | _ ->
-      raise (Error (name ^ ": bad types"))
+    let err = name ^ ": bad argument types" in
+    let a = num_atom a err in
+    let b = num_atom b err in
+    if op a b then true_word else false_word
 
   let greaterp = compaux "greaterp" (>)
   let greaterequalp = compaux "greaterequalp" (>=)

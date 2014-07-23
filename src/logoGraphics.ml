@@ -42,47 +42,47 @@ let orange = Color.v_srgbi 255 127 0
 let gray = Color.v_srgbi 128 128 128
 
 let forward (module T : TURTLE) dist =
-  let dist = iexpr dist in
+  let dist = int_atom dist "forward: DIST must be an integer" in
   T.move dist
 
 let back (module T : TURTLE) dist =
-  let dist = iexpr dist in
+  let dist = int_atom dist "back: DIST must be an integer" in
   T.move (-dist)
 
 let left (module T : TURTLE) deg =
-  let deg = iexpr deg in
+  let deg = int_atom deg "left: DEG must be an integer" in
   T.turn (-deg)
 
 let right (module T : TURTLE) deg =
-  let deg = iexpr deg in
+  let deg = int_atom deg "right: DEG must be an integer" in
   T.turn deg
 
 let setpos (module T : TURTLE) pos =
   match pos with
   | List [x; y] ->
-    let x = iexpr x in
-    let y = iexpr y in
+    let x = int_atom x "setpos: X must be an integer" in
+    let y = int_atom y "setpos: Y must be an integer" in
     T.set_pos x y
   | _ ->
     raise (Error "setpos: bad args")
 
 let setxy (module T : TURTLE) x y =
-  let x = try iexpr x with _ -> raise (Error "setxy: X must be integer") in
-  let y = try iexpr y with _ -> raise (Error "setxy: Y must be integer") in
+  let x = int_atom x "setxy: X must be integer" in
+  let y = int_atom y "setxy: Y must be integer" in
   T.set_pos x y
 
 let setx (module T : TURTLE) x =
-  let x = try iexpr x with _ -> raise (Error "setx: X must be an integer") in
+  let x = int_atom x "setx: X must be an integer" in
   let _, y = T.get_pos () in
   T.set_pos x y
 
 let sety (module T : TURTLE) y =
-  let y = try iexpr y with _ -> raise (Error "sety: Y must be an integer") in
+  let y = int_atom y "sety: Y must be an integer" in
   let x, _ = T.get_pos () in
   T.set_pos x y
 
 let setheading (module T : TURTLE) h =
-  let h = try iexpr h with _ -> raise (Error "setheading: HEADING must be an integer") in
+  let h = int_atom h "setheading: HEADING must be an integer" in
   T.set_heading h
 
 let home (module T : TURTLE) =

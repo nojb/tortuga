@@ -22,7 +22,7 @@
 open LogoTypes
   
 let rec pp ppf = function
-  | Int n -> Format.pp_print_int ppf n
+  | Num n -> Format.pp_print_float ppf n
   | Word s -> Format.pp_print_string ppf s
   | List l ->
     let rec printlist ppf = function
@@ -42,7 +42,7 @@ let rec pp ppf = function
     Format.fprintf ppf "@[<1>{%a}@@%i@]" (printarr 0) a orig
 
 let rec bprint b = function
-  | Int n -> Buffer.add_string b (string_of_int n)
+  | Num n -> Buffer.add_string b (string_of_float n)
   | Word w -> Buffer.add_string b w
   | List [] -> Buffer.add_string b "[]"
   | List (x :: xs) ->
@@ -81,14 +81,28 @@ let minus_word =
   Word "minus"
 
 let sexpr = function
-  | Int n -> string_of_int n
+  | Num n -> string_of_float n
   | Word w -> w
   | _ -> failwith "sexpr"
 
-let iexpr = function
-  | Int n -> n
+(* let iexpr = function *)
+(*   | Num n -> n *)
+(*   | Word w -> int_of_string w *)
+(*   | _ -> failwith "iexpr" *)
+
+let num_atom a err =
+  match a with
+  | Num n -> n
+  | Word w -> float_of_string w
+  | _ -> raise (Error err)
+
+let int_atom a err =
+  match a with
+  | Num n ->
+    let fr, itg = modf n in
+    if fr = 0.0 then int_of_float itg else raise (Error err)
   | Word w -> int_of_string w
-  | _ -> failwith "iexpr"
+  | _ -> raise (Error err)
 
 let parse str =
   let lexbuf = Lexing.from_string str in

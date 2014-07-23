@@ -25,7 +25,11 @@ val pp : Format.formatter -> atom -> unit
 
 val sexpr : atom -> string
 
-val iexpr : atom -> int
+(* val iexpr : atom -> int *)
+
+val num_atom : atom -> string -> float
+
+val int_atom : atom -> string -> int
 
 val bprint : Buffer.t -> atom -> unit
 
