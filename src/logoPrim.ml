@@ -352,6 +352,16 @@ module Control = struct
       loop 1
     | _ ->
       raise (Error "repeat: bad args")
+
+  let forever env things k =
+    match things with
+    | List list :: [] ->
+      let rec loop () =
+        command env (reparse list) loop
+      in
+      loop ()
+    | _ ->
+      raise (Error "forever: bad args")
         
   let stop env things _ =
     match things with
@@ -370,6 +380,7 @@ module Control = struct
     set_pfcn env "run" 1 run;
     set_pfcn env "runresult" 1 runresult;
     set_pfcn env "repeat" 2 repeat;
+    set_pfcn env "forever" 1 forever;
     set_pfcn env "stop" 0 stop;
     set_pfcn env "output" 1 output;
     set_cf0 env "bye" bye
