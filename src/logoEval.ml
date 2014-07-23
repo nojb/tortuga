@@ -23,7 +23,6 @@ open LogoTypes
 open LogoAtom
 open LogoEnv
 open LogoPredicates
-open LogoArithmetic
   
 exception Bye
 
@@ -57,8 +56,8 @@ and additive_expression env strm k =
         multiplicative_expression env strm (fun rhs -> loop (op lhs rhs))
       and loop lhs =
         match Stream.peek strm with
-        | Some (Word "+") -> app Arithmetic.sum2 lhs
-        | Some (Word "-") -> app Arithmetic.difference lhs
+        | Some (Word "+") -> app LogoArithmetic.sum2 lhs
+        | Some (Word "-") -> app LogoArithmetic.difference lhs
         | _ -> k lhs
       in
       loop lhs)
@@ -70,9 +69,9 @@ and multiplicative_expression env strm k =
         power_expression env strm (fun rhs -> loop (op lhs rhs))
       and loop lhs =
         match Stream.peek strm with
-        | Some (Word "*") -> app Arithmetic.product2 lhs
-        | Some (Word "/") -> app Arithmetic.quotient2 lhs
-        | Some (Word "%") -> app Arithmetic.remainder lhs
+        | Some (Word "*") -> app LogoArithmetic.product2 lhs
+        | Some (Word "/") -> app LogoArithmetic.quotient2 lhs
+        | Some (Word "%") -> app LogoArithmetic.remainder lhs
         | _ -> k lhs
       in
       loop lhs)
@@ -83,7 +82,7 @@ and power_expression env strm k =
         match Stream.peek strm with
         | Some (Word "^") ->
           Stream.junk strm;
-          unary_expression env strm (fun rhs -> loop (Arithmetic.power lhs rhs))
+          unary_expression env strm (fun rhs -> loop (LogoArithmetic.power lhs rhs))
         | _ -> k lhs
       in
       loop lhs)
@@ -92,7 +91,7 @@ and unary_expression env strm k =
   match Stream.peek strm with
   | Some w when w == minus_word ->
     Stream.junk strm;
-    unary_expression env strm (fun rhs -> k (Arithmetic.minus rhs))
+    unary_expression env strm (fun rhs -> k (LogoArithmetic.minus rhs))
   | _ ->
     final_expression env strm k
 

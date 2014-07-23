@@ -21,41 +21,39 @@
 
 open LogoTypes
 
-module Arithmetic = struct
-  let binaux name op a b =
-    try match a, b with
-      | Int n, Int m ->
-        Int (op n m)
-      | Int n, Word word
-      | Word word, Int n ->
-        Int (op n (int_of_string word))
-      | Word word1, Word word2 ->
-        Int (op (int_of_string word1) (int_of_string word2))
-      | _ ->
-        raise Exit
-    with
-    | _ -> raise (Error (name ^ ": bad types"))
+let binaux name op a b =
+  try match a, b with
+    | Int n, Int m ->
+      Int (op n m)
+    | Int n, Word word
+    | Word word, Int n ->
+      Int (op n (int_of_string word))
+    | Word word1, Word word2 ->
+      Int (op (int_of_string word1) (int_of_string word2))
+    | _ ->
+      raise Exit
+  with
+  | _ -> raise (Error (name ^ ": bad types"))
 
-  let sum2 = binaux "sum" (+)
+let sum2 = binaux "sum" (+)
 
-  let difference = binaux "difference" (-)
+let difference = binaux "difference" (-)
 
-  let product2 = binaux "product" ( * )
+let product2 = binaux "product" ( * )
 
-  let quotient2 = binaux "quotient" (/)
+let quotient2 = binaux "quotient" (/)
 
-  let remainder = binaux "remainder" (mod)
+let remainder = binaux "remainder" (mod)
 
-  let power = binaux "power" (fun a b -> truncate (float a ** float b))
+let power = binaux "power" (fun a b -> truncate (float a ** float b))
 
-  let minus n =
-    try match n with
-      | Int n ->
-        Int (-n)
-      | Word w ->
-        Int (- (int_of_string w))
-      | _ ->
-        raise Exit
-    with
-    | _ -> raise (Error "minus: bad type")
-end
+let minus n =
+  try match n with
+    | Int n ->
+      Int (-n)
+    | Word w ->
+      Int (- (int_of_string w))
+    | _ ->
+      raise Exit
+  with
+  | _ -> raise (Error "minus: bad type")
