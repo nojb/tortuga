@@ -270,7 +270,7 @@ end
 module Transmitters = struct
   let print things =
     let rec pr top = function
-      | Num n -> print_float n
+      | Num n -> if n = floor n then print_int (truncate n) else print_float n
       | Word w -> print_string w
       | List [] -> if top then () else print_string "[]"
       | List (x :: rest) ->

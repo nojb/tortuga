@@ -22,7 +22,9 @@
 open LogoTypes
   
 let rec pp ppf = function
-  | Num n -> Format.pp_print_float ppf n
+  | Num n ->
+    if n = floor n then Format.pp_print_int ppf (truncate n)
+    else Format.pp_print_float ppf n
   | Word s -> Format.pp_print_string ppf s
   | List l ->
     let rec printlist ppf = function
@@ -42,7 +44,9 @@ let rec pp ppf = function
     Format.fprintf ppf "@[<1>{%a}@@%i@]" (printarr 0) a orig
 
 let rec bprint b = function
-  | Num n -> Buffer.add_string b (string_of_float n)
+  | Num n ->
+    if n = floor n then Buffer.add_string b (string_of_int (truncate n))
+    else Buffer.add_string b (string_of_float n)
   | Word w -> Buffer.add_string b w
   | List [] -> Buffer.add_string b "[]"
   | List (x :: xs) ->
