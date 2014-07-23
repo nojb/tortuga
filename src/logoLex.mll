@@ -66,8 +66,8 @@ let nonspace = [^ ' ' '\010'-'\014']
 let identifier = '.'? ['a'-'z' 'A'-'Z'](['a'-'z' 'A'-'Z' '0'-'9' '_' '.' '?']*['a'-'z' 'A'-'Z' '0'-'9' '_' '?'])?
 let string_literal = '\"' [^ ' ' '[' ']' '{' '}' '(' ')']*
 let variable = ':' ['a'-'z' 'A'-'Z']['a'-'z' 'A'-'Z' '0'-'9' '_']*
-let number_literal = ['0'-'9']+
-let signed_literal = '-'? number_literal
+let number_literal = ['0'-'9']* '.'? ['0'-'9']+ (['e' 'E'] ['-' '+']? ['0'-'9']+)?
+let signed_literal = '-'? ['0'-'9']+
 let operator = "<=" | ">=" | "<>" | ['+' '-' '*' '/' '%' '^' '=' '<' '>' '[' ']' '{' '}' '(' ')']
 
 rule parse_atoms acc leading_space = parse
