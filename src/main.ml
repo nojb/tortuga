@@ -22,15 +22,18 @@
 open LogoTypes
 open LogoEnv
 open LogoEval
-open LogoPrim
+
+let make_env () =
+  let env = create_env () in
+  LogoPrim.Constructors.init env;
+  LogoPrim.DataSelectors.init env;
+  LogoPrim.Transmitters.init env;
+  LogoPrim.Control.init env;
+  env
 
 let main () =
   let lexbuf = Lexing.from_channel stdin in
-  let env = create_env () in
-  Constructors.init env;
-  DataSelectors.init env;
-  Transmitters.init env;
-  Control.init env;
+  let env = make_env () in
   let rec loop () =
     Format.fprintf Format.std_formatter "> @?";
     begin
