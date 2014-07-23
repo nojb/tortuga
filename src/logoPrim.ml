@@ -406,10 +406,8 @@ module Control = struct
     | _ ->
       raise (Error "ifelse: bad args")    
         
-  let stop env things _ =
-    match things with
-    | [] -> output env None
-    | _ -> raise (Error "stop: bad arity")
+  let stop env _ =
+    output env None
              
   let output env thing _ =
     output env (Some thing)
@@ -424,7 +422,7 @@ module Control = struct
     set_pfc1 env "forever" forever;
     set_pfcn env "if" 2 ifthen;
     set_pfcn env "ifelse" 3 ifelse;
-    set_pfcn env "stop" 0 stop;
+    set_pfc0 env "stop" stop;
     set_pfc1 env "output" output;
     set_cf0 env "bye" bye
 end

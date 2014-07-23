@@ -38,6 +38,7 @@ val set_cf0 : env -> string -> (unit -> unit) -> unit
 val set_cf1 : env -> string -> (atom -> unit) -> unit
 val set_cf2 : env -> string -> (atom -> atom -> unit) -> unit
 val set_cfn : env -> string -> int -> (atom list -> unit) -> unit
+val set_pfc0 : env -> string -> (env -> (atom option -> unit) -> unit) -> unit
 val set_pfc1 : env -> string -> (env -> atom -> (atom option -> unit) -> unit) -> unit
 val set_pfcn : env -> string -> int -> (env -> atom list -> (atom option -> unit) -> unit) -> unit
 val set_pft0 : env -> string -> (turtle -> unit) -> unit
