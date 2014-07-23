@@ -66,6 +66,29 @@ let setpos (module T : TURTLE) pos =
   | _ ->
     raise (Error "setpos: bad args")
 
+let setxy (module T : TURTLE) x y =
+  let x = try iexpr x with _ -> raise (Error "setxy: X must be integer") in
+  let y = try iexpr y with _ -> raise (Error "setxy: Y must be integer") in
+  T.set_pos x y
+
+let setx (module T : TURTLE) x =
+  let x = try iexpr x with _ -> raise (Error "setx: X must be an integer") in
+  let _, y = T.get_pos () in
+  T.set_pos x y
+
+let sety (module T : TURTLE) y =
+  let y = try iexpr y with _ -> raise (Error "sety: Y must be an integer") in
+  let x, _ = T.get_pos () in
+  T.set_pos x y
+
+let setheading (module T : TURTLE) h =
+  let h = try iexpr h with _ -> raise (Error "setheading: HEADING must be an integer") in
+  T.set_heading h
+
+let home (module T : TURTLE) =
+  T.set_pos 0 0;
+  T.set_heading 0
+  
 (* let render (module T : TURTLE) name = *)
 (*   let name = try sexpr name with _ -> raise (Error "render: bad args") in *)
 (*   let out = open_out_bin (name ^ ".pdf") in *)
@@ -82,6 +105,11 @@ let init env =
   set_pft1 env "lt" left;
   set_pft1 env "right" right;
   set_pft1 env "rt" right;
-  set_pft1 env "setpos" setpos
+  set_pft1 env "setpos" setpos;
+  set_pft2 env "setxy" setxy;
+  set_pft1 env "setx" setx;
+  set_pft1 env "sety" sety;
+  set_pft1 env "setheading" setheading;
+  set_pft0 env "home" home
 
   (* set_pft1 env "render" render *)

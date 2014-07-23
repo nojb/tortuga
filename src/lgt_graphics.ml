@@ -31,7 +31,7 @@ let get_heading () =
   !theta
 
 let set_heading h =
-  theta := h
+  theta := 90 - h
 
 let get_pos () =
   let x, y = G.current_point () in

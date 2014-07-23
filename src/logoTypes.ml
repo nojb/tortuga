@@ -66,6 +66,8 @@ and routine =
   | Pf2 of (atom -> atom -> atom option)
   | Pfn of int * (atom list -> atom option)
   | Pf12 of (atom -> ?opt:atom -> unit -> atom option)
+  | Pfc0 of (env -> (atom option -> unit) -> unit)
   | Pfc1 of (env -> atom -> (atom option -> unit) -> unit)
+  | Pfc2 of (env -> atom -> atom -> (atom option -> unit) -> unit)
   | Pfcn of int * (env -> atom list -> (atom option -> unit) -> unit)
   

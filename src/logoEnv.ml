@@ -74,8 +74,14 @@ let set_pfc1 env name f =
 let set_pfcn env name nargs f =
   set_routine env name (Pfcn (nargs, f))
 
+let set_pft0 env name f =
+  set_routine env name (Pfc0 (fun env k -> f env.turtle; k None))
+
 let set_pft1 env name f =
   set_routine env name (Pfc1 (fun env arg k -> f env.turtle arg; k None))
+
+let set_pft2 env name f =
+  set_routine env name (Pfc2 (fun env arg1 arg2 k -> f env.turtle arg1 arg2; k None))
 
 let has_routine env name =
   H.mem env.routines name

@@ -154,7 +154,9 @@ and dispatch env proc strm natural k =
     | Pf2 _ -> 2
     | Pfn (nargs, _) -> nargs
     | Pf12 _ -> 1
+    | Pfc0 _ -> 0
     | Pfc1 _ -> 1
+    | Pfc2 _ -> 2
     | Pfcn (nargs, _) -> nargs
   in
   let getargs len natural k =
@@ -194,8 +196,12 @@ and dispatch env proc strm natural k =
       k (f args)
     | Pf12 f, [arg1; arg2] ->
       k (f arg1 ~opt:arg2 ())
+    | Pfc0 f, [] ->
+      f env k
     | Pfc1 f, [arg] ->
       f env arg k
+    | Pfc2 f, [arg1; arg2] ->
+      f env arg1 arg2 k
     | Pfcn (_, f), args ->
       f env args k
     | _, _ ->
