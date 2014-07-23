@@ -25,36 +25,19 @@ type atom =
   | List of atom list
   | Array of atom array * int
 
+exception Error of string
+
 val pp : Format.formatter -> atom -> unit
 
-exception Error of string
-exception Bye
+val sexpr : atom -> string
 
-module Env : sig
-  type 'r t
-  val create : unit -> 'r t
-end
+val iexpr : atom -> int
 
-type routine
+val bprint : Buffer.t -> atom -> unit
 
-module Constructors : sig
-  val init : routine Env.t -> unit
-end
+val stringify_list : atom list -> string
 
-module DataSelectors : sig
-  val init : routine Env.t -> unit
-end
+val true_word : atom
+val false_word : atom
+val minus_word : atom
 
-module Transmitters : sig
-  val init : routine Env.t -> unit
-end
-
-module Control : sig
-  val init : routine Env.t -> unit
-end
-  
-module Eval : sig
-  val expression : routine Env.t -> atom Stream.t -> (atom -> unit) -> unit
-  val command : routine Env.t -> atom Stream.t -> (unit -> unit) -> unit
-  val toplevel : routine Env.t -> atom Stream.t -> unit
-end

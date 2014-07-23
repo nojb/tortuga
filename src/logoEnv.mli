@@ -19,39 +19,36 @@
    IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
    CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. *)
 
-val blank : Gg.color
-val blue : Gg.color
-val lime : Gg.color
-val cyan : Gg.color
-val red : Gg.color
-val magenta : Gg.color
-val yellow : Gg.color
-val white : Gg.color
-val brown : Gg.color
-val tan : Gg.color
-val green : Gg.color
-val aquamarine : Gg.color
-val salmon : Gg.color
-val purple : Gg.color
-val orange : Gg.color
-val gray : Gg.color
+open LogoAtom
+open LogoTurtle
 
-type t
+type 'r env
 
-val fresh : t
+val create_env : unit -> 'r env
 
-val move : float -> t -> t
+val new_frame : 'r env -> (atom option -> unit) -> 'r env
+val add_routine : 'r env -> string -> 'r -> unit
+val has_routine : 'r env -> string -> bool
+val get_routine : 'r env -> string -> 'r
+val set_global : 'r env -> string -> atom -> unit
+val set_var : 'r env -> string -> atom -> unit
+val get_global : 'r env -> string -> atom
+val get_var : 'r env -> string -> atom
+val output : 'r env -> atom option -> unit
+val update_turtle : 'r env -> (turtle -> turtle) -> unit
 
-val set_pos : Gg.v2 -> t -> t
-
-val get_pos : t -> Gg.v2
-
-val turn : float -> t -> t
-
-val arc : float -> float -> t -> t
-
-val set_color : Gg.color -> t -> t
-
-val clear_screen : t -> t
-
-val render : t -> out_channel -> unit
+type routine_kind =
+  | Proc0 of (unit -> atom)
+  | Proc1 of (atom -> atom)
+  | Proc12 of (atom -> ?opt:atom -> unit -> atom)
+  | Proc2 of (atom -> atom -> atom)
+  | Procn of (atom list -> atom)
+  | Cmd0 of (unit -> unit)
+  | Cmd1 of (atom -> unit)
+  | Cmdn of (atom list -> unit)
+  | Pcontn of (routine env -> atom list -> (atom option -> unit) -> unit)
+  
+and routine = {
+  nargs : int;
+  kind : routine_kind
+}

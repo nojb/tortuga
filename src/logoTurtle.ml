@@ -39,7 +39,7 @@ let purple = Color.v_srgbi 128 0 128
 let orange = Color.v_srgbi 255 127 0
 let gray = Color.v_srgbi 128 128 128
 
-type t = {
+type turtle = {
   point : V2.t;
   angle : float;
   image : image;
@@ -49,7 +49,7 @@ type t = {
   alpha : float
 }
 
-let fresh = {
+let fresh_turtle = {
   point = V2.zero;
   angle = Float.pi_div_2;
   image = I.void;

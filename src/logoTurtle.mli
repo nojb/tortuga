@@ -19,42 +19,39 @@
    IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
    CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. *)
 
-open LogoAtom
-open LogoEnv
-open LogoEval
-open LogoPrim
+val blank : Gg.color
+val blue : Gg.color
+val lime : Gg.color
+val cyan : Gg.color
+val red : Gg.color
+val magenta : Gg.color
+val yellow : Gg.color
+val white : Gg.color
+val brown : Gg.color
+val tan : Gg.color
+val green : Gg.color
+val aquamarine : Gg.color
+val salmon : Gg.color
+val purple : Gg.color
+val orange : Gg.color
+val gray : Gg.color
 
-let main () =
-  let lexbuf = Lexing.from_channel stdin in
-  let env = create_env () in
-  Constructors.init env;
-  DataSelectors.init env;
-  Transmitters.init env;
-  Control.init env;
-  let rec loop () =
-    Format.fprintf Format.std_formatter "> @?";
-    begin
-      try
-        let strm = Stream.of_list (LogoLex.parse_atoms [] false lexbuf) in
-        toplevel env strm
-      with
-      | LogoLex.Error err ->
-        Format.fprintf Format.std_formatter "%a.@." LogoLex.report_error err
-      | Error err ->
-        Format.fprintf Format.std_formatter "%s.@." err
-      | exn ->
-        Format.fprintf Format.std_formatter "internal error: %s@.Backtrace:@.%s@."
-          (Printexc.to_string exn) (Printexc.get_backtrace ())
-    end;
-    loop ()
-  in
-  try
-    loop ()
-  with
-  | Bye
-  | Exit ->
-    Format.fprintf Format.std_formatter "Goodbye.@."
- 
-let _ =
-  print_endline "Welcome to OCaml-Logo";
-  main ()
+type turtle
+
+val fresh_turtle : turtle
+
+val move : float -> turtle -> turtle
+
+val set_pos : Gg.v2 -> turtle -> turtle
+
+val get_pos : turtle -> Gg.v2
+
+val turn : float -> turtle -> turtle
+
+val arc : float -> float -> turtle -> turtle
+
+val set_color : Gg.color -> turtle -> turtle
+
+val clear_screen : turtle -> turtle
+
+val render : turtle -> out_channel -> unit

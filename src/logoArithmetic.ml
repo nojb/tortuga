@@ -20,41 +20,42 @@
    CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. *)
 
 open LogoAtom
-open LogoEnv
-open LogoEval
-open LogoPrim
 
-let main () =
-  let lexbuf = Lexing.from_channel stdin in
-  let env = create_env () in
-  Constructors.init env;
-  DataSelectors.init env;
-  Transmitters.init env;
-  Control.init env;
-  let rec loop () =
-    Format.fprintf Format.std_formatter "> @?";
-    begin
-      try
-        let strm = Stream.of_list (LogoLex.parse_atoms [] false lexbuf) in
-        toplevel env strm
-      with
-      | LogoLex.Error err ->
-        Format.fprintf Format.std_formatter "%a.@." LogoLex.report_error err
-      | Error err ->
-        Format.fprintf Format.std_formatter "%s.@." err
-      | exn ->
-        Format.fprintf Format.std_formatter "internal error: %s@.Backtrace:@.%s@."
-          (Printexc.to_string exn) (Printexc.get_backtrace ())
-    end;
-    loop ()
-  in
-  try
-    loop ()
-  with
-  | Bye
-  | Exit ->
-    Format.fprintf Format.std_formatter "Goodbye.@."
- 
-let _ =
-  print_endline "Welcome to OCaml-Logo";
-  main ()
+module Arithmetic = struct
+  let binaux name op a b =
+    try match a, b with
+      | Int n, Int m ->
+        Int (op n m)
+      | Int n, Word word
+      | Word word, Int n ->
+        Int (op n (int_of_string word))
+      | Word word1, Word word2 ->
+        Int (op (int_of_string word1) (int_of_string word2))
+      | _ ->
+        raise Exit
+    with
+    | _ -> raise (Error (name ^ ": bad types"))
+
+  let sum2 = binaux "sum" (+)
+
+  let difference = binaux "difference" (-)
+
+  let product2 = binaux "product" ( * )
+
+  let quotient2 = binaux "quotient" (/)
+
+  let remainder = binaux "remainder" (mod)
+
+  let power = binaux "power" (fun a b -> truncate (float a ** float b))
+
+  let minus n =
+    try match n with
+      | Int n ->
+        Int (-n)
+      | Word w ->
+        Int (- (int_of_string w))
+      | _ ->
+        raise Exit
+    with
+    | _ -> raise (Error "minus: bad type")
+end

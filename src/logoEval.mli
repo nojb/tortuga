@@ -21,40 +21,9 @@
 
 open LogoAtom
 open LogoEnv
-open LogoEval
-open LogoPrim
-
-let main () =
-  let lexbuf = Lexing.from_channel stdin in
-  let env = create_env () in
-  Constructors.init env;
-  DataSelectors.init env;
-  Transmitters.init env;
-  Control.init env;
-  let rec loop () =
-    Format.fprintf Format.std_formatter "> @?";
-    begin
-      try
-        let strm = Stream.of_list (LogoLex.parse_atoms [] false lexbuf) in
-        toplevel env strm
-      with
-      | LogoLex.Error err ->
-        Format.fprintf Format.std_formatter "%a.@." LogoLex.report_error err
-      | Error err ->
-        Format.fprintf Format.std_formatter "%s.@." err
-      | exn ->
-        Format.fprintf Format.std_formatter "internal error: %s@.Backtrace:@.%s@."
-          (Printexc.to_string exn) (Printexc.get_backtrace ())
-    end;
-    loop ()
-  in
-  try
-    loop ()
-  with
-  | Bye
-  | Exit ->
-    Format.fprintf Format.std_formatter "Goodbye.@."
- 
-let _ =
-  print_endline "Welcome to OCaml-Logo";
-  main ()
+  
+exception Bye
+  
+val expression : routine env -> atom Stream.t -> (atom -> unit) -> unit
+val command : routine env -> atom Stream.t -> (unit -> unit) -> unit
+val toplevel : routine env -> atom Stream.t -> unit
