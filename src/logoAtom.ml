@@ -19,14 +19,8 @@
    IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
    CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. *)
 
-type atom =
-  | Int of int
-  | Word of string
-  | List of atom list
-  | Array of atom array * int
-
-exception Error of string
-
+open LogoTypes
+  
 let rec pp ppf = function
   | Int n -> Format.pp_print_int ppf n
   | Word s -> Format.pp_print_string ppf s
@@ -95,3 +89,10 @@ let iexpr = function
   | Int n -> n
   | Word w -> int_of_string w
   | _ -> failwith "iexpr"
+
+let parse str =
+  let lexbuf = Lexing.from_string str in
+  LogoLex.parse_atoms [] false lexbuf
+
+let reparse list =
+  Stream.of_list (parse (stringify_list list))

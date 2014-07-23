@@ -21,6 +21,7 @@
 
 open Gg
 open Vg
+open LogoTypes
 
 let blank = Color.black
 let blue = Color.blue
@@ -38,16 +39,6 @@ let salmon = Color.v_srgbi 250 128 114
 let purple = Color.v_srgbi 128 0 128
 let orange = Color.v_srgbi 255 127 0
 let gray = Color.v_srgbi 128 128 128
-
-type turtle = {
-  point : V2.t;
-  angle : float;
-  image : image;
-  (* outline : P.outline; *)
-  penup : bool;
-  color : Color.t;
-  alpha : float
-}
 
 let fresh_turtle = {
   point = V2.zero;

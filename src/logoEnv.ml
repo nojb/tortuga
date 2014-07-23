@@ -19,37 +19,21 @@
    IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
    CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. *)
 
-open LogoAtom
-open LogoTurtle
-
-module NoCaseString = struct
-  type t = string
-  let equal s1 s2 =
-    String.uppercase s1 = String.uppercase s2
-  let hash s =
-    Hashtbl.hash (String.uppercase s)
-end
-  
-module H = Hashtbl.Make (NoCaseString)
-
-type 'r env = {
-  routines : 'r H.t;
-  globals : atom H.t;
-  locals : atom H.t list;
-  output : atom option -> unit;
-  mutable turtle : turtle
-}
+open LogoTypes
 
 let create_env () = {
   routines = H.create 17;
   globals = H.create 17;
   locals = [];
   output = (fun _ -> raise (Error "output: not inside a function"));
-  turtle = fresh_turtle
+  turtle = LogoTurtle.fresh_turtle
 }
 
-let new_frame env output =
-  { env with locals = H.create 17 :: env.locals; output }
+let new_frame env =
+  { env with locals = H.create 17 :: env.locals }
+
+let new_exit env output =
+  { env with output }
 
 let add_routine env name r =
   H.add env.routines name r
@@ -93,19 +77,3 @@ let output env a =
 
 let update_turtle env f =
   env.turtle <- f env.turtle
-
-type routine_kind =
-  | Proc0 of (unit -> atom)
-  | Proc1 of (atom -> atom)
-  | Proc12 of (atom -> ?opt:atom -> unit -> atom)
-  | Proc2 of (atom -> atom -> atom)
-  | Procn of (atom list -> atom)
-  | Cmd0 of (unit -> unit)
-  | Cmd1 of (atom -> unit)
-  | Cmdn of (atom list -> unit)
-  | Pcontn of (routine env -> atom list -> (atom option -> unit) -> unit)
-  
-and routine = {
-  nargs : int;
-  kind : routine_kind
-}

@@ -20,7 +20,7 @@
    CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. *)
         
 {
-open LogoAtom
+open LogoTypes
 open Lexing
 
 type error =
@@ -96,7 +96,7 @@ rule parse_atoms acc leading_space = parse
   | operator
     { parse_atoms (Word (Lexing.lexeme lexbuf) :: acc) false lexbuf }
   | eof
-    { raise Exit } (* List.rev acc *)
+    { List.rev acc }
   | _ as c
     { unexpected c }
 

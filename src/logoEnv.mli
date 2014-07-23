@@ -19,36 +19,18 @@
    IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
    CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. *)
 
-open LogoAtom
-open LogoTurtle
+open LogoTypes
 
-type 'r env
+val create_env : unit -> env
 
-val create_env : unit -> 'r env
-
-val new_frame : 'r env -> (atom option -> unit) -> 'r env
-val add_routine : 'r env -> string -> 'r -> unit
-val has_routine : 'r env -> string -> bool
-val get_routine : 'r env -> string -> 'r
-val set_global : 'r env -> string -> atom -> unit
-val set_var : 'r env -> string -> atom -> unit
-val get_global : 'r env -> string -> atom
-val get_var : 'r env -> string -> atom
-val output : 'r env -> atom option -> unit
-val update_turtle : 'r env -> (turtle -> turtle) -> unit
-
-type routine_kind =
-  | Proc0 of (unit -> atom)
-  | Proc1 of (atom -> atom)
-  | Proc12 of (atom -> ?opt:atom -> unit -> atom)
-  | Proc2 of (atom -> atom -> atom)
-  | Procn of (atom list -> atom)
-  | Cmd0 of (unit -> unit)
-  | Cmd1 of (atom -> unit)
-  | Cmdn of (atom list -> unit)
-  | Pcontn of (routine env -> atom list -> (atom option -> unit) -> unit)
-  
-and routine = {
-  nargs : int;
-  kind : routine_kind
-}
+val new_frame : env -> env
+val new_exit : env -> (atom option -> unit) -> env
+val add_routine : env -> string -> routine -> unit
+val has_routine : env -> string -> bool
+val get_routine : env -> string -> routine
+val set_global : env -> string -> atom -> unit
+val set_var : env -> string -> atom -> unit
+val get_global : env -> string -> atom
+val get_var : env -> string -> atom
+val output : env -> atom option -> unit
+val update_turtle : env -> (turtle -> turtle) -> unit

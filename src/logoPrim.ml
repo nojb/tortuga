@@ -19,6 +19,7 @@
    IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
    CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. *)
 
+open LogoTypes
 open LogoAtom
 open LogoEnv
 open LogoEval
@@ -318,6 +319,17 @@ module Transmitters = struct
 end
 
 module Control = struct
+  open LogoEval
+    
+  let run env things k =
+    match things with
+    | List list :: [] ->
+      execute env (reparse list) k
+    | _ :: [] ->
+      raise (Error "run: LIST expected")
+    | _ ->
+      raise (Error "run: bad arity")
+        
   let stop env things _ =
     match things with
     | [] -> output env None
@@ -332,6 +344,7 @@ module Control = struct
     raise Bye
       
   let init env =
+    add_routine env "run" { nargs = 1; kind = Pcontn run };
     add_routine env "stop" { nargs = 0; kind = Pcontn stop };
     add_routine env "output" { nargs = 1; kind = Pcontn output };
     add_routine env "bye" { nargs = 0; kind = Cmd0 bye }

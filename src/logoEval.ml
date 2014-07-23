@@ -19,6 +19,7 @@
    IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
    CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. *)
 
+open LogoTypes
 open LogoAtom
 open LogoEnv
 open LogoPredicates
@@ -235,20 +236,32 @@ let command env strm k =
         | Some a -> raise (Error ("Don't know what to do with ...")))
   | _ ->
     raise (Error ("Bad head"))
+
+let execute env strm k =
+  let env = new_exit env k in
+  let rec step () =
+    match Stream.peek strm with
+    | Some _ ->
+      command env strm step
+    | None ->
+      k None
+  in
+  step ()
   
 let to_ env strm =
   let name, inputs, body = parse_to strm in
   let body env args k =
-    let env = new_frame env k in
+    let env = new_frame env in
     List.iter2 (set_var env) inputs args;
-    let rec step strm =
-      match Stream.peek strm with
-      | Some _ ->
-        command env strm (fun () -> step strm)
-      | None ->
-        k None
-    in
-    step (Stream.of_list body)
+    execute env (Stream.of_list body) k
+    (* let rec step strm = *)
+    (*   match Stream.peek strm with *)
+    (*   | Some _ -> *)
+    (*     command env strm (fun () -> step strm) *)
+    (*   | None -> *)
+    (*     k None *)
+    (* in *)
+    (* step (Stream.of_list body) *)
   in
   add_routine env name { nargs = List.length inputs; kind = Pcontn body }
 

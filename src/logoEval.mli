@@ -19,11 +19,11 @@
    IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
    CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. *)
 
-open LogoAtom
-open LogoEnv
+open LogoTypes
   
 exception Bye
   
-val expression : routine env -> atom Stream.t -> (atom -> unit) -> unit
-val command : routine env -> atom Stream.t -> (unit -> unit) -> unit
-val toplevel : routine env -> atom Stream.t -> unit
+val expression : env -> atom Stream.t -> (atom -> unit) -> unit
+val command : env -> atom Stream.t -> (unit -> unit) -> unit
+val execute : env -> atom Stream.t -> (atom option -> unit) -> unit
+val toplevel : env -> atom Stream.t -> unit

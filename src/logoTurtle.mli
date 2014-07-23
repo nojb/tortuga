@@ -19,6 +19,8 @@
    IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
    CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. *)
 
+open LogoTypes
+  
 val blank : Gg.color
 val blue : Gg.color
 val lime : Gg.color
@@ -35,8 +37,6 @@ val salmon : Gg.color
 val purple : Gg.color
 val orange : Gg.color
 val gray : Gg.color
-
-type turtle
 
 val fresh_turtle : turtle
 

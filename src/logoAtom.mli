@@ -19,14 +19,8 @@
    IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
    CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. *)
 
-type atom =
-  | Int of int
-  | Word of string
-  | List of atom list
-  | Array of atom array * int
-
-exception Error of string
-
+open LogoTypes
+  
 val pp : Format.formatter -> atom -> unit
 
 val sexpr : atom -> string
@@ -41,3 +35,6 @@ val true_word : atom
 val false_word : atom
 val minus_word : atom
 
+val parse : string -> atom list
+
+val reparse : atom list -> atom Stream.t
