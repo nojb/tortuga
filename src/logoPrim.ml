@@ -343,7 +343,11 @@ module Control = struct
       let rec loop i =
         if i > num then k None
         else
-          command env (reparse list) (fun () -> loop (i+1))
+          execute env (reparse list)
+            (function
+              | Some _ ->
+                raise (Error "repeat: instruction list should not produce a value")
+              | None -> loop (i+1))
       in
       loop 1
     | _ ->
@@ -353,7 +357,10 @@ module Control = struct
     match list with
     | List list ->
       let rec loop () =
-        command env (reparse list) loop
+        execute env (reparse list)
+          (function
+            | Some _ -> raise (Error "forever: instruction list should not produce a value")
+            | None -> loop ())
       in
       loop ()
     | _ ->
@@ -363,16 +370,25 @@ module Control = struct
     match things with
     | Word w :: List iftrue :: [] ->
       if String.uppercase w = "TRUE" then
-        command env (reparse iftrue) (fun () -> k None)
+        execute env (reparse iftrue)
+          (function
+            | Some _ -> raise (Error "if: arguments should not produce a value")
+            | None -> k None)
       else if String.uppercase w = "FALSE" then
         k None
       else
         raise (Error "if: first argument should be either TRUE or FALSE")
     | Word w :: List iftrue :: List iffalse :: [] ->
       if String.uppercase w = "TRUE" then
-        command env (reparse iftrue) (fun () -> k None)
+        execute env (reparse iftrue)
+          (function
+            | Some _ -> raise (Error "if: arguments should not produce a value")
+            | None -> k None)
       else if String.uppercase w = "FALSE" then
-        command env (reparse iffalse) (fun () -> k None)
+        execute env (reparse iffalse)
+          (function
+            | Some _ -> raise (Error "if: arguments should not produce a value")
+            | None -> k None)
       else
         raise (Error "if: first argument should be either TRUE or FALSE")
     | _ ->
