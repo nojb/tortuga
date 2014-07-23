@@ -339,6 +339,19 @@ module Control = struct
       raise (Error "runresult: LIST expected")
     | _ ->
       raise (Error "runresult: bad arity")
+
+  let repeat env things k =
+    match things with
+    | num :: List list :: [] ->
+      let num = iexpr num in
+      let rec loop i =
+        if i > num then k None
+        else
+          command env (reparse list) (fun () -> loop (i+1))
+      in
+      loop 1
+    | _ ->
+      raise (Error "repeat: bad args")
         
   let stop env things _ =
     match things with
@@ -356,6 +369,7 @@ module Control = struct
   let init env =
     set_pfcn env "run" 1 run;
     set_pfcn env "runresult" 1 runresult;
+    set_pfcn env "repeat" 2 repeat;
     set_pfcn env "stop" 0 stop;
     set_pfcn env "output" 1 output;
     set_cf0 env "bye" bye
