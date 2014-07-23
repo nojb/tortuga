@@ -160,18 +160,18 @@ Outputs a unique word each time it's invoked.  The words are of the form G1, G2,
 etc."
 
   let init env =
-    add_routine env "word" { nargs = 2; kind = Procn word };
-    add_routine env "list" { nargs = 2; kind = Procn list };
-    add_routine env "sentence" { nargs = 2; kind = Procn sentence };
-    add_routine env "se" { nargs = 2; kind = Procn sentence };
-    add_routine env "fput" { nargs = 2; kind = Proc2 fput };
-    add_routine env "lput" { nargs = 2; kind = Proc2 lput };
-    add_routine env "array" { nargs = 1; kind = Proc12 array };
-    add_routine env "combine" { nargs = 2; kind = Proc2 combine };
-    add_routine env "listtoarray" { nargs = 1; kind = Proc12 listtoarray };
-    add_routine env "arraytolist" { nargs = 1; kind = Proc1 arraytolist };
-    add_routine env "reverse" { nargs = 1; kind = Proc1 reverse };
-    add_routine env "gensym" { nargs = 0; kind = Proc0 gensym }
+    set_pfn env "word" 2 word;
+    set_pfn env "list" 2 list;
+    set_pfn env "sentence" 2 sentence;
+    set_pfn env "se" 2 sentence;
+    set_pf2 env "fput" fput;
+    set_pf2 env "lput" lput;
+    set_pf12 env "array" array;
+    set_pf2 env "combine" combine;
+    set_pf12 env "listtoarray" listtoarray;
+    set_pf1 env "arraytolist" arraytolist;
+    set_pf1 env "reverse" reverse;
+    set_pf0 env "gensym" gensym
 end
 
 module DataSelectors = struct
@@ -258,13 +258,13 @@ module DataSelectors = struct
       raise (Error "quoted: LIST or WORD expected")
         
   let init env =
-    add_routine env "first" { nargs = 1; kind = Proc1 first };
-    add_routine env "firsts" { nargs = 1; kind = Proc1 firsts };
-    add_routine env "last" { nargs = 1; kind = Proc1 last };
-    add_routine env "butfirst" { nargs = 1; kind = Proc1 butfirst };
-    add_routine env "item" { nargs = 2; kind = Proc2 item };
-    add_routine env "pick" { nargs = 1; kind = Proc1 pick };
-    add_routine env "quoted" { nargs = 1; kind = Proc1 quoted }
+    set_pf1 env "first" first;
+    set_pf1 env "firsts" firsts;
+    set_pf1 env "last" last;
+    set_pf1 env "butfirst" butfirst;
+    set_pf2 env "item" item;
+    set_pf1 env "pick" pick;
+    set_pf1 env "quoted" quoted
 end
 
 module Transmitters = struct
@@ -315,7 +315,7 @@ module Transmitters = struct
       print_newline ()
     
   let init env =
-    add_routine env "print" { nargs = 1; kind = Cmdn print }
+    set_cfn env "print" 1 print
 end
 
 module Control = struct
@@ -344,8 +344,8 @@ module Control = struct
     raise Bye
       
   let init env =
-    add_routine env "run" { nargs = 1; kind = Pcontn run };
-    add_routine env "stop" { nargs = 0; kind = Pcontn stop };
-    add_routine env "output" { nargs = 1; kind = Pcontn output };
-    add_routine env "bye" { nargs = 0; kind = Cmd0 bye }
+    set_pcntn env "run" 1 run;
+    set_pcntn env "stop" 0 stop;
+    set_pcntn env "output" 1 output;
+    set_cf0 env "bye" bye
 end

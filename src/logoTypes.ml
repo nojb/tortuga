@@ -55,18 +55,10 @@ type env = {
   mutable turtle : turtle
 }
 
-and routine_kind =
-  | Proc0 of (unit -> atom)
-  | Proc1 of (atom -> atom)
-  | Proc12 of (atom -> ?opt:atom -> unit -> atom)
-  | Proc2 of (atom -> atom -> atom)
-  | Procn of (atom list -> atom)
-  | Cmd0 of (unit -> unit)
-  | Cmd1 of (atom -> unit)
-  | Cmdn of (atom list -> unit)
-  | Pcontn of (env -> atom list -> (atom option -> unit) -> unit)
-  
-and routine = {
-  nargs : int;
-  kind : routine_kind
-}
+and routine =
+  | Pf0 of (unit -> atom option)
+  | Pf1 of (atom -> atom option)
+  | Pf2 of (atom -> atom -> atom option)
+  | Pfn of int * (atom list -> atom option)
+  | Pf12 of (atom -> ?opt:atom -> unit -> atom option)
+  | Pfcn of int * (env -> atom list -> (atom option -> unit) -> unit)

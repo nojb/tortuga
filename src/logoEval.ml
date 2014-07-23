@@ -149,6 +149,14 @@ and apply env w strm k =
     dispatch env w strm true k
 
 and dispatch env proc strm natural k =
+  let nargs = function
+    | Pf0 _ -> 0
+    | Pf1 _ -> 1
+    | Pf2 _ -> 2
+    | Pfn (nargs, _) -> nargs
+    | Pf12 _ -> 1
+    | Pfcn (nargs, _) -> nargs
+  in
   let getargs len natural k =
     if natural then
       let rec loop acc i =
@@ -174,27 +182,19 @@ and dispatch env proc strm natural k =
     with
     | Not_found -> raise (Error ("Don't know how to " ^ String.uppercase proc))
   in
-  getargs r.nargs natural begin fun args ->
-    match r.kind, args with
-    | Proc0 f, [] ->
-      k (Some (f ()))
-    | Proc1 f, [arg] ->
-      k (Some (f arg))
-    | Proc12 f, [arg] ->
-      k (Some (f arg ()))
-    | Proc12 f, [arg1; arg2] ->
-      k (Some (f arg1 ~opt:arg2 ()))
-    | Proc2 f, [arg1; arg2] ->
-      k (Some (f arg1 arg2))
-    | Procn f, args ->
-      k (Some (f args))
-    | Cmd0 f, [] ->
-      f (); k None
-    | Cmd1 f, [arg] ->
-      f arg; k None
-    | Cmdn f, args ->
-      f args; k None
-    | Pcontn f, args ->
+  getargs (nargs r) natural begin fun args ->
+    match r, args with
+    | Pf0 f, [] ->
+      k (f ())
+    | Pf1 f, [arg] ->
+      k (f arg)
+    | Pf2 f, [arg1; arg2] ->
+      k (f arg1 arg2)
+    | Pfn (_, f), args ->
+      k (f args)
+    | Pf12 f, [arg1; arg2] ->
+      k (f arg1 ~opt:arg2 ())
+    | Pfcn (_, f), args ->
       f env args k
     | _, _ ->
       raise (Error "bad arity")
@@ -254,16 +254,8 @@ let to_ env strm =
     let env = new_frame env in
     List.iter2 (set_var env) inputs args;
     execute env (Stream.of_list body) k
-    (* let rec step strm = *)
-    (*   match Stream.peek strm with *)
-    (*   | Some _ -> *)
-    (*     command env strm (fun () -> step strm) *)
-    (*   | None -> *)
-    (*     k None *)
-    (* in *)
-    (* step (Stream.of_list body) *)
   in
-  add_routine env name { nargs = List.length inputs; kind = Pcontn body }
+  set_pcntn env name (List.length inputs) body
 
 let rec toplevel env strm =
   match Stream.peek strm with
