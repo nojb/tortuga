@@ -45,7 +45,25 @@ let gray = Color.v_srgbi 128 128 128
 let forward dist turtle =
   let dist = iexpr dist in
   move (float dist) turtle
+
+let back dist turtle =
+  let dist = iexpr dist in
+  move (float (-dist)) turtle
+
+let left deg turtle =
+  let deg = iexpr deg in
+  turn (float (-deg)) turtle
+
+let right deg turtle =
+  let deg = iexpr deg in
+  turn (float deg) turtle
     
 let init env =
   set_pft1 env "forward" forward;
-  set_pft1 env "fd" forward
+  set_pft1 env "fd" forward;
+  set_pft1 env "back" back;
+  set_pft1 env "bk" back;
+  set_pft1 env "left" left;
+  set_pft1 env "lt" left;
+  set_pft1 env "right" right;
+  set_pft1 env "rt" right
