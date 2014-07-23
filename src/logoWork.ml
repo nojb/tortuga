@@ -20,45 +20,29 @@
    CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. *)
 
 open LogoTypes
+open LogoAtom
 open LogoEnv
-open LogoEval
+  
+(** 7.2 Variable Definition *)
 
-let make_env () =
-  let env = create_env () in
-  LogoPrim.Constructors.init env;
-  LogoPrim.DataSelectors.init env;
-  LogoPrim.Transmitters.init env;
-  LogoPrim.Control.init env;
-  LogoWork.init env;
-  env
+let make env things k =
+  match things with
+  | varname :: value :: [] ->
+    let varname = try sexpr varname with _ -> raise (Error "make: VARNAME must be a word") in
+    set_var env varname value;
+    k None
+  | _ ->
+    raise (Error "make: bad args")
 
-let main () =
-  let lexbuf = Lexing.from_channel stdin in
-  let env = make_env () in
-  let rec loop () =
-    Format.fprintf Format.std_formatter "> @?";
-    begin
-      try
-        let strm = Stream.of_list (LogoLex.parse_atoms [] false lexbuf) in
-        toplevel env strm
-      with
-      | LogoLex.Error err ->
-        Format.fprintf Format.std_formatter "%a.@." LogoLex.report_error err
-      | Error err ->
-        Format.fprintf Format.std_formatter "%s.@." err
-      | exn ->
-        Format.fprintf Format.std_formatter "internal error: %s@.Backtrace:@.%s@."
-          (Printexc.to_string exn) (Printexc.get_backtrace ())
-    end;
-    loop ()
-  in
-  try
-    loop ()
-  with
-  | Bye
-  | Exit ->
-    Format.fprintf Format.std_formatter "Goodbye.@."
- 
-let _ =
-  print_endline "Welcome to OCaml-Logo";
-  main ()
+let name env things k =
+  match things with
+  | value :: varname :: [] ->
+    let varname = try sexpr varname with _ -> raise (Error "name: VARNAME must be a word") in
+    set_var env varname value;
+    k None
+  | _ ->
+    raise (Error "name: bad args")
+
+let init env =
+  set_pfcn env "make" 2 make;
+  set_pfcn env "name" 2 name
