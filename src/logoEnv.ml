@@ -21,12 +21,12 @@
 
 open LogoTypes
 
-let create_env () = {
+let create_env turtle = {
   routines = H.create 17;
   globals = H.create 17;
   locals = [];
   output = (fun _ -> raise (Error "output: not inside a function"));
-  turtle = LogoTurtle.fresh_turtle
+  turtle;
 }
 
 let new_frame env =
@@ -37,9 +37,6 @@ let new_exit env output =
 
 let output env a =
   env.output a
-
-let update_turtle env f =
-  env.turtle <- f env.turtle
 
 let set_routine env name r =
   H.add env.routines name r
@@ -78,7 +75,7 @@ let set_pfcn env name nargs f =
   set_routine env name (Pfcn (nargs, f))
 
 let set_pft1 env name f =
-  set_routine env name (Pfc1 (fun env arg k -> update_turtle env (f arg); k None))
+  set_routine env name (Pfc1 (fun env arg k -> f env.turtle arg; k None))
 
 let has_routine env name =
   H.mem env.routines name

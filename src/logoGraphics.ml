@@ -22,7 +22,6 @@
 open Gg
 open LogoTypes
 open LogoAtom
-open LogoTurtle
 open LogoEnv
   
 let blank = Color.black
@@ -42,37 +41,37 @@ let purple = Color.v_srgbi 128 0 128
 let orange = Color.v_srgbi 255 127 0
 let gray = Color.v_srgbi 128 128 128
 
-let forward dist turtle =
+let forward (module T : TURTLE) dist =
   let dist = iexpr dist in
-  move (float dist) turtle
+  T.move dist
 
-let back dist turtle =
+let back (module T : TURTLE) dist =
   let dist = iexpr dist in
-  move (float (-dist)) turtle
+  T.move (-dist)
 
-let left deg turtle =
+let left (module T : TURTLE) deg =
   let deg = iexpr deg in
-  turn (float (-deg)) turtle
+  T.turn (-deg)
 
-let right deg turtle =
+let right (module T : TURTLE) deg =
   let deg = iexpr deg in
-  turn (float deg) turtle
+  T.turn deg
 
-let setpos pos turtle =
+let setpos (module T : TURTLE) pos =
   match pos with
   | List [x; y] ->
     let x = iexpr x in
     let y = iexpr y in
-    set_pos (V2.v (float x) (float y)) turtle
+    T.set_pos x y
   | _ ->
     raise (Error "setpos: bad args")
 
-let render name turtle =
-  let name = try sexpr name with _ -> raise (Error "render: bad args") in
-  let out = open_out_bin (name ^ ".pdf") in
-  render turtle out;
-  close_out out;
-  turtle
+(* let render (module T : TURTLE) name = *)
+(*   let name = try sexpr name with _ -> raise (Error "render: bad args") in *)
+(*   let out = open_out_bin (name ^ ".pdf") in *)
+(*   render turtle out; *)
+(*   close_out out; *)
+(*   turtle *)
     
 let init env =
   set_pft1 env "forward" forward;
@@ -83,6 +82,6 @@ let init env =
   set_pft1 env "lt" left;
   set_pft1 env "right" right;
   set_pft1 env "rt" right;
-  set_pft1 env "setpos" setpos;
+  set_pft1 env "setpos" setpos
 
-  set_pft1 env "render" render
+  (* set_pft1 env "render" render *)

@@ -26,16 +26,21 @@ type atom =
   | Array of atom array * int
 
 exception Error of string
-    
-type turtle = {
-  point : Gg.V2.t;
-  angle : float;
-  image : Vg.image;
-  (* outline : P.outline; *)
-  penup : bool;
-  color : Gg.Color.t;
-  alpha : float
-}
+
+module type TURTLE = sig
+  val get_heading : unit -> int
+  val set_heading : int -> unit
+  val get_pos : unit -> int * int
+  val set_pos : int -> int -> unit
+  val set_color : Gg.color -> unit
+  val move : int -> unit
+  val turn : int -> unit
+  val arc : int -> int -> unit
+  val clear_screen : unit -> unit
+  (* val render : turtle -> out_channel -> unit *)
+end
+
+type turtle = (module TURTLE)
 
 module H : Hashtbl.S with type key = string
 
@@ -44,7 +49,7 @@ type env = {
   globals : atom H.t;
   locals : atom H.t list;
   output : atom option -> unit;
-  mutable turtle : turtle
+  turtle : turtle
 }
 
 and routine =
