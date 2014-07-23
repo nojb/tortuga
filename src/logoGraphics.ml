@@ -57,6 +57,22 @@ let left deg turtle =
 let right deg turtle =
   let deg = iexpr deg in
   turn (float deg) turtle
+
+let setpos pos turtle =
+  match pos with
+  | List [x; y] ->
+    let x = iexpr x in
+    let y = iexpr y in
+    set_pos (V2.v (float x) (float y)) turtle
+  | _ ->
+    raise (Error "setpos: bad args")
+
+let render name turtle =
+  let name = try sexpr name with _ -> raise (Error "render: bad args") in
+  let out = open_out_bin (name ^ ".pdf") in
+  render turtle out;
+  close_out out;
+  turtle
     
 let init env =
   set_pft1 env "forward" forward;
@@ -66,4 +82,7 @@ let init env =
   set_pft1 env "left" left;
   set_pft1 env "lt" left;
   set_pft1 env "right" right;
-  set_pft1 env "rt" right
+  set_pft1 env "rt" right;
+  set_pft1 env "setpos" setpos;
+
+  set_pft1 env "render" render
