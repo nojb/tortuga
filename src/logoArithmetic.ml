@@ -20,6 +20,7 @@
    CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. *)
 
 open LogoTypes
+open LogoAtom
 open LogoEnv
 
 (** 4.1 Numeric Operations *)
@@ -46,15 +47,8 @@ let sum things =
 let difference = binaux "difference" (-)
 
 let minus n =
-  try match n with
-    | Int n ->
-      Int (-n)
-    | Word w ->
-      Int (- (int_of_string w))
-    | _ ->
-      raise Exit
-  with
-  | _ -> raise (Error "minus: bad type")
+  let n = try iexpr n with _ -> raise (Error "minus: argument must be number") in
+  Int (-n)
 
 let product2 = binaux "product" ( * )
 
