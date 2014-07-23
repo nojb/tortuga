@@ -362,6 +362,37 @@ module Control = struct
       loop ()
     | _ ->
       raise (Error "forever: bad args")
+
+  let ifthen env things k =
+    match things with
+    | Word w :: List iftrue :: [] ->
+      if String.uppercase w = "TRUE" then
+        command env (reparse iftrue) (fun () -> k None)
+      else if String.uppercase w = "FALSE" then
+        k None
+      else
+        raise (Error "if: first argument should be either TRUE or FALSE")
+    | Word w :: List iftrue :: List iffalse :: [] ->
+      if String.uppercase w = "TRUE" then
+        command env (reparse iftrue) (fun () -> k None)
+      else if String.uppercase w = "FALSE" then
+        command env (reparse iffalse) (fun () -> k None)
+      else
+        raise (Error "if: first argument should be either TRUE or FALSE")
+    | _ ->
+      raise (Error "if: bad args")
+
+  let ifelse env things k =
+    match things with
+    | Word w :: List iftrue :: List iffalse :: [] ->
+      if String.uppercase w = "TRUE" then
+        execute env (reparse iftrue) k
+      else if String.uppercase w = "FALSE" then
+        execute env (reparse iffalse) k
+      else
+        raise (Error "ifelse: first argument should be either TRUE or FALSE")
+    | _ ->
+      raise (Error "ifelse: bad args")    
         
   let stop env things _ =
     match things with
@@ -381,6 +412,8 @@ module Control = struct
     set_pfcn env "runresult" 1 runresult;
     set_pfcn env "repeat" 2 repeat;
     set_pfcn env "forever" 1 forever;
+    set_pfcn env "if" 2 ifthen;
+    set_pfcn env "ifelse" 3 ifelse;
     set_pfcn env "stop" 0 stop;
     set_pfcn env "output" 1 output;
     set_cf0 env "bye" bye
