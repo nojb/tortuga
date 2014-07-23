@@ -321,25 +321,21 @@ end
 module Control = struct
   open LogoEval
     
-  let run env things k =
-    match things with
-    | List list :: [] ->
+  let run env list k =
+    match list with
+    | List list ->
       execute env (reparse list) k
-    | _ :: [] ->
-      raise (Error "run: LIST expected")
     | _ ->
-      raise (Error "run: bad arity")
+      raise (Error "run: LIST expected")
 
-  let runresult env things k =
-    match things with
-    | List list :: [] ->
+  let runresult env list k =
+    match list with
+    | List list ->
       execute env (reparse list)
         (function None -> k (Some (List [])) | Some a -> k (Some (List [a])))
-    | _ :: [] ->
-      raise (Error "runresult: LIST expected")
     | _ ->
-      raise (Error "runresult: bad arity")
-
+      raise (Error "runresult: LIST expected")
+    
   let repeat env things k =
     match things with
     | num :: List list :: [] ->
@@ -353,15 +349,15 @@ module Control = struct
     | _ ->
       raise (Error "repeat: bad args")
 
-  let forever env things k =
-    match things with
-    | List list :: [] ->
+  let forever env list k =
+    match list with
+    | List list ->
       let rec loop () =
         command env (reparse list) loop
       in
       loop ()
     | _ ->
-      raise (Error "forever: bad args")
+      raise (Error "forever: LIST expected")
 
   let ifthen env things k =
     match things with
@@ -399,22 +395,20 @@ module Control = struct
     | [] -> output env None
     | _ -> raise (Error "stop: bad arity")
              
-  let output env things _ =
-    match things with
-    | a :: [] -> output env (Some a)
-    | _ -> raise (Error "output: bad arity")
+  let output env thing _ =
+    output env (Some thing)
 
   let bye () =
     raise Bye
       
   let init env =
-    set_pfcn env "run" 1 run;
-    set_pfcn env "runresult" 1 runresult;
+    set_pfc1 env "run" run;
+    set_pfc1 env "runresult" runresult;
     set_pfcn env "repeat" 2 repeat;
-    set_pfcn env "forever" 1 forever;
+    set_pfc1 env "forever" forever;
     set_pfcn env "if" 2 ifthen;
     set_pfcn env "ifelse" 3 ifelse;
     set_pfcn env "stop" 0 stop;
-    set_pfcn env "output" 1 output;
+    set_pfc1 env "output" output;
     set_cf0 env "bye" bye
 end
