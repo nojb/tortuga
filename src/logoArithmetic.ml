@@ -20,6 +20,9 @@
    CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. *)
 
 open LogoTypes
+open LogoEnv
+
+(** 4.1 Numeric Operations *)
 
 let binaux name op a b =
   try match a, b with
@@ -37,15 +40,10 @@ let binaux name op a b =
 
 let sum2 = binaux "sum" (+)
 
+let sum things =
+  List.fold_left sum2 (Int 0) things
+
 let difference = binaux "difference" (-)
-
-let product2 = binaux "product" ( * )
-
-let quotient2 = binaux "quotient" (/)
-
-let remainder = binaux "remainder" (mod)
-
-let power = binaux "power" (fun a b -> truncate (float a ** float b))
 
 let minus n =
   try match n with
@@ -57,3 +55,21 @@ let minus n =
       raise Exit
   with
   | _ -> raise (Error "minus: bad type")
+
+let product2 = binaux "product" ( * )
+
+let product things =
+  List.fold_left product2 (Int 1) things
+
+let quotient2 = binaux "quotient" (/)
+
+let remainder = binaux "remainder" (mod)
+
+let power = binaux "power" (fun a b -> truncate (float a ** float b))
+
+let init env =
+  set_pfn env "sum" 2 sum;
+  set_pf2 env "difference" difference;
+  set_pf1 env "minus" minus;
+  set_pfn env "product" 2 product;
+  set_pf2 env "remainder" remainder
