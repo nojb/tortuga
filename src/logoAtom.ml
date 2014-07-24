@@ -21,59 +21,67 @@
 
 open LogoTypes
   
-let rec pp ppf = function
-  | Num n ->
-    if n = floor n then Format.pp_print_int ppf (truncate n)
-    else Format.pp_print_float ppf n
-  | Word s -> Format.pp_print_string ppf s
-  | List l ->
-    let rec printlist ppf = function
-      | [] -> ()
-      | x :: [] -> pp ppf x
-      | x :: xs -> Format.fprintf ppf "%a@ %a" pp x printlist xs
-    in
-    Format.fprintf ppf "@[<1>[%a]@]" printlist l
-  | Array (a, orig) ->
-    let rec printarr i ppf a =
-      if i < Array.length a - 1 then begin
-        Format.fprintf ppf "%a@ " pp a.(i);
-        printarr (i+1) ppf a
-      end else
-        Format.fprintf ppf "%a" pp a.(i)
-    in
-    Format.fprintf ppf "@[<1>{%a}@@%i@]" (printarr 0) a orig
-
 let rec bprint b = function
   | Num n ->
-    if n = floor n then Buffer.add_string b (string_of_int (truncate n))
-    else Buffer.add_string b (string_of_float n)
-  | Word w -> Buffer.add_string b w
-  | List [] -> Buffer.add_string b "[]"
+    Printf.bprintf b "%g" n
+  | Word w ->
+    Printf.bprintf b "%s" w
+  | List [] ->
+    Printf.bprintf b "[]"
   | List (x :: xs) ->
-    Buffer.add_char b '[';
-    bprint b x;
-    List.iter (fun x -> Buffer.add_char b ' '; bprint b x) xs
+    Printf.bprintf b "[%a" bprint x;
+    List.iter (fun x -> Printf.bprintf b " %a" bprint x) xs;
+    Printf.bprintf b "]"
   | Array ([| |], orig) ->
-    Buffer.add_string b "{}@";
-    Buffer.add_string b (string_of_int orig)
+    Printf.bprintf b "{}@%i" orig
   | Array (a, orig) ->
-    Buffer.add_char b '{';
-    bprint b a.(0);
+    Printf.bprintf b "{%a" bprint a.(0);
     for i = 1 to Array.length a - 1 do
-      Buffer.add_char b ' ';
-      bprint b a.(i)
+      Printf.bprintf b " %a" bprint a.(i)
     done;
-    Buffer.add_string b "}@";
-    Buffer.add_string b (string_of_int orig)
+    Printf.bprintf b "}@%i" orig
 
-let stringify_list l =
-  match l with
-  | [] -> ""
+let bprint_list b = function
+  | [] -> ()
   | x :: xs ->
-    let b = Buffer.create 17 in
-    bprint b x;
-    List.iter (fun x -> Buffer.add_char b ' '; bprint b x) xs;
-    Buffer.contents b
+    let rec loop b = function
+      | [] -> ()
+      | x :: xs ->
+        Printf.bprintf b " %a%a" bprint x loop xs
+    in
+    Printf.bprintf b "%a%a" bprint x loop xs
+
+let output out a =
+  let b = Buffer.create 17 in
+  bprint b a;
+  Buffer.output_buffer out b
+
+let output_list out al =
+  let b = Buffer.create 17 in
+  bprint_list b al;
+  Buffer.output_buffer out b
+
+let print a =
+  output stdout a
+
+let print_list al =
+  output_list stdout al
+
+let sprint () a =
+  let b = Buffer.create 17 in
+  bprint b a;
+  Buffer.contents b
+
+let sprint_list () al =
+  let b = Buffer.create 17 in
+  bprint_list b al;
+  Buffer.contents b
+
+let pp_print ppf a =
+  Format.fprintf ppf "%s" (sprint () a)
+
+let pp_print_list ppf al =
+  Format.fprintf ppf "%s" (sprint_list () al)
   
 let true_word =
   Word "true"
@@ -113,4 +121,4 @@ let parse str =
   LogoLex.parse_atoms [] false lexbuf
 
 let reparse list =
-  Stream.of_list (parse (stringify_list list))
+  Stream.of_list (parse (sprint_list () list))

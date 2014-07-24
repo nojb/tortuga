@@ -21,8 +21,6 @@
 
 open LogoTypes
   
-val pp : Format.formatter -> atom -> unit
-
 val sexpr : atom -> string
 
 (* val iexpr : atom -> int *)
@@ -33,7 +31,23 @@ val int_atom : atom -> string -> int
 
 val bprint : Buffer.t -> atom -> unit
 
-val stringify_list : atom list -> string
+val bprint_list : Buffer.t -> atom list -> unit
+
+val output : out_channel -> atom -> unit
+
+val output_list : out_channel -> atom list -> unit
+
+val print : atom -> unit
+
+val print_list : atom list -> unit
+
+val sprint : unit -> atom -> string
+
+val sprint_list : unit -> atom list -> string
+
+val pp_print : Format.formatter -> atom -> unit
+  
+val pp_print_list : Format.formatter -> atom list -> unit
 
 val true_word : atom
 val false_word : atom

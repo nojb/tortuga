@@ -269,50 +269,19 @@ end
 
 module Transmitters = struct
   let print things =
-    let rec pr top = function
-      | Num n -> if n = floor n then print_int (truncate n) else print_float n
-      | Word w -> print_string w
-      | List [] -> if top then () else print_string "[]"
-      | List (x :: rest) ->
-        if top then begin
-          pr false x;
-          List.iter (fun x -> print_char ' '; pr false x) rest
-        end else begin
-          print_char '[';
-          pr false x;
-          List.iter (fun x -> print_char ' '; pr false x) rest;
-          print_char ']'
-        end
-      | Array ([| |], 1) ->
-        print_string "{}"
-      | Array ([| |], orig) ->
-        print_string "{}@";
-        print_int orig
-      | Array (a, 1) ->
-        print_char '{';
-        pr false a.(0);
-        for i = 1 to Array.length a - 1 do
-          print_char ' ';
-          pr false a.(i)
-        done;
-        print_char '}'
-      | Array (a, orig) ->
-        print_char '{';
-        pr false a.(0);
-        for i = 1 to Array.length a - 1 do
-          print_char ' ';
-          pr false a.(i)
-        done;
-        print_string "}@";
-        print_int orig
+    let rec loop first = function
+      | [] ->
+        print_newline ()
+      | List l :: xs ->
+        if not first then print_char ' ';
+        print_list l;
+        loop false xs
+      | x :: xs ->
+        if not first then print_char ' ';
+        print x;
+        loop false xs
     in
-    match things with
-    | [] ->
-      print_newline ()
-    | x :: rest ->
-      pr true x;
-      List.iter (fun x -> print_char ' '; pr true x) rest;
-      print_newline ()
+    loop true things
     
   let init env =
     set_cfn env "print" 1 print
