@@ -50,9 +50,9 @@ let product things =
 let quotient2 = binaux "quotient" (/.)
 
 let remainder a b =
-  let a = int_atom a "remainder: NUM1 must be an integer" in
-  let b = int_atom b "remainder: NUM2 must be an integer" in
-  Num (float (a mod b))
+  let a = num_atom a "remainder: NUM1 must be a number" in
+  let b = num_atom b "remainder: NUM2 must be a number" in
+  Num (mod_float a b)
 
 (* modulo: not implemented *)
 
