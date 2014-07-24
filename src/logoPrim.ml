@@ -282,9 +282,27 @@ module Transmitters = struct
         loop false xs
     in
     loop true things
+
+  let type_ things =
+    List.iter (function
+        | List l -> print_list l
+        | _ as a -> LogoAtom.print a) things
+
+  let show things =
+    let rec loop first = function
+      | [] ->
+        print_newline ()
+      | x :: xs ->
+        if not first then print_char ' ';
+        LogoAtom.print x;
+        loop false xs
+    in
+    loop true things    
     
   let init env =
-    set_cfn env "print" 1 print
+    set_cfn env "print" 1 print;
+    set_cfn env "type" 1 type_;
+    set_cfn env "show" 1 show
 end
 
 module Control = struct
