@@ -19,6 +19,8 @@
    IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
    CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. *)
 
+(** 8. Control Structures *)
+
 open LogoTypes
 open LogoAtom
 open LogoEnv
@@ -28,6 +30,8 @@ exception Throw of string * atom option
 exception Toplevel
 exception Bye
 exception Pause of env
+
+(** 8.1 Control *)
 
 let run env list k =
   execute env (reparse list) k
@@ -128,6 +132,9 @@ let continue env value _ =
 
 let bye () =
   raise Bye
+
+let ignore _ =
+  ()
       
 let init env =
   set_pf env "run" Lga.(env @@ list any @-> ret cont) run;
@@ -142,4 +149,5 @@ let init env =
   set_pf env "throw" Lga.(word @-> opt any retvoid) throw;
   set_pf env "pause" Lga.(env @@ ret cont) pause;
   set_pf env "continue" Lga.(env @@ opt any cont) continue;
-  set_pf env "bye" Lga.(void @@ ret retvoid) bye
+  set_pf env "bye" Lga.(void @@ ret retvoid) bye;
+  set_pf env "ignore" Lga.(any @-> ret retvoid) ignore
