@@ -56,6 +56,8 @@ module type TURTLE = sig
   val turn : int -> unit
   val arc : int -> int -> unit
   val set_size : int -> unit
+  val pen_down : unit -> unit
+  val pen_up : unit -> unit
   val clean_screen : unit -> unit
 end
 

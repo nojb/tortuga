@@ -93,6 +93,12 @@ let clearscreen (module T : TURTLE) =
 
 (** 6.5 Pen and Background Control *)
 
+let pendown (module T : TURTLE) =
+  T.pen_down ()
+
+let penup (module T : TURTLE) =
+  T.pen_up ()
+
 let setpencolor env (module T : TURTLE) = function
     `L color ->
     begin
@@ -161,6 +167,10 @@ let init env =
   set_pf env "clean" Lga.(turtle @@ ret retvoid) clean;
   set_pf env "clearscreen" Lga.(turtle @@ ret retvoid) clearscreen;
 
+  set_pf env "pendown" Lga.(turtle @@ ret retvoid) pendown;
+  set_pf env "pd" Lga.(turtle @@ ret retvoid) pendown;
+  set_pf env "penup" Lga.(turtle @@ ret retvoid) penup;
+  set_pf env "pu" Lga.(turtle @@ ret retvoid) penup;
   set_pf env "setpencolor" Lga.(env @@ turtle @@ alt word (fix_list int 3) @-> ret retvoid)
     setpencolor;
   set_pf env "setpc" Lga.(env @@ turtle @@ alt word (fix_list int 3) @-> ret retvoid)

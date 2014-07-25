@@ -27,6 +27,8 @@ let _ =
 
 let theta = ref 90
 
+let pendown = ref true
+
 let get_heading () =
   !theta
 
@@ -56,16 +58,22 @@ let move d =
   let dx = truncate dx in
   let dy = float d *. sin (rad_of_deg !theta) in
   let dy = truncate dy in
-  G.rlineto dx dy
+  if !pendown then G.rlineto dx dy
   
 let turn r =
   theta := !theta - r
 
 let arc angle r =
-  G.draw_arc (G.current_x ()) (G.current_y ()) r r !theta (!theta - r)
+  if !pendown then G.draw_arc (G.current_x ()) (G.current_y ()) r r !theta (!theta - r)
 
 let set_size sz =
   G.set_line_width sz
+
+let pen_down () =
+  pendown := true
+
+let pen_up () =
+  pendown := false
   
 let clean_screen () =
   G.clear_graph ()
