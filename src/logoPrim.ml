@@ -175,35 +175,18 @@ let firsts l =
   List.map first l
 
 let last = function
-    Num n ->
-    let s = string_of_float n in
-    let l = String.length s in
-    Word (String.make 1 (s.[l-1]))
-  | Word w ->
-    let l = String.length w in
-    Word (String.make 1 (w.[l-1]))
-  | List [] ->
-    raise (Error "last: empty list")
-  | List lst ->
+    `L w ->
+    Word (String.make 1 w.[String.length w - 1])
+  | `R lst ->
     let l = List.length lst in
     List.nth lst (l-1)
-  | _ ->
-    raise (Error "last: LIST or WORD expected")
 
 let butfirst = function
-    Num n ->
-    let s = string_of_float n in
-    let l = String.length s in
-    Word (String.sub s 1 (l-1))
-  | Word w ->
+    `L w ->
     let l = String.length w in
     Word (String.sub w 1 (l-1))
-  | List [] ->
-    raise (Error "butfirst: empty list")
-  | List (_ :: rest) ->
-    List rest
-  | _ ->
-    raise (Error "butfirst: expected WORD or LIST")
+  | `R l ->
+    List (List.tl l)
 
 let item index = function
     Num n ->
@@ -216,21 +199,12 @@ let item index = function
   | Array (a, orig) ->
     a.(index-orig)
 
-let pick = function
-    [] ->
-    raise (Error "pick: empty list")
-  | (_ :: _) as l ->
-    List.nth l (Random.int (List.length l))
+let pick l =
+  List.nth l (Random.int (List.length l))
 
 let quoted = function
-    List _ as a -> a
-  | Num n ->
-    let s = string_of_float n in
-    Word ("\"" ^ s)
-  | Word w ->
-    Word ("\"" ^ w)
-  | _ ->
-    raise (Error "quoted: LIST or WORD expected")
+    `L s -> Word ("\"" ^ s)
+  | `R l -> List l
 
 (** 2.3 Data Mutators *)
 
@@ -289,11 +263,11 @@ let init env =
 
   set_pf env "first" Lga.(any @-> ret (value any)) first;
   set_pf env "firsts" Lga.(list any @-> ret (value (list any))) firsts;
-  (* set_pf1 env "last" last; *)
-  (* set_pf1 env "butfirst" butfirst; *)
+  set_pf env "last" Lga.(alt word (ne_list any) @-> ret (value any)) last;
+  set_pf env "butfirst" Lga.(alt word (ne_list any) @-> ret (value any)) butfirst;
   set_pf env "item" Lga.(int @-> any @-> ret (value any)) item;
-  set_pf env "pick" Lga.(list any @-> ret (value any)) pick;
-  (* set_pf1 env "quoted" quoted *)
+  set_pf env "pick" Lga.(ne_list any @-> ret (value any)) pick;
+  set_pf env "quoted" Lga.(alt word (list any) @-> ret (value any)) quoted;
 
   set_pf env "equalp" Lga.(any @-> any @-> ret (value any)) equalp;
   set_pf env "equal?" Lga.(any @-> any @-> ret (value any)) equalp;

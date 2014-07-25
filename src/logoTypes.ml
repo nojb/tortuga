@@ -79,6 +79,7 @@ type _ ty =
   | Karray : 'a ty -> ('a array * int) ty
   | Kany : atom ty
   | Kpred : 'a ty * ('a -> bool) * string -> 'a ty
+  | Kalt : 'a ty * 'b ty -> [ `L of 'a | `R of 'b ] ty
 
 and _ ret =
     Kcont : ((atom option -> unit) -> unit) ret
@@ -115,15 +116,13 @@ let rec argatom : type a. a ty -> a -> atom = fun ty a ->
   | Karray ty -> let a, orig = a in Array (Array.map (argatom ty) a, orig)
   | Kany -> a
   | Kpred (ty, _, _) -> argatom ty a
+  | Kalt (ty1, ty2) ->
+    match a with
+    | `L a -> argatom ty1 a
+    | `R a -> argatom ty2 a
 
 let rec minargs : type a. a fn -> int = function
-    Kfix (Kint, rest)     -> 1 + minargs rest
-  | Kfix (Knum, rest)     -> 1 + minargs rest
-  | Kfix (Kword, rest)    -> 1 + minargs rest
-  | Kfix (Klist _, rest)  -> 1 + minargs rest
-  | Kfix (Karray _, rest) -> 1 + minargs rest
-  | Kfix (Kany, rest)     -> 1 + minargs rest
-  | Kfix (Kpred _, rest)  -> 1 + minargs rest
+    Kfix (_, rest)     -> 1 + minargs rest
   | Kopt _                -> 0
   | Krest _               -> 0
   | Kret _                -> 0
@@ -139,6 +138,7 @@ let rec init : type a. a ty -> a = function
   | Karray _ -> ([| |], 0)
   | Kany -> List []
   | Kpred (ty, _, _) -> init ty
+  | Kalt (ty1, _) -> `L (init ty1)
   
 let rec matcharg : type a. a ty -> atom -> a option = fun ty a ->
   match ty, a with
@@ -177,6 +177,14 @@ let rec matcharg : type a. a ty -> atom -> a option = fun ty a ->
         if p a then Some a else None
       | None -> None
     end
+  | Kalt (ty1, ty2), a ->
+    begin match matcharg ty1 a with
+      | Some a -> Some (`L a)
+      | None ->
+        match matcharg ty2 a with
+        | Some a -> Some (`R a)
+        | None -> None
+    end
   | _ ->
     None
 
@@ -187,7 +195,8 @@ let rec argstring : type a. a ty -> string = function
   | Klist ty -> "list of " ^ argstring ty
   | Karray ty -> "array of " ^ argstring ty
   | Kany -> "any"
-  | Kpred (ty, _, s) -> Printf.sprintf "%s [%s]" (argstring ty) s
+  | Kpred (ty, _, s) -> Printf.sprintf "%s, %s" (argstring ty) s
+  | Kalt (ty1, ty2) -> Printf.sprintf "%s | %s" (argstring ty1) (argstring ty2)
 
 module Lga = struct
   let int = Kint
@@ -200,7 +209,11 @@ module Lga = struct
   let pos_num = Kpred (Knum, (fun x -> x > 0.0), "positive")
   let nn_int = Kpred (Kint, (fun x -> x >= 0), "non-negative")
   let nn_num = Kpred (Knum, (fun x -> x >= 0.0), "non-negative")
-
+  let ne_list ty = Kpred (Klist ty, (function [] -> false | _ :: _ -> true), "non-empty")
+  let alt ty1 ty2 = Kalt (ty1, ty2)
+  let fix_list ty n =
+    Kpred (Klist ty, (function l -> List.length l = n), "list of length " ^ string_of_int n)
+  
   let cont = Kcont
   let retvoid = Kretvoid
   let value ty = Kvalue ty

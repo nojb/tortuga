@@ -57,12 +57,9 @@ let left (module T : TURTLE) deg =
 let right (module T : TURTLE) deg =
   T.turn deg
 
-let setpos (module T : TURTLE) = function
-    [x; y] ->
-    T.set_pos x y
-  | _ ->
-    raise (Error "setpos: bad args")
-
+let setpos (module T : TURTLE) l =
+  T.set_pos (List.nth l 0) (List.nth l 1)
+  
 let setxy (module T : TURTLE) x y =
   T.set_pos x y
 
@@ -122,7 +119,7 @@ let init env =
   set_pf env "lt" Lga.(turtle @@ int @-> ret retvoid) left;
   set_pf env "right" Lga.(turtle @@ int @-> ret retvoid) right;
   set_pf env "rt" Lga.(turtle @@ int @-> ret retvoid) right;
-  set_pf env "setpos" Lga.(turtle @@ list int @-> ret retvoid) setpos;
+  set_pf env "setpos" Lga.(turtle @@ fix_list int 2 @-> ret retvoid) setpos;
   set_pf env "setxy" Lga.(turtle @@ int @-> int @-> ret retvoid) setxy;
   set_pf env "setx" Lga.(turtle @@ int @-> ret retvoid) setx;
   set_pf env "sety" Lga.(turtle @@ int @-> ret retvoid) sety;

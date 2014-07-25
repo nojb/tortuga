@@ -36,6 +36,8 @@ val get_routine : env -> string -> proc
 
 val set_global : env -> string -> atom -> unit
 val get_global : env -> string -> atom
-
+val has_global : env -> string -> bool
+  
 val set_var : env -> string -> atom -> unit
 val get_var : env -> string -> atom
+val has_var : env -> string -> bool

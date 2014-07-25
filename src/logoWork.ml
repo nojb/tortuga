@@ -19,6 +19,8 @@
    IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
    CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. *)
 
+(** 7. Workspace Management *)
+
 open LogoTypes
 open LogoAtom
 open LogoEnv
@@ -31,6 +33,20 @@ let make env varname value =
 let name env value varname =
   set_var env varname value
 
+(** 7.4 Workspace Predicates *)
+
+let definedp env name =
+  if has_routine env name then true_word else false_word
+
+let namep env name =
+  if has_var env name then true_word else false_word
+  
 let init env =
   set_pf env "make" Lga.(env @@ word @-> any @-> ret retvoid) make;
-  set_pf env "name" Lga.(env @@ any @-> word @-> ret retvoid) name
+  set_pf env "name" Lga.(env @@ any @-> word @-> ret retvoid) name;
+
+  set_pf env "definedp" Lga.(env @@ word @-> ret (value any)) definedp;
+  set_pf env "defined?" Lga.(env @@ word @-> ret (value any)) definedp;
+  set_pf env "namep" Lga.(env @@ word @-> ret (value any)) namep;
+  set_pf env "name?" Lga.(env @@ word @-> ret (value any)) namep
+  

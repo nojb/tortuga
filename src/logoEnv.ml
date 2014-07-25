@@ -67,6 +67,9 @@ let get_global env name =
     H.add env.globals name a;
     a
 
+let has_global env name =
+  H.mem env.globals name
+
 let set_var env name data =
   match env.locals with
   | [] ->
@@ -80,5 +83,14 @@ let get_var env name =
       get_global env name
     | top :: rest ->
       try H.find top name with | Not_found -> loop rest
+  in
+  loop env.locals
+
+let has_var env name =
+  let rec loop = function
+    | [] ->
+      has_global env name
+    | top :: rest ->
+      H.mem top name || loop rest
   in
   loop env.locals
