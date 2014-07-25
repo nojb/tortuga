@@ -121,13 +121,9 @@ let setpencolor (module T : TURTLE) cn =
   in
   T.set_color c
 
-(* let render (module T : TURTLE) name = *)
-(*   let name = try sexpr name with _ -> raise (Error "render: bad args") in *)
-(*   let out = open_out_bin (name ^ ".pdf") in *)
-(*   render turtle out; *)
-(*   close_out out; *)
-(*   turtle *)
-    
+let setpensize (module T : TURTLE) size =
+  T.set_size size
+
 let init env =
   set_pf env "forward" Lga.(turtle @@ int @-> ret retvoid) forward;
   set_pf env "fd" Lga.(turtle @@ int @-> ret retvoid) forward;
@@ -153,6 +149,8 @@ let init env =
   set_pf env "clean" Lga.(turtle @@ ret retvoid) clean;
   set_pf env "clearscreen" Lga.(turtle @@ ret retvoid) clearscreen;
 
-  set_pf env "setpencolor" Lga.(turtle @@ int @-> ret retvoid) setpencolor
+  set_pf env "setpencolor" Lga.(turtle @@ int @-> ret retvoid) setpencolor;
+  (* setpalette *)
+  set_pf env "setpensize" Lga.(turtle @@ int @-> ret retvoid) setpensize
     
   (* set_pft1 env "render" render *)

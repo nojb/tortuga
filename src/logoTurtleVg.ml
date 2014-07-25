@@ -81,7 +81,10 @@ let arc angle r =
   (* let p = P.earc ~large:false ~angle (Size2.v r r) dst (P.sub src P.empty) in *)
   (* let outline = I.cut ~area:(`O P.o) p base in *)
   (* let image = outline >> I.blend t.image in *)
-  (* { t with image } *)
+(* { t with image } *)
+
+let set_size size =
+  () (* TODO *)
 
 let clean_screen () =
   t := { !t with point = V2.zero; image = I.void }

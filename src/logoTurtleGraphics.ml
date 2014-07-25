@@ -63,6 +63,9 @@ let turn r =
 
 let arc angle r =
   G.draw_arc (G.current_x ()) (G.current_y ()) r r !theta (!theta - r)
+
+let set_size sz =
+  G.set_line_width sz
   
 let clean_screen () =
   G.clear_graph ()
