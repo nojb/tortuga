@@ -126,7 +126,7 @@ let rec matcharg : type a. a ty -> atom -> a option = fun ty a ->
     if n = float n1 then Some n1 else None
   | Knum, Num n -> Some n
   | Kword, Word s -> Some s
-  | Kword, Num n -> Some (string_of_float n)
+  | Kword, Num n -> Some (Printf.sprintf "%g" n)
   | Klist ty, List l ->
     let rec loop = function
       | [] -> []
