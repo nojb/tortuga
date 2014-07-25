@@ -24,10 +24,6 @@ open LogoAtom
 open LogoEnv
 open LogoPredicates
 
-exception Throw of string * atom option
-exception Toplevel
-exception Bye
-
 let stringfrom pos str =
   String.sub str pos (String.length str - pos)
 

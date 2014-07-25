@@ -23,7 +23,11 @@ open LogoTypes
 open LogoAtom
 open LogoEnv
 open LogoEval
-    
+
+exception Throw of string * atom option
+exception Toplevel
+exception Bye
+
 let run env list k =
   execute env (reparse list) k
     

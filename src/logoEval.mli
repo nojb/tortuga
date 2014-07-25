@@ -21,10 +21,6 @@
 
 open LogoTypes
 
-exception Throw of string * atom option
-exception Toplevel
-exception Bye
-  
 val expression : env -> atom Stream.t -> (atom -> unit) -> unit
 val command : env -> atom Stream.t -> (unit -> unit) -> unit
 val execute : env -> atom Stream.t -> (atom option -> unit) -> unit
