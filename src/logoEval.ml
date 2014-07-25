@@ -96,12 +96,6 @@ and unary_expression env strm k =
     final_expression env strm k
 
 and final_expression env strm k =
-  let isnumber =
-    (* keep in sync with [number_literal] in LogoLex.mll *)
-    let re = Str.regexp "[0-9]*\\.?[0-9]+\\([eE][-+]?[0-9]+\\)?" in
-    fun w ->
-      Str.string_match re w 0 && Str.match_end () = String.length w
-  in
   match Stream.peek strm with
   | Some (Num _) ->
     assert false

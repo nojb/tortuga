@@ -25,6 +25,22 @@ type atom =
   | List of atom list
   | Array of atom array * int
 
+let isnumber =
+    (* keep in sync with [number_literal] in LogoLex.mll *)
+    let re = Str.regexp "[0-9]*\\.?[0-9]+\\([eE][-+]?[0-9]+\\)?" in
+    fun w ->
+      Str.string_match re w 0 && Str.match_end () = String.length w
+
+let isint s =
+  let rec loop i =
+    if i >= String.length s then true
+    else
+      match s.[i] with
+      | '0' .. '9' -> loop (i+1)
+      | _ -> false
+  in
+  loop 0
+
 exception Error of string
 
 let error fmt =
@@ -125,6 +141,8 @@ let rec matcharg : type a. a ty -> atom -> a option = fun ty a ->
     let n1 = truncate n in
     if n = float n1 then Some n1 else None
   | Knum, Num n -> Some n
+  | Knum, Word s -> if isnumber s then Some (float_of_string s) else None
+  | Kint, Word s -> if isint s then Some (int_of_string s) else None
   | Kword, Word s -> Some s
   | Kword, Num n -> Some (Printf.sprintf "%g" n)
   | Klist ty, List l ->

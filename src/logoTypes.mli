@@ -25,6 +25,9 @@ type atom =
   | List of atom list
   | Array of atom array * int
 
+val isnumber : string -> bool
+val isint : string -> bool
+
 exception Error of string
 
 val error : ('a, unit, string, 'b) format4 -> 'a
