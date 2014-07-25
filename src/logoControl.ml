@@ -135,6 +135,25 @@ let bye () =
 
 let ignore _ =
   ()
+
+let do_while env list expr =
+  let list = parse (sprint_list () list) in
+  let expr = parse (sprint_list () expr) in
+  let rec loop () =
+    instructionlist env (Stream.of_list list)
+      (function
+          None ->
+          expression env (Stream.of_list expr) (function
+              | Word a ->
+                let a = String.uppercase a in
+                if a = "TRUE" then loop ()
+                else if a = "FALSE" then ()
+                else error "do.while condition should produce true or false"
+              | _ ->
+                error "do.while condition should produce true or false")
+        | Some a -> error "do.while should not produce a value, got %a" sprint a)
+  in
+  loop ()
       
 let init env =
   set_pf env "run" Lga.(env @@ list any @-> ret cont) run;
@@ -150,4 +169,5 @@ let init env =
   set_pf env "pause" Lga.(env @@ ret cont) pause;
   set_pf env "continue" Lga.(env @@ opt any cont) continue;
   set_pf env "bye" Lga.(void @@ ret retvoid) bye;
-  set_pf env "ignore" Lga.(any @-> ret retvoid) ignore
+  set_pf env "ignore" Lga.(any @-> ret retvoid) ignore;
+  set_pf env "do.while" Lga.(env @@ list any @-> list any @-> ret retvoid) do_while
