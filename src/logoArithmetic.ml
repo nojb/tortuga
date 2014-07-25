@@ -92,6 +92,22 @@ let rerandom = function
   | Some num ->
     Random.init num
 
+(** 4.4 Print Formatting *)
+
+let form num width precision =
+  (* TODO check that width, precision >= 0 *)
+  Printf.sprintf "%*.*f" width precision num
+
+(* TODO As a debugging feature, (FORM num -1 format) will print the floating
+   point num according to the C printf format, to allow
+	
+to hex :num
+op form :num -1 "|%08X %08X|
+end
+
+   to allow finding out the exact result of floating point operations. The precise
+   format needed may be machine-dependent. *)
+
 let init env =
   set_pf env "sum" Lga.(num @-> num @-> rest num (value num)) sum;
   set_pf env "difference" Lga.(num @-> num @-> ret (value num)) difference;
@@ -103,4 +119,5 @@ let init env =
   set_pf env "sqrt" Lga.(num @-> ret (value num)) sqrt;
   set_pf env "power" Lga.(num @-> num @-> ret (value num)) power;
   set_pf env "random" Lga.(int @-> opt int (value int)) random;
-  set_pf env "rerandom" Lga.(opt int retvoid) rerandom
+  set_pf env "rerandom" Lga.(opt int retvoid) rerandom;
+  set_pf env "form" Lga.(num @-> int @-> int @-> ret (value word)) form
