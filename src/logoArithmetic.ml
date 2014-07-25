@@ -97,16 +97,21 @@ let rerandom = function
 let form num width precision =
   (* TODO check that width, precision >= 0 *)
   Printf.sprintf "%*.*f" width precision num
+(* TODO width = -1, precision = format for debuggin, use Sscanf.format_of_string *)
 
-(* TODO As a debugging feature, (FORM num -1 format) will print the floating
-   point num according to the C printf format, to allow
-	
-to hex :num
-op form :num -1 "|%08X %08X|
-end
+(** 4.5 Bitwise Operations *)
 
-   to allow finding out the exact result of floating point operations. The precise
-   format needed may be machine-dependent. *)
+let bitand num1 num2 nums =
+  List.fold_left (land) (num1 land num2) nums
+
+let bitor num1 num2 nums =
+  List.fold_left (lor) (num1 lor num2) nums
+
+let bitxor num1 num2 nums =
+  List.fold_left (lxor) (num1 lxor num2) nums
+
+let bitnot num =
+  lnot num
 
 let init env =
   set_pf env "sum" Lga.(num @-> num @-> rest num (value num)) sum;
@@ -120,4 +125,8 @@ let init env =
   set_pf env "power" Lga.(num @-> num @-> ret (value num)) power;
   set_pf env "random" Lga.(int @-> opt int (value int)) random;
   set_pf env "rerandom" Lga.(opt int retvoid) rerandom;
-  set_pf env "form" Lga.(num @-> int @-> int @-> ret (value word)) form
+  set_pf env "form" Lga.(num @-> int @-> int @-> ret (value word)) form;
+  set_pf env "bitand" Lga.(int @-> int @-> rest int (value int)) bitand;
+  set_pf env "bitor" Lga.(int @-> int @-> rest int (value int)) bitor;
+  set_pf env "bitxor" Lga.(int @-> int @-> rest int (value int)) bitxor;
+  set_pf env "bitnot" Lga.(int @-> ret (value int)) bitnot
