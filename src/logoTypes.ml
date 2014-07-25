@@ -78,6 +78,7 @@ type _ ty =
   | Klist : 'a ty -> 'a list ty
   | Karray : 'a ty -> ('a array * int) ty
   | Kany : atom ty
+  | Kpred : 'a ty * ('a -> bool) * string -> 'a ty
 
 and _ ret =
     Kcont : ((atom option -> unit) -> unit) ret
@@ -113,6 +114,7 @@ let rec argatom : type a. a ty -> a -> atom = fun ty a ->
   | Klist ty -> List (List.map (argatom ty) a)
   | Karray ty -> let a, orig = a in Array (Array.map (argatom ty) a, orig)
   | Kany -> a
+  | Kpred (ty, _, _) -> argatom ty a
 
 let rec minargs : type a. a fn -> int = function
     Kfix (Kint, rest)     -> 1 + minargs rest
@@ -121,6 +123,7 @@ let rec minargs : type a. a fn -> int = function
   | Kfix (Klist _, rest)  -> 1 + minargs rest
   | Kfix (Karray _, rest) -> 1 + minargs rest
   | Kfix (Kany, rest)     -> 1 + minargs rest
+  | Kfix (Kpred _, rest)  -> 1 + minargs rest
   | Kopt _                -> 0
   | Krest _               -> 0
   | Kret _                -> 0
@@ -128,13 +131,14 @@ let rec minargs : type a. a fn -> int = function
   | Kenv rest             -> minargs rest 
   | Kturtle rest          -> minargs rest
 
-let init : type a. a ty -> a = function
+let rec init : type a. a ty -> a = function
   | Kint -> 0
   | Knum -> 0.0
   | Kword -> ""
   | Klist _ -> []
   | Karray _ -> ([| |], 0)
   | Kany -> List []
+  | Kpred (ty, _, _) -> init ty
   
 let rec matcharg : type a. a ty -> atom -> a option = fun ty a ->
   match ty, a with
@@ -167,6 +171,12 @@ let rec matcharg : type a. a ty -> atom -> a option = fun ty a ->
       with Exit -> None
     end
   | Kany, _ -> Some a
+  | Kpred (ty, p, _), a ->
+    begin match matcharg ty a with
+      | Some a ->
+        if p a then Some a else None
+      | None -> None
+    end
   | _ ->
     None
 
@@ -177,6 +187,7 @@ let rec argstring : type a. a ty -> string = function
   | Klist ty -> "list of " ^ argstring ty
   | Karray ty -> "array of " ^ argstring ty
   | Kany -> "any"
+  | Kpred (ty, _, s) -> Printf.sprintf "%s [%s]" (argstring ty) s
 
 module Lga = struct
   let int = Kint
@@ -185,6 +196,10 @@ module Lga = struct
   let list ty = Klist ty
   let array ty = Karray ty
   let any = Kany
+  let pos_int = Kpred (Kint, (fun x -> x > 0), "positive")
+  let pos_num = Kpred (Knum, (fun x -> x > 0.0), "positive")
+  let nn_int = Kpred (Kint, (fun x -> x >= 0), "non-negative")
+  let nn_num = Kpred (Knum, (fun x -> x >= 0.0), "non-negative")
 
   let cont = Kcont
   let retvoid = Kretvoid

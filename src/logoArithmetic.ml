@@ -63,11 +63,8 @@ let round num =
   floor (num +. 0.5)
 
 let sqrt num =
-  if num >= 0.0 then
-    sqrt num
-  else
-    error "sqrt: argument must be non-negative"
-
+  sqrt num
+  
 let power a b = a ** b
 
 (** 4.2 Numeric Predicates *)
@@ -141,7 +138,7 @@ let init env =
   set_pf env "remainder" Lga.(num @-> num @-> ret (value num)) remainder;
   set_pf env "int" Lga.(num @-> ret (value int)) int;
   set_pf env "round" Lga.(num @-> ret (value num)) round;
-  set_pf env "sqrt" Lga.(num @-> ret (value num)) sqrt;
+  set_pf env "sqrt" Lga.(nn_num @-> ret (value num)) sqrt;
   set_pf env "power" Lga.(num @-> num @-> ret (value num)) power;
 
   set_pf env "lessp" Lga.(num @-> num @-> ret (value any)) lessp;

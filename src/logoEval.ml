@@ -22,7 +22,6 @@
 open LogoTypes
 open LogoAtom
 open LogoEnv
-open LogoPredicates
 
 let stringfrom pos str =
   String.sub str pos (String.length str - pos)

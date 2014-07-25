@@ -56,6 +56,7 @@ type _ ty =
   | Klist : 'a ty -> 'a list ty
   | Karray : 'a ty -> ('a array * int) ty
   | Kany : atom ty
+  | Kpred : 'a ty * ('a -> bool) * string -> 'a ty
 
 and _ ret =
     Kcont : ((atom option -> unit) -> unit) ret
@@ -101,6 +102,10 @@ module Lga : sig
   val list : 'a ty -> 'a list ty
   val array : 'a ty -> ('a array * int) ty
   val any : atom ty
+  val pos_int : int ty
+  val pos_num : float ty
+  val nn_int : int ty
+  val nn_num : float ty
 
   val cont : ((atom option -> unit) -> unit) ret
   val retvoid : unit ret
