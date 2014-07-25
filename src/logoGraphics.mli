@@ -21,7 +21,7 @@
 
 open LogoTypes
 
-val blank : Gg.color
+val black : Gg.color
 val blue : Gg.color
 val lime : Gg.color
 val cyan : Gg.color
@@ -36,6 +36,6 @@ val aquamarine : Gg.color
 val salmon : Gg.color
 val purple : Gg.color
 val orange : Gg.color
-val gray : Gg.color
+val grey : Gg.color
   
 val init : env -> unit

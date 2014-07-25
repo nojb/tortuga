@@ -24,8 +24,6 @@ open LogoAtom
 open LogoEnv
 open LogoEval
   
-let _ = Random.self_init ()
-
 module Constructors = struct
   let word word1 word2 words =
     String.concat "" (word1 :: word2 :: words)

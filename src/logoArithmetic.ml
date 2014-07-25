@@ -19,6 +19,8 @@
    IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
    CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. *)
 
+(** 4. Arithmetic *)
+
 open LogoTypes
 open LogoAtom
 open LogoEnv
@@ -68,6 +70,28 @@ let sqrt num =
 
 let power a b = a ** b
 
+(** 4.3 Random Numbers *)
+
+let initial_seed = 1728
+
+let _ = Random.init initial_seed
+
+let random num1 num2 =
+  match num2 with
+  | None ->
+    if num1 > 0 then Random.int num1
+    else error "random: argument must be positive"
+  | Some num2 ->
+    let d = num2 - num1 in
+    if d > 0 then Random.int d + num1
+    else error "random: first arg (%i) must be less than second arg (%i) " num1 num2
+
+let rerandom = function
+  | None ->
+    Random.init initial_seed
+  | Some num ->
+    Random.init num
+
 let init env =
   set_pf env "sum" Lga.(num @-> num @-> rest num (value num)) sum;
   set_pf env "difference" Lga.(num @-> num @-> ret (value num)) difference;
@@ -77,4 +101,6 @@ let init env =
   set_pf env "int" Lga.(num @-> ret (value int)) int;
   set_pf env "round" Lga.(num @-> ret (value num)) round;
   set_pf env "sqrt" Lga.(num @-> ret (value num)) sqrt;
-  set_pf env "power" Lga.(num @-> num @-> ret (value num)) power
+  set_pf env "power" Lga.(num @-> num @-> ret (value num)) power;
+  set_pf env "random" Lga.(int @-> opt int (value int)) random;
+  set_pf env "rerandom" Lga.(opt int retvoid) rerandom

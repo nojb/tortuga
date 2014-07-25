@@ -19,12 +19,14 @@
    IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
    CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. *)
 
+(** 6. Graphics *)
+
 open Gg
 open LogoTypes
 open LogoAtom
 open LogoEnv
   
-let blank = Color.black
+let black = Color.black
 let blue = Color.blue
 let lime = Color.v_srgbi 191 255 0
 let cyan = Color.v_srgbi 0 255 255
@@ -39,7 +41,9 @@ let aquamarine = Color.v_srgbi 127 255 212
 let salmon = Color.v_srgbi 250 128 114
 let purple = Color.v_srgbi 128 0 128
 let orange = Color.v_srgbi 255 127 0
-let gray = Color.v_srgbi 128 128 128
+let grey = Color.v_srgbi 128 128 128
+
+(** 6.1 Turtle Motion *)
 
 let forward (module T : TURTLE) dist =
   T.move dist
@@ -77,6 +81,10 @@ let home (module T : TURTLE) =
   T.set_pos 0 0;
   T.set_heading 0
 
+(** 6.2 Turtle Motion Queries *)
+
+(** 6.3 Turtle and Window Control *)
+
 let clean (module T : TURTLE) =
   T.clean_screen ()
 
@@ -84,6 +92,19 @@ let clearscreen (module T : TURTLE) =
   T.set_pos 0 0;
   T.set_heading 0;
   T.clean_screen ()
+
+(** 6.5 Pen and Background Control *)
+
+let setpencolor (module T : TURTLE) cn =
+  let c = match cn with
+      0 -> black | 1 -> blue | 2 -> green | 3 -> cyan
+    | 4 -> red | 5 -> magenta | 6 -> yellow | 7 -> white
+    | 8 -> brown | 9 -> tan | 10 -> green | 11 -> aquamarine
+    | 12 -> salmon | 13 -> purple | 14 -> orange
+    | 15 -> grey
+    | _ -> error "setpencolor: unknown color %i" cn
+  in
+  T.set_color c
 
 (* let render (module T : TURTLE) name = *)
 (*   let name = try sexpr name with _ -> raise (Error "render: bad args") in *)
@@ -109,6 +130,8 @@ let init env =
   set_pf env "home" Lga.(turtle @@ ret retvoid) home;
 
   set_pf env "clean" Lga.(turtle @@ ret retvoid) clean;
-  set_pf env "clearscreen" Lga.(turtle @@ ret retvoid) clearscreen
+  set_pf env "clearscreen" Lga.(turtle @@ ret retvoid) clearscreen;
+
+  set_pf env "setpencolor" Lga.(turtle @@ int @-> ret retvoid) setpencolor
     
   (* set_pft1 env "render" render *)
