@@ -29,7 +29,7 @@ let make_env () =
   LogoPrim.Constructors.init env;
   LogoPrim.DataSelectors.init env;
   LogoPrim.Transmitters.init env;
-  LogoPrim.Control.init env;
+  LogoControl.init env;
   LogoWork.init env;
   LogoGraphics.init env;
   env
