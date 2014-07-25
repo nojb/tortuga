@@ -20,7 +20,9 @@
    CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. *)
 
 open LogoTypes
-  
+
+exception Throw of string * atom option
+exception Toplevel
 exception Bye
   
 val expression : env -> atom Stream.t -> (atom -> unit) -> unit

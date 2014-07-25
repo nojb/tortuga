@@ -44,8 +44,15 @@ let main () =
         let strm = Stream.of_list (LogoLex.parse_atoms [] false lexbuf) in
         toplevel env strm
       with
+      | LogoEval.Toplevel ->
+        ()
       | LogoLex.Error err ->
         Format.fprintf Format.std_formatter "%a.@." LogoLex.report_error err
+      | LogoEval.Throw (tag, None) ->
+        Format.fprintf Format.std_formatter "Unhandled exception with tag %S@." tag
+      | LogoEval.Throw (tag, Some a) ->
+        Format.fprintf Format.std_formatter "Unhandled exception with tag %S, value %a@." tag
+          LogoAtom.pp_print a
       | Error err ->
         Format.fprintf Format.std_formatter "%s.@." err
       | exn ->

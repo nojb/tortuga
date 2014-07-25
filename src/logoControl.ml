@@ -92,6 +92,29 @@ let stop env =
 let output env thing =
   output env (Some thing)
 
+let catch env tag list k =
+  try
+    execute env (reparse list) k
+  with
+    Error _ when String.uppercase tag = "ERROR" ->
+    (* TODO Also, during the running of the instructionlist, the variable ERRACT
+       is temporarily unbound. (If there is an error while ERRACT has a value, that
+       value is taken as an instructionlist to be run after printing the error
+       message. Typically the value of ERRACT, if any, is the list [PAUSE].) *)
+    k None
+  | Throw (tag', v) when String.uppercase tag = String.uppercase tag' ->
+    k v
+
+let throw tag value =
+  if String.uppercase tag = "ERROR" then
+    raise (Error (match value with Some value -> sprint () value | None -> ""))
+  else if String.uppercase tag = "SYSTEM" then
+    raise Bye
+  else if String.uppercase tag = "TOPLEVEL" then
+    raise Toplevel
+  else
+    raise (Throw (tag, value))
+
 let bye () =
   raise Bye
       
@@ -104,4 +127,6 @@ let init env =
   set_pf env "ifelse" Lga.(env @@ word @-> list any @-> list any @-> ret cont) ifelse;
   set_pf env "stop" Lga.(env @@ ret retvoid) stop;
   set_pf env "output" Lga.(env @@ any @-> ret retvoid) output;
+  set_pf env "catch" Lga.(env @@ word @-> list any @-> ret cont) catch;
+  set_pf env "throw" Lga.(word @-> opt any retvoid) throw;
   set_pf env "bye" Lga.(void @@ ret retvoid) bye
