@@ -236,7 +236,42 @@ let quoted = function
 
 (** 2.4 Predicates *)
 
+(* TODO fix conversion between numbers and words *)
+let rec equalaux a b =
+  match a, b with
+  | Num n, Num m -> n = m
+  | Word w1, Word w2 -> w1 == w2
+  | List l1, List l2 -> List.length l1 = List.length l2 && List.for_all2 equalaux l1 l2
+  | Array (a1, _), Array (a2, _) -> a1 == a2
+  | _ -> false
+
+let equalp a b =
+  if equalaux a b then true_word else false_word
+
+let notequalp a b =
+  if equalaux a b then false_word else true_word
+
+let beforep a b =
+  if a < b then true_word else false_word
+
+let _eq a b =
+  if a == b then true_word else false_word
+
+let numberp = function
+  | Num _ ->
+    true_word
+  | Word n ->
+    if isnumber n then true_word else false_word
+  | _ ->
+    false_word
+
 (** 2.5 Queries *)
+
+let count = function
+  | Num n -> String.length (Printf.sprintf "%g" n)
+  | Word w -> String.length w
+  | List l -> List.length l
+  | Array (a, _) -> Array.length a
 
 let init env =
   set_pf env "word" Lga.(word @-> word @-> rest word (value word)) word;
@@ -257,5 +292,17 @@ let init env =
   (* set_pf1 env "last" last; *)
   (* set_pf1 env "butfirst" butfirst; *)
   set_pf env "item" Lga.(int @-> any @-> ret (value any)) item;
-  set_pf env "pick" Lga.(list any @-> ret (value any)) pick
+  set_pf env "pick" Lga.(list any @-> ret (value any)) pick;
   (* set_pf1 env "quoted" quoted *)
+
+  set_pf env "equalp" Lga.(any @-> any @-> ret (value any)) equalp;
+  set_pf env "equal?" Lga.(any @-> any @-> ret (value any)) equalp;
+  set_pf env "notequalp" Lga.(any @-> any @-> ret (value any)) notequalp;
+  set_pf env "notequal?" Lga.(any @-> any @-> ret (value any)) notequalp;
+  set_pf env "beforep" Lga.(word @-> word @-> ret (value any)) beforep;
+  set_pf env ".eq" Lga.(any @-> any @-> ret (value any)) _eq;
+  (* missing : "memberp" *)
+  (* set_pf env "substringp" Lga.(any @-> any @-> ret (value any)) substringp *)
+  set_pf env "numberp" Lga.(any @-> ret (value any)) numberp;
+
+  set_pf env "count" Lga.(any @-> ret (value int)) count

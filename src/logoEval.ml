@@ -37,12 +37,12 @@ and relational_expression env strm k =
         additive_expression env strm (fun rhs -> loop (op lhs rhs))
       and loop lhs =
         match Stream.peek strm with
-        | Some (Word "=") -> app Predicates.equalp lhs
+        (* | Some (Word "=") -> app LogoPrim.equalp lhs *)
         (* | Some (Word "<") -> app LogoArithmetic.lessp lhs *)
         (* | Some (Word ">") -> app LogoArithmetic.greaterp lhs *)
         (* | Some (Word "<=") -> app LogoArithmetic.lessequalp lhs *)
         (* | Some (Word ">=") -> app LogoArithmetic.greaterequalp lhs *)
-        | Some (Word "<>") -> app Predicates.notequalp lhs
+        (* | Some (Word "<>") -> app LogoPrim.notequalp lhs *)
         | _ -> k lhs
       in
       loop lhs)
