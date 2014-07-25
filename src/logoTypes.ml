@@ -26,7 +26,10 @@ type atom =
   | Array of atom array * int
 
 exception Error of string
-    
+
+let error fmt =
+  Printf.ksprintf (fun err -> raise (Error err)) fmt
+
 module type TURTLE = sig
   val get_heading : unit -> int
   val set_heading : int -> unit
@@ -147,6 +150,14 @@ let rec matcharg : type a. a ty -> atom -> a option = fun ty a ->
   | Kany, _ -> Some a
   | _ ->
     None
+
+let rec argstring : type a. a ty -> string = function
+  | Kint -> "integer"
+  | Kword -> "word"
+  | Knum -> "number"
+  | Klist ty -> "list of " ^ argstring ty
+  | Karray ty -> "array of " ^ argstring ty
+  | Kany -> "any"
 
 module Lga = struct
   let int = Kint

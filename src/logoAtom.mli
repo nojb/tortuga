@@ -23,8 +23,6 @@ open LogoTypes
   
 val sexpr : atom -> string
 
-(* val iexpr : atom -> int *)
-
 val num_atom : atom -> string -> float
 
 val int_atom : atom -> string -> int

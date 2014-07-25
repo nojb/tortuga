@@ -27,6 +27,8 @@ type atom =
 
 exception Error of string
 
+val error : ('a, unit, string, 'b) format4 -> 'a
+
 module type TURTLE = sig
   val get_heading : unit -> int
   val set_heading : int -> unit
@@ -80,6 +82,7 @@ and env = {
 val argatom : 'a ty -> 'a -> atom
 val minargs : 'a fn -> int
 val matcharg : 'a ty -> atom -> 'a option
+val argstring : 'a ty -> string
 
 module Lga : sig
   val int : int ty

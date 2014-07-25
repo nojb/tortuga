@@ -61,8 +61,10 @@ let round num =
   floor (num +. 0.5)
 
 let sqrt num =
-  if num >= 0.0 then sqrt num
-  else raise (Error "sqrt: NUM must be non-negative")
+  if num >= 0.0 then
+    sqrt num
+  else
+    error "sqrt: argument must be non-negative"
 
 let power a b = a ** b
 

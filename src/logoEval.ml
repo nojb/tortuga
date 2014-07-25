@@ -123,7 +123,7 @@ and final_expression env strm k =
     else
       apply env w strm (function
           | Some a -> k a
-          | None -> raise (Error (w ^ ": expected result !")))
+          | None -> error "%s did not produce a result" w)
   | None ->
     assert false
 
@@ -139,10 +139,10 @@ and apply env w strm k =
           | Some (Word ")") ->
             Stream.junk strm;
             k (Some result)
-          | Some _ ->
-            raise (Error "expected ')', saw somethign else")
+          | Some a ->
+            error "expected ')', found %a" sprint a
           | None ->
-            raise (Error "expected ')'"))
+            error "expected ')'")
   else
     dispatch env w strm true k
 
@@ -170,7 +170,7 @@ and dispatch env proc strm natural k =
     try
       get_routine env proc
     with
-    | Not_found -> raise (Error ("Don't know how to " ^ String.uppercase proc))
+    | Not_found -> error "Don't know how to %s" (String.uppercase proc)
   in
   getargs (minargs fn) natural begin fun args ->
     let return : type a. a ret -> a -> unit = fun ret f ->
@@ -191,11 +191,13 @@ and dispatch env proc strm natural k =
       | Kturtle fn, _ ->
         loop i fn args (f env.turtle)
       | Kfix _, [] ->
-        raise (Error "not enough arguments")
+        error "%s requires at least %d more arguments" (String.uppercase proc) (minargs fn)
       | Kfix (typ, fn), a :: args ->
         begin match matcharg typ a with
           | Some a -> loop (i+1) fn args (f a)
-          | None -> raise (Error (Printf.sprintf "argument %i does not have the right type" i))
+          | None ->
+            error "argument %i of %s should be a %s, found %a" i (String.uppercase proc)
+              (argstring typ) sprint a
         end
       | Kopt (_, ret), [] ->
         return ret (f None)
@@ -203,10 +205,11 @@ and dispatch env proc strm natural k =
         begin match matcharg ty a with
           | Some _ as a -> return ret (f a)
           | None ->
-            raise (Error (Printf.sprintf "optional arguemtn %i does not have the right type" i))
+            error "optional argument %i of %s should be a %s, found %a" i (String.uppercase proc)
+              (argstring ty) sprint a
         end
       | Kopt _, _ :: _ :: _ ->
-        raise (Error "too many arguments")
+        error "too many arguments for %s" (String.uppercase proc)
       | Krest (ty, ret), args ->
         let args = List.map (fun a ->
             match matcharg ty a with
@@ -215,7 +218,7 @@ and dispatch env proc strm natural k =
       | Kret ret, [] ->
         return ret f
       | Kret _, _ :: _ ->
-        raise (Error "too many arguments")
+        error "too many arguments for %s" (String.uppercase proc)
     in
     loop 1 fn args f
   end
@@ -253,9 +256,11 @@ let command env strm k =
     apply env w strm
       (function
         | None -> k ()
-        | Some a -> raise (Error ("Don't know what to do with ...")))
-  | _ ->
-    raise (Error ("Bad head"))
+        | Some a -> error "don't know what to do with %a" sprint a)
+  | Some a ->
+    error "don't know how to %a" sprint a
+  | None ->
+    error "premature eof"
 
 let execute env strm k =
   let env = new_exit env k in
