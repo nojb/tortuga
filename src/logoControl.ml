@@ -27,6 +27,7 @@ open LogoEval
 exception Throw of string * atom option
 exception Toplevel
 exception Bye
+exception Pause of env
 
 let run env list k =
   execute env (reparse list) k
@@ -90,10 +91,10 @@ let ifelse env tf iftrue iffalse k =
   else
     raise (Error "ifelse: first argument should be either TRUE or FALSE")
       
-let stop env =
+let stop env _ =
   output env None
              
-let output env thing =
+let output env thing _ =
   output env (Some thing)
 
 let catch env tag list k =
@@ -119,6 +120,12 @@ let throw tag value =
   else
     raise (Throw (tag, value))
 
+let pause env k =
+  raise (Pause (new_continue env k))
+
+let continue env value _ =
+  continue env value
+
 let bye () =
   raise Bye
       
@@ -129,8 +136,10 @@ let init env =
   set_pf env "forever" Lga.(env @@ list any @-> ret retvoid) forever;
   set_pf env "if" Lga.(env @@ word @-> list any @-> opt (list any) cont)  ifthen;
   set_pf env "ifelse" Lga.(env @@ word @-> list any @-> list any @-> ret cont) ifelse;
-  set_pf env "stop" Lga.(env @@ ret retvoid) stop;
-  set_pf env "output" Lga.(env @@ any @-> ret retvoid) output;
+  set_pf env "stop" Lga.(env @@ ret cont) stop;
+  set_pf env "output" Lga.(env @@ any @-> ret cont) output;
   set_pf env "catch" Lga.(env @@ word @-> list any @-> ret cont) catch;
   set_pf env "throw" Lga.(word @-> opt any retvoid) throw;
+  set_pf env "pause" Lga.(env @@ ret cont) pause;
+  set_pf env "continue" Lga.(env @@ opt any cont) continue;
   set_pf env "bye" Lga.(void @@ ret retvoid) bye

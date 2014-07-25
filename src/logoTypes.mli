@@ -79,13 +79,20 @@ and env = {
   globals : atom H.t;
   locals : atom H.t list;
   output : atom option -> unit;
-  turtle : turtle
+  turtle : turtle;
+  continue : atom option -> unit
 }
 
 val argatom : 'a ty -> 'a -> atom
 val minargs : 'a fn -> int
 val matcharg : 'a ty -> atom -> 'a option
 val argstring : 'a ty -> string
+
+(** Very important: procedures that can potentially altern the natural control
+    flow by calling some other coninuation than the standard one, MUST use the
+    'cont' return type.  Otherwise the standard continuation will be called
+    anyways.  This includes e.g. all the procedures in the LogoControl
+    module. *)
 
 module Lga : sig
   val int : int ty

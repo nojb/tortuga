@@ -26,6 +26,8 @@ val create_env : turtle -> env
 val new_frame : env -> env
 val new_exit : env -> (atom option -> unit) -> env
 val output : env -> atom option -> unit
+val new_continue : env -> (atom option -> unit) -> env
+val continue : env -> atom option -> unit
 
 val set_pf : env -> string -> 'a fn -> 'a -> unit
   

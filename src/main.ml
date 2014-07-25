@@ -37,13 +37,15 @@ let make_env () =
 let main () =
   let lexbuf = Lexing.from_channel stdin in
   let env = make_env () in
-  let rec loop () =
+  let rec loop env =
     Format.fprintf Format.std_formatter "> @?";
     begin
       try
         let strm = Stream.of_list (LogoLex.parse_atoms [] false lexbuf) in
         toplevel env strm
       with
+      | LogoControl.Pause env ->
+        loop env
       | LogoControl.Toplevel ->
         ()
       | LogoLex.Error err ->
@@ -59,10 +61,10 @@ let main () =
         Format.fprintf Format.std_formatter "internal error: %s@.Backtrace:@.%s@."
           (Printexc.to_string exn) (Printexc.get_backtrace ())
     end;
-    loop ()
+    loop env
   in
   try
-    loop ()
+    loop env
   with
   | LogoControl.Bye
   | Exit ->

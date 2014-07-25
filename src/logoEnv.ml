@@ -27,6 +27,7 @@ let create_env turtle = {
   locals = [];
   output = (fun _ -> raise (Error "output: not inside a function"));
   turtle;
+  continue = (fun _ -> raise (Error "continue: no pause"))
 }
 
 let new_frame env =
@@ -37,6 +38,12 @@ let new_exit env output =
 
 let output env a =
   env.output a
+
+let new_continue env k =
+  { env with continue = k }
+
+let continue env a =
+  env.continue a
 
 let set_pf : 'a. env -> string -> 'a fn -> 'a -> unit =
   fun env name args f ->

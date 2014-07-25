@@ -115,7 +115,7 @@ and final_expression env strm k =
     else
       apply env w strm (function
           | Some a -> k a
-          | None -> error "%s did not produce a result" w)
+          | None -> error "%s did not produce a result" (String.uppercase w))
   | None ->
     assert false
 
@@ -254,6 +254,7 @@ let command env strm k =
   | None ->
     error "premature eof"
 
+(* FIXME 'step' should only be called if 'k' it not invoked! *)
 let execute env strm k =
   let env = new_exit env k in
   let rec step () =

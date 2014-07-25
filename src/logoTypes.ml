@@ -101,7 +101,8 @@ and env = {
   globals : atom H.t;
   locals : atom H.t list;
   output : atom option -> unit;
-  turtle : turtle
+  turtle : turtle;
+  continue : atom option -> unit
 }
 
 let rec argatom : type a. a ty -> a -> atom = fun ty a ->
