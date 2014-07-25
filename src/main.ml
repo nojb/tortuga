@@ -24,7 +24,7 @@ open LogoEnv
 open LogoEval
 
 let make_env () =
-  let env = create_env (module Lgt_graphics) in
+  let env = create_env (module LogoTurtleGraphics) in
   LogoPrim.init env;
   LogoComm.init env;
   LogoArithmetic.init env;

@@ -78,7 +78,25 @@ let home (module T : TURTLE) =
   T.set_pos 0 0;
   T.set_heading 0
 
+let arc (module T : TURTLE) angle radius =
+  T.arc angle radius
+
 (** 6.2 Turtle Motion Queries *)
+
+let pos (module T : TURTLE) =
+  let x, y = T.get_pos () in
+  [x; y]
+
+let xcor (module T : TURTLE) =
+  let x, _ = T.get_pos () in
+  x
+
+let ycor (module T : TURTLE) =
+  let _, y = T.get_pos () in
+  y
+
+let heading (module T : TURTLE) =
+  T.get_heading ()
 
 (** 6.3 Turtle and Window Control *)
 
@@ -125,7 +143,13 @@ let init env =
   set_pf env "sety" Lga.(turtle @@ int @-> ret retvoid) sety;
   set_pf env "setheading" Lga.(turtle @@ int @-> ret retvoid) setheading;
   set_pf env "home" Lga.(turtle @@ ret retvoid) home;
+  set_pf env "arc" Lga.(turtle @@ int @-> int @-> ret retvoid) arc;
 
+  set_pf env "pos" Lga.(turtle @@ ret (value (list int))) pos;
+  set_pf env "xcor" Lga.(turtle @@ ret (value int)) xcor;
+  set_pf env "ycor" Lga.(turtle @@ ret (value int)) ycor;
+  set_pf env "heading" Lga.(turtle @@ ret (value int)) heading;
+  
   set_pf env "clean" Lga.(turtle @@ ret retvoid) clean;
   set_pf env "clearscreen" Lga.(turtle @@ ret retvoid) clearscreen;
 

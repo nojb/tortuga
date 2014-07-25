@@ -62,14 +62,7 @@ let turn r =
   theta := !theta - r
 
 let arc angle r =
-  assert false
-  (* let src = V2.(t.point + of_polar (v r t.angle)) in *)
-  (* let dst = V2.add t.point (V2.of_polar (V2.v r (t.angle -. Float.rad_of_deg angle))) in *)
-  (* let base = if t.penup then I.void else I.const (Color.with_a t.color t.alpha) in *)
-  (* let p = P.earc ~large:false ~angle (Size2.v r r) dst (P.sub src P.empty) in *)
-  (* let outline = I.cut ~area:(`O P.o) p base in *)
-  (* let image = outline >> I.blend t.image in *)
-  (* { t with image } *)
-
+  G.draw_arc (G.current_x ()) (G.current_y ()) r r !theta (!theta - r)
+  
 let clean_screen () =
   G.clear_graph ()
