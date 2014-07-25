@@ -26,23 +26,6 @@ open LogoTypes
 open LogoAtom
 open LogoEnv
   
-let black = Color.black
-let blue = Color.blue
-let lime = Color.v_srgbi 191 255 0
-let cyan = Color.v_srgbi 0 255 255
-let red = Color.red
-let magenta = Color.v_srgbi 255 0 255
-let yellow = Color.v_srgbi 255 255 0
-let white = Color.white
-let brown = Color.v_srgbi 150 75 0
-let tan = Color.v_srgbi 210 180 140
-let green = Color.green
-let aquamarine = Color.v_srgbi 127 255 212
-let salmon = Color.v_srgbi 250 128 114
-let purple = Color.v_srgbi 128 0 128
-let orange = Color.v_srgbi 255 127 0
-let grey = Color.v_srgbi 128 128 128
-
 (** 6.1 Turtle Motion *)
 
 let forward (module T : TURTLE) dist =
@@ -110,19 +93,48 @@ let clearscreen (module T : TURTLE) =
 
 (** 6.5 Pen and Background Control *)
 
-let setpencolor (module T : TURTLE) cn =
-  let c = match cn with
-      0 -> black | 1 -> blue | 2 -> green | 3 -> cyan
-    | 4 -> red | 5 -> magenta | 6 -> yellow | 7 -> white
-    | 8 -> brown | 9 -> tan | 10 -> green | 11 -> aquamarine
-    | 12 -> salmon | 13 -> purple | 14 -> orange
-    | 15 -> grey
-    | _ -> error "setpencolor: unknown color %i" cn
-  in
-  T.set_color c
+let setpencolor env (module T : TURTLE) = function
+    `L color ->
+    begin
+      try
+        let c = H.find env.palette color in
+        T.set_color c
+      with
+      | Not_found ->
+        error "setpencolor: unknown color %s" color
+    end
+  | `R [r; g; b] ->
+    let r = float r /. 100.0 in
+    let g = float g /. 100.0 in
+    let b = float b /. 100.0 in
+    T.set_color (Gg.Color.v_srgb r g b)
+  | `R _ -> assert false
+
+(* TODO check that 0 <= r, g, b <= 100 *)
+let setpalette env name = function
+    [r; g; b] ->
+    let r = float r /. 100.0 in
+    let g = float g /. 100.0 in
+    let b = float b /. 100.0 in
+    H.add env.palette name (Gg.Color.v_srgb r g b)
+  | _ ->
+    assert false
 
 let setpensize (module T : TURTLE) size =
   T.set_size size
+
+(** 6.6 Pen Queries *)
+
+let palette env col =
+  try
+    let c = H.find env.palette col in
+    let r = truncate (Gg.Color.r c *. 100.0) in
+    let g = truncate (Gg.Color.g c *. 100.0) in
+    let b = truncate (Gg.Color.b c *. 100.0) in
+    [r; g; b]
+  with
+  | Not_found ->
+    error "palette: color %s not found" col
 
 let init env =
   set_pf env "forward" Lga.(turtle @@ int @-> ret retvoid) forward;
@@ -149,8 +161,11 @@ let init env =
   set_pf env "clean" Lga.(turtle @@ ret retvoid) clean;
   set_pf env "clearscreen" Lga.(turtle @@ ret retvoid) clearscreen;
 
-  set_pf env "setpencolor" Lga.(turtle @@ int @-> ret retvoid) setpencolor;
-  (* setpalette *)
-  set_pf env "setpensize" Lga.(turtle @@ int @-> ret retvoid) setpensize
-    
-  (* set_pft1 env "render" render *)
+  set_pf env "setpencolor" Lga.(env @@ turtle @@ alt word (fix_list int 3) @-> ret retvoid)
+    setpencolor;
+  set_pf env "setpc" Lga.(env @@ turtle @@ alt word (fix_list int 3) @-> ret retvoid)
+    setpencolor;
+  set_pf env "setpalette" Lga.(env @@ word @-> fix_list int 3 @-> ret retvoid) setpalette;
+  set_pf env "setpensize" Lga.(turtle @@ int @-> ret retvoid) setpensize;
+
+  set_pf env "palette" Lga.(env @@ word @-> ret (value (list int))) palette

@@ -20,22 +20,5 @@
    CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. *)
 
 open LogoTypes
-
-val black : Gg.color
-val blue : Gg.color
-val lime : Gg.color
-val cyan : Gg.color
-val red : Gg.color
-val magenta : Gg.color
-val yellow : Gg.color
-val white : Gg.color
-val brown : Gg.color
-val tan : Gg.color
-val green : Gg.color
-val aquamarine : Gg.color
-val salmon : Gg.color
-val purple : Gg.color
-val orange : Gg.color
-val grey : Gg.color
   
 val init : env -> unit

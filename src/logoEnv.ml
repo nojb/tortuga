@@ -21,13 +21,40 @@
 
 open LogoTypes
 
+let default_colors =
+  let open Gg.Color in
+  [
+    0 , "black"     , black;
+    1 , "blue"      , blue;
+    2 , "lime"      , v_srgbi 191 255 0;
+    3 , "cyan"      , v_srgbi 0 255 255;
+    4 , "red"       , red;
+    5 , "magenta"   , v_srgbi 255 0 255;
+    6 , "yellow"    , v_srgbi 255 255 0;
+    7 , "white"     , white;
+    8 , "brown"     , v_srgbi 150 75 0;
+    9 , "tan"       , v_srgbi 210 180 140;
+    10, "green"     , green;
+    11, "aquamarine", v_srgbi 127 255 212;
+    12, "salmon"    , v_srgbi 250 128 114;
+    13, "purple"    , v_srgbi 128 0 128;
+    14, "orange"    , v_srgbi 255 127 0;
+    15, "grey"      , v_srgbi 128 128 128
+  ]
+
 let create_env turtle = {
   routines = H.create 17;
   globals = H.create 17;
   locals = [];
   output = (fun _ -> raise (Error "output: not inside a function"));
   turtle;
-  continue = (fun _ -> raise (Error "continue: no pause"))
+  continue = (fun _ -> raise (Error "continue: no pause"));
+  palette =
+    let pal = H.create 17 in
+    List.iter (fun (id, name, col) ->
+        H.add pal (string_of_int id) col;
+        H.add pal name col) default_colors;
+    pal
 }
 
 let new_frame env =

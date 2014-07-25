@@ -104,7 +104,8 @@ and env = {
   locals : atom H.t list;
   output : atom option -> unit;
   turtle : turtle;
-  continue : atom option -> unit
+  continue : atom option -> unit;
+  palette : Gg.color H.t
 }
 
 let rec argatom : type a. a ty -> a -> atom = fun ty a ->
