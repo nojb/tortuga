@@ -70,6 +70,26 @@ let sqrt num =
 
 let power a b = a ** b
 
+(** 4.2 Numeric Predicates *)
+
+let compaux name op a b =
+  let err = name ^ ": bad argument types" in
+  let a = num_atom a err in
+  let b = num_atom b err in
+  if op a b then true_word else false_word
+
+let lessp a b =
+  if a < b then true_word else false_word
+
+let greaterp a b =
+  if a > b then true_word else false_word
+    
+let lessequalp a b =
+  if a <= b then true_word else false_word
+    
+let greaterequalp a b =
+  if a >= b then true_word else false_word
+
 (** 4.3 Random Numbers *)
 
 let initial_seed = 1728
@@ -123,9 +143,21 @@ let init env =
   set_pf env "round" Lga.(num @-> ret (value num)) round;
   set_pf env "sqrt" Lga.(num @-> ret (value num)) sqrt;
   set_pf env "power" Lga.(num @-> num @-> ret (value num)) power;
+
+  set_pf env "lessp" Lga.(num @-> num @-> ret (value any)) lessp;
+  set_pf env "less?" Lga.(num @-> num @-> ret (value any)) lessp;
+  set_pf env "greaterp" Lga.(num @-> num @-> ret (value any)) greaterp;
+  set_pf env "greater?" Lga.(num @-> num @-> ret (value any)) greaterp;
+  set_pf env "lessequalp" Lga.(num @-> num @-> ret (value any)) lessequalp;
+  set_pf env "lessequal?" Lga.(num @-> num @-> ret (value any)) lessequalp;
+  set_pf env "greaterequalp" Lga.(num @-> num @-> ret (value any)) greaterequalp;
+  set_pf env "greaterequal?" Lga.(num @-> num @-> ret (value any)) greaterequalp;
+  
   set_pf env "random" Lga.(int @-> opt int (value int)) random;
   set_pf env "rerandom" Lga.(opt int retvoid) rerandom;
+
   set_pf env "form" Lga.(num @-> int @-> int @-> ret (value word)) form;
+
   set_pf env "bitand" Lga.(int @-> int @-> rest int (value int)) bitand;
   set_pf env "bitor" Lga.(int @-> int @-> rest int (value int)) bitor;
   set_pf env "bitxor" Lga.(int @-> int @-> rest int (value int)) bitxor;

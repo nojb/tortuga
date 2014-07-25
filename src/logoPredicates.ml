@@ -37,16 +37,3 @@ module Predicates = struct
   let notequalp a b =
     if equalaux a b then false_word else true_word
 end
-
-module NumericPredicates = struct
-  let compaux name op a b =
-    let err = name ^ ": bad argument types" in
-    let a = num_atom a err in
-    let b = num_atom b err in
-    if op a b then true_word else false_word
-
-  let greaterp = compaux "greaterp" (>)
-  let greaterequalp = compaux "greaterequalp" (>=)
-  let lessp = compaux "lessp" (<)
-  let lessequalp = compaux "lessequalp" (<=)
-end

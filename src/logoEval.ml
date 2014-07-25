@@ -38,10 +38,10 @@ and relational_expression env strm k =
       and loop lhs =
         match Stream.peek strm with
         | Some (Word "=") -> app Predicates.equalp lhs
-        | Some (Word "<") -> app NumericPredicates.lessp lhs
-        | Some (Word ">") -> app NumericPredicates.greaterp lhs
-        | Some (Word "<=") -> app NumericPredicates.lessequalp lhs
-        | Some (Word ">=") -> app NumericPredicates.greaterequalp lhs
+        (* | Some (Word "<") -> app LogoArithmetic.lessp lhs *)
+        (* | Some (Word ">") -> app LogoArithmetic.greaterp lhs *)
+        (* | Some (Word "<=") -> app LogoArithmetic.lessequalp lhs *)
+        (* | Some (Word ">=") -> app LogoArithmetic.greaterequalp lhs *)
         | Some (Word "<>") -> app Predicates.notequalp lhs
         | _ -> k lhs
       in
