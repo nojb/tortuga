@@ -34,17 +34,17 @@ exception Pause of env
 (** 8.1 Control *)
 
 let run env list k =
-  execute env (reparse list) k
+  instructionlist env (reparse list) k
     
 let runresult env list k =
-  execute env (reparse list)
+  instructionlist env (reparse list)
     (function None -> k (Some (List [])) | Some a -> k (Some (List [a])))
     
 let repeat env num list k =
   let rec loop i =
     if i > num then k None
     else
-      execute env (reparse list)
+      instructionlist env (reparse list)
         (function
           | Some _ ->
             raise (Error "repeat: instruction list should not produce a value")
@@ -54,7 +54,7 @@ let repeat env num list k =
 
 let forever env list =
   let rec loop () =
-    execute env (reparse list)
+    instructionlist env (reparse list)
       (function
         | Some _ -> raise (Error "forever: instruction list should not produce a value")
         | None -> loop ())
@@ -65,7 +65,7 @@ let ifthen env tf iftrue iffalse k =
   match iffalse with
     None ->
     if String.uppercase tf = "TRUE" then
-      execute env (reparse iftrue)
+      instructionlist env (reparse iftrue)
         (function
           | Some _ -> raise (Error "if: arguments should not produce a value")
           | None -> k None)
@@ -75,12 +75,12 @@ let ifthen env tf iftrue iffalse k =
       raise (Error "if: first argument should be either TRUE or FALSE")
   | Some iffalse ->
     if String.uppercase tf = "TRUE" then
-      execute env (reparse iftrue)
+      instructionlist env (reparse iftrue)
         (function
           | Some _ -> raise (Error "if: arguments should not produce a value")
           | None -> k None)
     else if String.uppercase tf = "FALSE" then
-      execute env (reparse iffalse)
+      instructionlist env (reparse iffalse)
         (function
           | Some _ -> raise (Error "if: arguments should not produce a value")
           | None -> k None)
@@ -89,9 +89,9 @@ let ifthen env tf iftrue iffalse k =
 
 let ifelse env tf iftrue iffalse k =
   if String.uppercase tf = "TRUE" then
-    execute env (reparse iftrue) k
+    instructionlist env (reparse iftrue) k
   else if String.uppercase tf = "FALSE" then
-    execute env (reparse iffalse) k
+    instructionlist env (reparse iffalse) k
   else
     raise (Error "ifelse: first argument should be either TRUE or FALSE")
       
@@ -103,7 +103,7 @@ let output env thing _ =
 
 let catch env tag list k =
   try
-    execute env (reparse list) k
+    instructionlist env (reparse list) k
   with
     Error _ when String.uppercase tag = "ERROR" ->
     (* TODO Also, during the running of the instructionlist, the variable ERRACT
