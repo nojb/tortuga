@@ -27,17 +27,14 @@ open LogoEval
 let _ = Random.self_init ()
 
 module Constructors = struct
-  let word things =
-    try
-      Word (String.concat "" (List.map sexpr things))
-    with
-    | _ -> raise (Error "word: expected string")
-
+  let word word1 word2 words =
+    String.concat "" (word1 :: word2 :: words)
+    
   let list things =
-    List things
+    things
 
-  let sentence args =
-    List (List.concat (List.map (function List l -> l | _ as a -> [a]) args))
+  let sentence thing1 thing2 things =
+    List.concat (List.map (function List l -> l | _ as a -> [a]) (thing1 :: thing2 :: things))
 
   let fput thing list =
     match thing, list with
@@ -81,9 +78,11 @@ Outputs LIST with one extra member, THING, at the end.  If LIST is a word, then
 THING must be a one-letter word, and 'lput THING LIST' is equivalent to 'word
 LIST THING'."
 
-  let array size ?(opt = Num 1.0) () =
-    let size = int_atom size "array: SIZE must be an integer" in
-    let origin = int_atom opt "array: ORIGIN must be an integer" in
+  let array size origin =
+    let origin = match origin with
+        None -> 1
+      | Some origin -> origin
+    in
     if size < 0 then raise (Error "array: SIZE must be a positive integer");
     Array (Array.create size (List []), origin)
 
@@ -110,12 +109,13 @@ braces; indicate an origin with {a b c}@0."
       let s2 = sexpr thing2 in
       Word (s1 ^ s2)
 
-  let listtoarray list ?(opt = Num 1.0) () =
-    let origin = int_atom opt "listtoarray: ORIGIN must be a number" in
-    match list with
-    | List l -> Array (Array.of_list l, origin)
-    | _ -> raise (Error "listtoarray: LIST must be a list")
-
+  let listtoarray list origin =
+    let origin = match origin with
+        None -> 1
+      | Some origin -> origin
+    in
+    (Array.of_list list, origin)
+    
   let listtoarray_doc =
     "listtoarray LIST
 (listtoarray LIST ORIGIN)
@@ -125,11 +125,8 @@ LIST.  The first member of the array is member number 1 unless an ORIGIN input
 (must be an integer) is given, in which case the first member of the array has
 ORIGIN as its index."
 
-  let arraytolist = function
-    | Array (a, _) ->
-      List (Array.to_list a)
-    | _ ->
-      raise (Error "arraytolist: ARRAY must be an array")
+  let arraytolist (a, _) =
+    Array.to_list a
   
   let arraytolist_doc =
     "arraytolist ARRAY
@@ -137,10 +134,8 @@ ORIGIN as its index."
 Outputs a list whose members are the members of ARRAY.  The first member of the
 output is the first member of the array, regardless of the array's origin."
 
-  let reverse = function
-    | List l -> List (List.rev l)
-    | _ ->
-      raise (Error "reverse: expected a list")
+  let reverse =
+    List.rev
 
   let reverse_doc =
     "reverse LIST
@@ -151,7 +146,7 @@ Outputs a list whose members are the members of LIST, in reverse order."
     let count = ref 0 in
     fun () ->
       incr count;
-      Word ("G" ^ string_of_int !count)
+      "G" ^ string_of_int !count
 
   let gensym_doc =
     "gensym
@@ -160,18 +155,18 @@ Outputs a unique word each time it's invoked.  The words are of the form G1, G2,
 etc."
 
   let init env =
-    set_pfn env "word" 2 word;
-    set_pfn env "list" 2 list;
-    set_pfn env "sentence" 2 sentence;
-    set_pfn env "se" 2 sentence;
-    set_pf2 env "fput" fput;
-    set_pf2 env "lput" lput;
-    set_pf12 env "array" array;
-    set_pf2 env "combine" combine;
-    set_pf12 env "listtoarray" listtoarray;
-    set_pf1 env "arraytolist" arraytolist;
-    set_pf1 env "reverse" reverse;
-    set_pf0 env "gensym" gensym
+    set_pf env "word" Lga.(word @-> word @-> rest word (value word)) word;
+    set_pf env "list" Lga.(rest any (value (list any))) list;
+    set_pf env "sentence" Lga.(any @-> any @-> rest any (value (list any))) sentence;
+    set_pf env "se" Lga.(any @-> any @-> rest any (value (list any))) sentence;
+    (* set_pf2 env "fput" fput; *)
+    (* set_pf2 env "lput" lput; *)
+    set_pf env "array" Lga.(int @-> opt int (value any)) array;
+    (* set_pf2 env "combine" combine; *)
+    set_pf env "listtoarray" Lga.(list any @-> opt int (value (array any))) listtoarray;
+    set_pf env "arraytolist" Lga.(array any @-> ret (value (list any))) arraytolist;
+    set_pf env "reverse" Lga.(list any @-> ret (value (list any))) reverse;
+    set_pf env "gensym" Lga.(void @@ ret (value word)) gensym
 end
 
 module DataSelectors = struct
@@ -189,11 +184,8 @@ module DataSelectors = struct
     | Array (_, orig) ->
       Num (float orig)
 
-  let firsts = function
-    | List l ->
-      List (List.map first l)
-    | _ ->
-      raise (Error "firsts: list expected")
+  let firsts l =
+    List.map first l
 
   let last = function
     | Num n ->
@@ -226,9 +218,7 @@ module DataSelectors = struct
     | _ ->
       raise (Error "butfirst: expected WORD or LIST")
 
-  let item index thing =
-    let index = int_atom index "item: INDEX must be an integer" in
-    match thing with
+  let item index = function
     | Num n ->
       let s = string_of_float n in
       Word (String.make 1 s.[index-1])
@@ -240,12 +230,10 @@ module DataSelectors = struct
       a.(index-orig)
 
   let pick = function
-    | List [] ->
+    | [] ->
       raise (Error "pick: empty list")
-    | List l ->
+    | (_ :: _) as l ->
       List.nth l (Random.int (List.length l))
-    | _ ->
-      raise (Error "pick: LIST expected")
 
   let quoted = function
     | List _ as a -> a
@@ -258,158 +246,137 @@ module DataSelectors = struct
       raise (Error "quoted: LIST or WORD expected")
         
   let init env =
-    set_pf1 env "first" first;
-    set_pf1 env "firsts" firsts;
-    set_pf1 env "last" last;
-    set_pf1 env "butfirst" butfirst;
-    set_pf2 env "item" item;
-    set_pf1 env "pick" pick;
-    set_pf1 env "quoted" quoted
+    set_pf env "first" Lga.(any @-> ret (value any)) first;
+    set_pf env "firsts" Lga.(list any @-> ret (value (list any))) firsts;
+    (* set_pf1 env "last" last; *)
+    (* set_pf1 env "butfirst" butfirst; *)
+    set_pf env "item" Lga.(int @-> any @-> ret (value any)) item;
+    set_pf env "pick" Lga.(list any @-> ret (value any)) pick;
+    (* set_pf1 env "quoted" quoted *)
 end
 
 module Transmitters = struct
-  let print things =
-    let rec loop first = function
+  let print thing1 things =
+    let rec loop = function
       | [] ->
         print_newline ()
       | List l :: xs ->
-        if not first then print_char ' ';
+        print_char ' ';
         print_list l;
-        loop false xs
+        loop xs
       | x :: xs ->
-        if not first then print_char ' ';
+        print_char ' ';
         print x;
-        loop false xs
+        loop xs
     in
-    loop true things
+    print thing1;
+    loop things
 
-  let type_ things =
+  let type_ thing1 things =
     List.iter (function
         | List l -> print_list l
-        | _ as a -> LogoAtom.print a) things
+        | _ as a -> LogoAtom.print a) (thing1 :: things)
 
-  let show things =
-    let rec loop first = function
+  let show thing1 things =
+    let rec loop = function
       | [] ->
         print_newline ()
       | x :: xs ->
-        if not first then print_char ' ';
+        print_char ' ';
         LogoAtom.print x;
-        loop false xs
+        loop xs
     in
-    loop true things    
+    LogoAtom.print thing1;
+    loop things
     
   let init env =
-    set_cfn env "print" 1 print;
-    set_cfn env "type" 1 type_;
-    set_cfn env "show" 1 show
+    set_pf env "print" Lga.(any @-> rest any retvoid) print;
+    set_pf env "type" Lga.(any @-> rest any retvoid) type_;
+    set_pf env "show" Lga.(any @-> rest any retvoid) show
 end
 
 module Control = struct
   open LogoEval
     
   let run env list k =
-    match list with
-    | List list ->
-      execute env (reparse list) k
-    | _ ->
-      raise (Error "run: LIST expected")
-
-  let runresult env list k =
-    match list with
-    | List list ->
-      execute env (reparse list)
-        (function None -> k (Some (List [])) | Some a -> k (Some (List [a])))
-    | _ ->
-      raise (Error "runresult: LIST expected")
+    execute env (reparse list) k
     
-  let repeat env things k =
-    match things with
-    | num :: List list :: [] ->
-      let num = int_atom num "repeat: NUM must be an integer" in
-      let rec loop i =
-        if i > num then k None
-        else
-          execute env (reparse list)
-            (function
-              | Some _ ->
-                raise (Error "repeat: instruction list should not produce a value")
-              | None -> loop (i+1))
-      in
-      loop 1
-    | _ ->
-      raise (Error "repeat: bad args")
-
-  let forever env list k =
-    match list with
-    | List list ->
-      let rec loop () =
+  let runresult env list k =
+    execute env (reparse list)
+      (function None -> k (Some (List [])) | Some a -> k (Some (List [a])))
+    
+  let repeat env num list k =
+    let rec loop i =
+      if i > num then k None
+      else
         execute env (reparse list)
           (function
-            | Some _ -> raise (Error "forever: instruction list should not produce a value")
-            | None -> loop ())
-      in
-      loop ()
-    | _ ->
-      raise (Error "forever: LIST expected")
+            | Some _ ->
+              raise (Error "repeat: instruction list should not produce a value")
+            | None -> loop (i+1))
+    in
+    loop 1
 
-  let ifthen env things k =
-    match things with
-    | Word w :: List iftrue :: [] ->
-      if String.uppercase w = "TRUE" then
+  let forever env list =
+    let rec loop () =
+      execute env (reparse list)
+        (function
+          | Some _ -> raise (Error "forever: instruction list should not produce a value")
+          | None -> loop ())
+    in
+    loop ()
+
+  let ifthen env tf iftrue iffalse k =
+    match iffalse with
+      None ->
+      if String.uppercase tf = "TRUE" then
         execute env (reparse iftrue)
           (function
             | Some _ -> raise (Error "if: arguments should not produce a value")
             | None -> k None)
-      else if String.uppercase w = "FALSE" then
+      else if String.uppercase tf = "FALSE" then
         k None
       else
         raise (Error "if: first argument should be either TRUE or FALSE")
-    | Word w :: List iftrue :: List iffalse :: [] ->
-      if String.uppercase w = "TRUE" then
+    | Some iffalse ->
+      if String.uppercase tf = "TRUE" then
         execute env (reparse iftrue)
           (function
             | Some _ -> raise (Error "if: arguments should not produce a value")
             | None -> k None)
-      else if String.uppercase w = "FALSE" then
+      else if String.uppercase tf = "FALSE" then
         execute env (reparse iffalse)
           (function
             | Some _ -> raise (Error "if: arguments should not produce a value")
             | None -> k None)
       else
         raise (Error "if: first argument should be either TRUE or FALSE")
-    | _ ->
-      raise (Error "if: bad args")
 
-  let ifelse env things k =
-    match things with
-    | Word w :: List iftrue :: List iffalse :: [] ->
-      if String.uppercase w = "TRUE" then
-        execute env (reparse iftrue) k
-      else if String.uppercase w = "FALSE" then
-        execute env (reparse iffalse) k
-      else
-        raise (Error "ifelse: first argument should be either TRUE or FALSE")
-    | _ ->
-      raise (Error "ifelse: bad args")    
+  let ifelse env tf iftrue iffalse k =
+    if String.uppercase tf = "TRUE" then
+      execute env (reparse iftrue) k
+    else if String.uppercase tf = "FALSE" then
+      execute env (reparse iffalse) k
+    else
+      raise (Error "ifelse: first argument should be either TRUE or FALSE")
         
-  let stop env _ =
+  let stop env =
     output env None
              
-  let output env thing _ =
+  let output env thing =
     output env (Some thing)
 
   let bye () =
     raise Bye
       
   let init env =
-    set_pfc1 env "run" run;
-    set_pfc1 env "runresult" runresult;
-    set_pfcn env "repeat" 2 repeat;
-    set_pfc1 env "forever" forever;
-    set_pfcn env "if" 2 ifthen;
-    set_pfcn env "ifelse" 3 ifelse;
-    set_pfc0 env "stop" stop;
-    set_pfc1 env "output" output;
-    set_cf0 env "bye" bye
+    set_pf env "run" Lga.(env @@ list any @-> ret cont) run;
+    set_pf env "runresult" Lga.(env @@ list any @-> ret cont) runresult;
+    set_pf env "repeat" Lga.(env @@ int @-> list any @-> ret cont) repeat;
+    set_pf env "forever" Lga.(env @@ list any @-> ret retvoid) forever;
+    set_pf env "if" Lga.(env @@ word @-> list any @-> opt (list any) cont)  ifthen;
+    set_pf env "ifelse" Lga.(env @@ word @-> list any @-> list any @-> ret cont) ifelse;
+    set_pf env "stop" Lga.(env @@ ret retvoid) stop;
+    set_pf env "output" Lga.(env @@ any @-> ret retvoid) output;
+    set_pf env "bye" Lga.(void @@ ret retvoid) bye
 end

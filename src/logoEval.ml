@@ -57,7 +57,7 @@ and additive_expression env strm k =
       and loop lhs =
         match Stream.peek strm with
         | Some (Word "+") -> app LogoArithmetic.sum2 lhs
-        | Some (Word "-") -> app LogoArithmetic.difference lhs
+        (* | Some (Word "-") -> app LogoArithmetic.difference lhs *)
         | _ -> k lhs
       in
       loop lhs)
@@ -71,7 +71,7 @@ and multiplicative_expression env strm k =
         match Stream.peek strm with
         | Some (Word "*") -> app LogoArithmetic.product2 lhs
         | Some (Word "/") -> app LogoArithmetic.quotient2 lhs
-        | Some (Word "%") -> app LogoArithmetic.remainder lhs
+        (* | Some (Word "%") -> app LogoArithmetic.remainder lhs *)
         | _ -> k lhs
       in
       loop lhs)
@@ -80,18 +80,18 @@ and power_expression env strm k =
   unary_expression env strm (fun lhs ->
       let rec loop lhs =
         match Stream.peek strm with
-        | Some (Word "^") ->
-          Stream.junk strm;
-          unary_expression env strm (fun rhs -> loop (LogoArithmetic.power lhs rhs))
+        (* | Some (Word "^") -> *)
+          (* Stream.junk strm; *)
+          (* unary_expression env strm (fun rhs -> loop (LogoArithmetic.power lhs rhs)) *)
         | _ -> k lhs
       in
       loop lhs)
 
 and unary_expression env strm k =
   match Stream.peek strm with
-  | Some w when w == minus_word ->
-    Stream.junk strm;
-    unary_expression env strm (fun rhs -> k (LogoArithmetic.minus rhs))
+  (* | Some w when w == minus_word -> *)
+    (* Stream.junk strm; *)
+    (* unary_expression env strm (fun rhs -> k (LogoArithmetic.minus rhs)) *)
   | _ ->
     final_expression env strm k
 
@@ -147,17 +147,6 @@ and apply env w strm k =
     dispatch env w strm true k
 
 and dispatch env proc strm natural k =
-  let nargs = function
-    | Pf0 _ -> 0
-    | Pf1 _ -> 1
-    | Pf2 _ -> 2
-    | Pfn (nargs, _) -> nargs
-    | Pf12 _ -> 1
-    | Pfc0 _ -> 0
-    | Pfc1 _ -> 1
-    | Pfc2 _ -> 2
-    | Pfcn (nargs, _) -> nargs
-  in
   let getargs len natural k =
     if natural then
       let rec loop acc i =
@@ -177,34 +166,58 @@ and dispatch env proc strm natural k =
       in
       loop []
   in
-  let r =
+  let Pf (fn, f) =
     try
       get_routine env proc
     with
     | Not_found -> raise (Error ("Don't know how to " ^ String.uppercase proc))
   in
-  getargs (nargs r) natural begin fun args ->
-    match r, args with
-    | Pf0 f, [] ->
-      k (f ())
-    | Pf1 f, [arg] ->
-      k (f arg)
-    | Pf2 f, [arg1; arg2] ->
-      k (f arg1 arg2)
-    | Pfn (_, f), args ->
-      k (f args)
-    | Pf12 f, [arg1; arg2] ->
-      k (f arg1 ~opt:arg2 ())
-    | Pfc0 f, [] ->
-      f env k
-    | Pfc1 f, [arg] ->
-      f env arg k
-    | Pfc2 f, [arg1; arg2] ->
-      f env arg1 arg2 k
-    | Pfcn (_, f), args ->
-      f env args k
-    | _, _ ->
-      raise (Error "bad arity")
+  getargs (minargs fn) natural begin fun args ->
+    let return : type a. a ret -> a -> unit = fun ret f ->
+      match ret with
+        Kcont ->
+        f k
+      | Kretvoid ->
+        k None
+      | Kvalue ty ->
+        k (Some (argatom ty f))
+    in
+    let rec loop : type a. int -> a fn -> atom list -> a -> unit = fun i fn args f ->
+      match fn, args with
+      | Kvoid fn, _ ->
+        loop i fn args (f ())
+      | Kenv fn, _ ->
+        loop i fn args (f env)
+      | Kturtle fn, _ ->
+        loop i fn args (f env.turtle)
+      | Kfix _, [] ->
+        raise (Error "not enough arguments")
+      | Kfix (typ, fn), a :: args ->
+        begin match matcharg typ a with
+          | Some a -> loop (i+1) fn args (f a)
+          | None -> raise (Error (Printf.sprintf "argument %i does not have the right type" i))
+        end
+      | Kopt (_, ret), [] ->
+        return ret (f None)
+      | Kopt (ty, ret), a :: [] ->
+        begin match matcharg ty a with
+          | Some _ as a -> return ret (f a)
+          | None ->
+            raise (Error (Printf.sprintf "optional arguemtn %i does not have the right type" i))
+        end
+      | Kopt _, _ :: _ :: _ ->
+        raise (Error "too many arguments")
+      | Krest (ty, ret), args ->
+        let args = List.map (fun a ->
+            match matcharg ty a with
+            | Some a -> a | None -> assert false) args in
+        return ret (f args)
+      | Kret ret, [] ->
+        return ret f
+      | Kret _, _ :: _ ->
+        raise (Error "too many arguments")
+    in
+    loop 1 fn args f
   end
     
 let parse_to strm =
@@ -254,15 +267,22 @@ let execute env strm k =
       k None
   in
   step ()
+
+type aux =
+  { k : 'a. 'a fn -> (env -> 'a) -> unit }
   
 let to_ env strm =
   let name, inputs, body = parse_to strm in
-  let body env args k =
-    let env = new_frame env in
-    List.iter2 (set_var env) inputs args;
-    execute env (Stream.of_list body) k
+  let rec loop : string list -> aux -> unit = fun inputs k ->
+    match inputs with
+    | input :: inputs ->
+      loop inputs
+        { k = fun fn f -> k.k Lga.(any @-> fn) (fun env a -> set_var env input a; f env) }
+    | [] ->
+      k.k Lga.(ret cont) (fun env k -> execute env (Stream.of_list body) k)
   in
-  set_pfcn env name (List.length inputs) body
+  loop inputs
+    { k = fun fn f -> set_pf env name (Kenv fn) (fun env -> f (new_frame env)) }
 
 let rec toplevel env strm =
   match Stream.peek strm with

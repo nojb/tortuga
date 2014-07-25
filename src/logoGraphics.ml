@@ -42,47 +42,35 @@ let orange = Color.v_srgbi 255 127 0
 let gray = Color.v_srgbi 128 128 128
 
 let forward (module T : TURTLE) dist =
-  let dist = int_atom dist "forward: DIST must be an integer" in
   T.move dist
 
 let back (module T : TURTLE) dist =
-  let dist = int_atom dist "back: DIST must be an integer" in
   T.move (-dist)
 
 let left (module T : TURTLE) deg =
-  let deg = int_atom deg "left: DEG must be an integer" in
   T.turn (-deg)
 
 let right (module T : TURTLE) deg =
-  let deg = int_atom deg "right: DEG must be an integer" in
   T.turn deg
 
-let setpos (module T : TURTLE) pos =
-  match pos with
-  | List [x; y] ->
-    let x = int_atom x "setpos: X must be an integer" in
-    let y = int_atom y "setpos: Y must be an integer" in
+let setpos (module T : TURTLE) = function
+    [x; y] ->
     T.set_pos x y
   | _ ->
     raise (Error "setpos: bad args")
 
 let setxy (module T : TURTLE) x y =
-  let x = int_atom x "setxy: X must be integer" in
-  let y = int_atom y "setxy: Y must be integer" in
   T.set_pos x y
 
 let setx (module T : TURTLE) x =
-  let x = int_atom x "setx: X must be an integer" in
   let _, y = T.get_pos () in
   T.set_pos x y
 
 let sety (module T : TURTLE) y =
-  let y = int_atom y "sety: Y must be an integer" in
   let x, _ = T.get_pos () in
   T.set_pos x y
 
 let setheading (module T : TURTLE) h =
-  let h = int_atom h "setheading: HEADING must be an integer" in
   T.set_heading h
 
 let home (module T : TURTLE) =
@@ -105,22 +93,22 @@ let clearscreen (module T : TURTLE) =
 (*   turtle *)
     
 let init env =
-  set_pft1 env "forward" forward;
-  set_pft1 env "fd" forward;
-  set_pft1 env "back" back;
-  set_pft1 env "bk" back;
-  set_pft1 env "left" left;
-  set_pft1 env "lt" left;
-  set_pft1 env "right" right;
-  set_pft1 env "rt" right;
-  set_pft1 env "setpos" setpos;
-  set_pft2 env "setxy" setxy;
-  set_pft1 env "setx" setx;
-  set_pft1 env "sety" sety;
-  set_pft1 env "setheading" setheading;
-  set_pft0 env "home" home;
+  set_pf env "forward" Lga.(turtle @@ int @-> ret retvoid) forward;
+  set_pf env "fd" Lga.(turtle @@ int @-> ret retvoid) forward;
+  set_pf env "back" Lga.(turtle @@ int @-> ret retvoid) back;
+  set_pf env "bk" Lga.(turtle @@ int @-> ret retvoid) back;
+  set_pf env "left" Lga.(turtle @@ int @-> ret retvoid) left;
+  set_pf env "lt" Lga.(turtle @@ int @-> ret retvoid) left;
+  set_pf env "right" Lga.(turtle @@ int @-> ret retvoid) right;
+  set_pf env "rt" Lga.(turtle @@ int @-> ret retvoid) right;
+  set_pf env "setpos" Lga.(turtle @@ list int @-> ret retvoid) setpos;
+  set_pf env "setxy" Lga.(turtle @@ int @-> int @-> ret retvoid) setxy;
+  set_pf env "setx" Lga.(turtle @@ int @-> ret retvoid) setx;
+  set_pf env "sety" Lga.(turtle @@ int @-> ret retvoid) sety;
+  set_pf env "setheading" Lga.(turtle @@ int @-> ret retvoid) setheading;
+  set_pf env "home" Lga.(turtle @@ ret retvoid) home;
 
-  set_pft0 env "clean" clean;
-  set_pft0 env "clearscreen" clearscreen
+  set_pf env "clean" Lga.(turtle @@ ret retvoid) clean;
+  set_pf env "clearscreen" Lga.(turtle @@ ret retvoid) clearscreen
     
   (* set_pft1 env "render" render *)

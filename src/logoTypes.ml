@@ -52,22 +52,120 @@ end
 
 module H = Hashtbl.Make (NoCaseString)
 
-type env = {
-  routines : routine H.t;
+type _ ty =
+    Kint : int ty
+  | Knum : float ty
+  | Kword : string ty
+  | Klist : 'a ty -> 'a list ty
+  | Karray : 'a ty -> ('a array * int) ty
+  | Kany : atom ty
+
+and _ ret =
+    Kcont : ((atom option -> unit) -> unit) ret
+  | Kretvoid : unit ret
+  | Kvalue : 'a ty -> 'a ret
+  
+and _ fn =
+    Kfix : 'a ty * 'b fn -> ('a -> 'b) fn
+  | Kopt : 'a ty * 'b ret -> ('a option -> 'b) fn
+  | Krest : 'a ty * 'b ret -> ('a list -> 'b) fn
+  | Kret : 'a ret -> 'a fn
+  | Kvoid : 'a fn -> (unit -> 'a) fn
+  | Kenv : 'a fn -> (env -> 'a) fn
+  | Kturtle : 'a fn -> (turtle -> 'a) fn
+
+and proc =
+    Pf : 'a fn * 'a -> proc
+
+and env = {
+  routines : proc H.t;
   globals : atom H.t;
   locals : atom H.t list;
   output : atom option -> unit;
   turtle : turtle
 }
 
-and routine =
-  | Pf0 of (unit -> atom option)
-  | Pf1 of (atom -> atom option)
-  | Pf2 of (atom -> atom -> atom option)
-  | Pfn of int * (atom list -> atom option)
-  | Pf12 of (atom -> ?opt:atom -> unit -> atom option)
-  | Pfc0 of (env -> (atom option -> unit) -> unit)
-  | Pfc1 of (env -> atom -> (atom option -> unit) -> unit)
-  | Pfc2 of (env -> atom -> atom -> (atom option -> unit) -> unit)
-  | Pfcn of int * (env -> atom list -> (atom option -> unit) -> unit)
+let rec argatom : type a. a ty -> a -> atom = fun ty a ->
+  match ty with
+    Kint -> Num (float_of_int a)
+  | Knum -> Num a
+  | Kword -> Word a
+  | Klist ty -> List (List.map (argatom ty) a)
+  | Karray ty -> let a, orig = a in Array (Array.map (argatom ty) a, orig)
+  | Kany -> a
+
+let rec minargs : type a. a fn -> int = function
+    Kfix (Kint, rest)     -> 1 + minargs rest
+  | Kfix (Knum, rest)     -> 1 + minargs rest
+  | Kfix (Kword, rest)    -> 1 + minargs rest
+  | Kfix (Klist _, rest)  -> 1 + minargs rest
+  | Kfix (Karray _, rest) -> 1 + minargs rest
+  | Kfix (Kany, rest)     -> 1 + minargs rest
+  | Kopt _                -> 0
+  | Krest _               -> 0
+  | Kret _                -> 0
+  | Kvoid rest            -> minargs rest
+  | Kenv rest             -> minargs rest 
+  | Kturtle rest          -> minargs rest
+
+let init : type a. a ty -> a = function
+  | Kint -> 0
+  | Knum -> 0.0
+  | Kword -> ""
+  | Klist _ -> []
+  | Karray _ -> ([| |], 0)
+  | Kany -> List []
   
+let rec matcharg : type a. a ty -> atom -> a option = fun ty a ->
+  match ty, a with
+  | Kint, Num n ->
+    let n1 = truncate n in
+    if n = float n1 then Some n1 else None
+  | Knum, Num n -> Some n
+  | Kword, Word s -> Some s
+  | Kword, Num n -> Some (string_of_float n)
+  | Klist ty, List l ->
+    let rec loop = function
+      | [] -> []
+      | a :: l ->
+        match matcharg ty a with
+        | Some a -> a :: loop l
+        | None -> raise Exit
+    in
+    begin try Some (loop l) with Exit -> None end
+  | Karray ty, Array (a, orig) ->
+    let a1 = Array.create (Array.length a) (init ty) in
+    begin
+      try for i = 0 to Array.length a - 1 do
+          match matcharg ty a.(i) with
+          | Some a -> a1.(i) <- a
+          | None -> raise Exit
+        done;
+        Some (a1, orig)
+      with Exit -> None
+    end
+  | Kany, _ -> Some a
+  | _ ->
+    None
+
+module Lga = struct
+  let int = Kint
+  let word = Kword
+  let num = Knum
+  let list ty = Klist ty
+  let array ty = Karray ty
+  let any = Kany
+
+  let cont = Kcont
+  let retvoid = Kretvoid
+  let value ty = Kvalue ty
+
+  let (@->) ty fn = Kfix (ty, fn)
+      
+  let opt ty ret = Kopt (ty, ret)
+  let rest ty ret = Krest (ty, ret)
+  let ret ret = Kret ret
+  let void fn = Kvoid fn
+  let env fn = Kenv fn
+  let turtle fn = Kturtle fn
+end
