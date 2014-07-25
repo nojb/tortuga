@@ -20,6 +20,18 @@
    CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. *)
 
 open LogoTypes
+
+let is_true = function
+  | Word w ->
+    String.uppercase w = "TRUE"
+  | _ ->
+    false
+
+let is_false = function
+  | Word w ->
+    String.uppercase w = "FALSE"
+  | _ ->
+    false
   
 let rec bprint b = function
   | Num n ->
@@ -96,11 +108,6 @@ let sexpr = function
   | Num n -> string_of_float n
   | Word w -> w
   | _ -> failwith "sexpr"
-
-(* let iexpr = function *)
-(*   | Num n -> n *)
-(*   | Word w -> int_of_string w *)
-(*   | _ -> failwith "iexpr" *)
 
 let num_atom a err =
   match a with

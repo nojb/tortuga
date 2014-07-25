@@ -20,7 +20,11 @@
    CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. *)
 
 open LogoTypes
-  
+
+val is_true : atom -> bool
+
+val is_false : atom -> bool
+
 val sexpr : atom -> string
 
 val num_atom : atom -> string -> float

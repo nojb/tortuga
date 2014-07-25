@@ -64,22 +64,22 @@ let forever env list =
 let ifthen env tf iftrue iffalse k =
   match iffalse with
     None ->
-    if String.uppercase tf = "TRUE" then
+    if is_true tf then
       instructionlist env (reparse iftrue)
         (function
           | Some _ -> raise (Error "if: arguments should not produce a value")
           | None -> k None)
-    else if String.uppercase tf = "FALSE" then
+    else if is_false tf then
       k None
     else
       raise (Error "if: first argument should be either TRUE or FALSE")
   | Some iffalse ->
-    if String.uppercase tf = "TRUE" then
+    if is_true tf then
       instructionlist env (reparse iftrue)
         (function
           | Some _ -> raise (Error "if: arguments should not produce a value")
           | None -> k None)
-    else if String.uppercase tf = "FALSE" then
+    else if is_false tf then
       instructionlist env (reparse iffalse)
         (function
           | Some _ -> raise (Error "if: arguments should not produce a value")
@@ -88,9 +88,9 @@ let ifthen env tf iftrue iffalse k =
       raise (Error "if: first argument should be either TRUE or FALSE")
 
 let ifelse env tf iftrue iffalse k =
-  if String.uppercase tf = "TRUE" then
-    instructionlist env (reparse iftrue) k
-  else if String.uppercase tf = "FALSE" then
+  if is_true tf then
+      instructionlist env (reparse iftrue) k
+  else if is_false tf then
     instructionlist env (reparse iffalse) k
   else
     raise (Error "ifelse: first argument should be either TRUE or FALSE")
@@ -143,15 +143,62 @@ let do_while env list expr =
     instructionlist env (Stream.of_list list)
       (function
           None ->
-          expression env (Stream.of_list expr) (function
-              | Word a ->
-                let a = String.uppercase a in
-                if a = "TRUE" then loop ()
-                else if a = "FALSE" then ()
-                else error "do.while condition should produce true or false"
-              | _ ->
-                error "do.while condition should produce true or false")
+          expression env (Stream.of_list expr)
+            (fun a ->
+              if is_true a then loop ()
+              else if is_false a then ()
+              else error "do.while condition should produce true or false")
         | Some a -> error "do.while should not produce a value, got %a" sprint a)
+  in
+  loop ()
+
+let while_ env expr list =
+  let expr = parse (sprint_list () expr) in
+  let list = parse (sprint_list () list) in
+  let rec loop () =
+    expression env (Stream.of_list expr) (fun a ->
+        if is_true a then
+          instructionlist env (Stream.of_list list) (function
+              | None -> loop ()
+              | Some a ->
+                error "WHILE should not produce a value, got %a" sprint a)
+        else if is_false a then
+          ()
+        else
+          error "WHILE condition should produce true or false")
+  in
+  loop ()
+
+let do_until env list expr =
+  let list = parse (sprint_list () list) in
+  let expr = parse (sprint_list () expr) in
+  let rec loop () =
+    instructionlist env (Stream.of_list list)
+      (function
+          None ->
+          expression env (Stream.of_list expr)
+            (fun a ->
+              if is_true a then ()
+              else if is_false a then loop ()
+              else error "do.until condition should produce true or false")
+        | Some a -> error "do.until should not produce a value, got %a" sprint a)
+  in
+  loop ()
+
+let until env expr list =
+  let expr = parse (sprint_list () expr) in
+  let list = parse (sprint_list () list) in
+  let rec loop () =
+    expression env (Stream.of_list expr) (fun a ->
+        if is_false a then
+          instructionlist env (Stream.of_list list) (function
+              | None -> loop ()
+              | Some a ->
+                error "UNTIL should not produce a value, got %a" sprint a)
+        else if is_true a then
+          ()
+        else
+          error "UNTIL condition should produce true or false")
   in
   loop ()
       
@@ -160,8 +207,8 @@ let init env =
   set_pf env "runresult" Lga.(env @@ list any @-> ret cont) runresult;
   set_pf env "repeat" Lga.(env @@ int @-> list any @-> ret cont) repeat;
   set_pf env "forever" Lga.(env @@ list any @-> ret retvoid) forever;
-  set_pf env "if" Lga.(env @@ word @-> list any @-> opt (list any) cont)  ifthen;
-  set_pf env "ifelse" Lga.(env @@ word @-> list any @-> list any @-> ret cont) ifelse;
+  set_pf env "if" Lga.(env @@ any @-> list any @-> opt (list any) cont)  ifthen;
+  set_pf env "ifelse" Lga.(env @@ any @-> list any @-> list any @-> ret cont) ifelse;
   set_pf env "stop" Lga.(env @@ ret cont) stop;
   set_pf env "output" Lga.(env @@ any @-> ret cont) output;
   set_pf env "catch" Lga.(env @@ word @-> list any @-> ret cont) catch;
@@ -170,4 +217,7 @@ let init env =
   set_pf env "continue" Lga.(env @@ opt any cont) continue;
   set_pf env "bye" Lga.(void @@ ret retvoid) bye;
   set_pf env "ignore" Lga.(any @-> ret retvoid) ignore;
-  set_pf env "do.while" Lga.(env @@ list any @-> list any @-> ret retvoid) do_while
+  set_pf env "do.while" Lga.(env @@ list any @-> list any @-> ret retvoid) do_while;
+  set_pf env "while" Lga.(env @@ list any @-> list any @-> ret retvoid) while_;
+  set_pf env "do.until" Lga.(env @@ list any @-> list any @-> ret retvoid) do_until;
+  set_pf env "until" Lga.(env @@ list any @-> list any @-> ret retvoid) until
