@@ -26,9 +26,8 @@ open LogoEval
 let make_env () =
   let env = create_env (module Lgt_graphics) in
   LogoArithmetic.init env;
-  LogoPrim.Constructors.init env;
-  LogoPrim.DataSelectors.init env;
-  LogoPrim.Transmitters.init env;
+  LogoPrim.init env;
+  LogoComm.init env;
   LogoControl.init env;
   LogoWork.init env;
   LogoGraphics.init env;
