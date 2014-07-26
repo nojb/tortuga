@@ -76,7 +76,7 @@ and proc =
 and env = {
   routines : proc H.t;
   globals : atom H.t;
-  locals : atom H.t list;
+  locals : atom option H.t list;
   output : atom option -> unit;
   turtle : turtle;
   continue : atom option -> unit;

@@ -33,6 +33,18 @@ let make env varname value =
 let name env value varname =
   set_var env varname value
 
+(* TODO 'local' now accepts the form
+   (local varlist varname2 varname3 ...)
+   which should be marked as an error. *)
+let local env varname rest =
+  begin match varname with
+  | `L w ->
+    create_var env w
+  | `R wl ->
+    List.iter (create_var env) wl
+  end;
+  List.iter (create_var env) rest
+
 (** 7.4 Workspace Predicates *)
 
 let definedp env name =
@@ -44,6 +56,7 @@ let namep env name =
 let init env =
   set_pf env "make" Lga.(env @@ word @-> any @-> ret retvoid) make;
   set_pf env "name" Lga.(env @@ any @-> word @-> ret retvoid) name;
+  set_pf env "local" Lga.(env @@ alt word (list word) @-> rest word retvoid) local;
 
   set_pf env "definedp" Lga.(env @@ word @-> ret (value any)) definedp;
   set_pf env "defined?" Lga.(env @@ word @-> ret (value any)) definedp;
