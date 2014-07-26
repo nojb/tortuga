@@ -20,7 +20,8 @@
    CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. *)
 
 open LogoTypes
-
+open LogoAtom
+  
 let default_colors =
   let open Gg.Color in
   [
@@ -90,9 +91,7 @@ let get_global env name =
     H.find env.globals name
   with
   | Not_found ->
-    let a = List [] in
-    H.add env.globals name a;
-    a
+    error "Don't know about variable %s" name
 
 let has_global env name =
   H.mem env.globals name
