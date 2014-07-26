@@ -79,5 +79,5 @@ let main () =
     Format.fprintf Format.std_formatter "Goodbye.@."
  
 let _ =
-  print_endline "Welcome to OCaml-Logo";
+  print_endline "Tortuga 0.1";
   main ()
