@@ -41,8 +41,13 @@ let t =
     color   = Color.white
   }
 
-let render () =
-  let out = open_out_bin "test.pdf" in
+let render name =
+  let name, out = match name with
+    | None ->
+      Filename.open_temp_file ~temp_dir:(Sys.getcwd ()) "" ".pdf"
+    | Some name ->
+      name, open_out_bin name
+  in
 
   (* 1. Define your image *)
       
@@ -58,7 +63,9 @@ let render () =
   ignore (Vgr.render r (`Image (size, view, image)));
   ignore (Vgr.render r `End);
   
-  close_out out
+  close_out out;
+
+  print_endline ("output written to " ^ name)
 
 let get_heading () =
   !t.theta
@@ -115,4 +122,4 @@ let clean_screen () =
 open LogoEnv
 
 let init env =
-  set_pf env "render" LogoAtom.Lga.(void @@ ret retvoid) render
+  set_pf env "render" LogoAtom.Lga.(opt word retvoid) render
