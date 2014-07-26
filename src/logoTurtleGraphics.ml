@@ -22,7 +22,7 @@
 module G = Graphics
 
 let round d =
-  truncate (d +. 0.5)
+  int_of_float (floor (d +. 0.5))
     
 let _ =
   G.open_graph "";
