@@ -111,7 +111,7 @@ let set_var env name data =
 let create_var env name =
   match env.locals with
   | [] ->
-    error "using local outside of any procedure"
+    failwith "create_var"
   | top :: _ ->
     H.add top name None
 
