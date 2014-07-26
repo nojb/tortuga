@@ -24,7 +24,6 @@
 open LogoTypes
 open LogoAtom
 open LogoEnv
-open LogoEval
 
 (** 2.1 Constructors *)
 
@@ -222,8 +221,20 @@ let rec equalaux a b =
 let equalp a b =
   if equalaux a b then true_word else false_word
 
+let equalp_infix env a b k =
+  wrap env "=" Lga.(any @-> any @-> ret (value any)) equalp [a; b]
+    (function
+      | Some a -> k a
+      | None -> assert false)
+
 let notequalp a b =
   if equalaux a b then false_word else true_word
+
+let notequalp_infix env a b k =
+  wrap env "<>" Lga.(any @-> any @-> ret (value any)) notequalp [a; b]
+    (function
+      | Some a -> k a
+      | None -> assert false)
 
 let beforep a b =
   if a < b then true_word else false_word

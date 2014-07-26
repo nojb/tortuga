@@ -21,6 +21,11 @@
 
 open LogoTypes
 
+val error : ('a, unit, string, 'b) format4 -> 'a
+
+val isnumber : string -> bool
+val isint : string -> bool
+
 val is_true : atom -> bool
 
 val is_false : atom -> bool
@@ -58,3 +63,45 @@ val minus_word : atom
 val parse : string -> atom list
 
 val reparse : atom list -> atom Stream.t
+
+val argatom : 'a ty -> 'a -> atom
+val minargs : 'a fn -> int
+val matcharg : 'a ty -> atom -> 'a option
+val argstring : 'a ty -> string
+
+(** Very important: procedures that can potentially altern the natural control
+    flow by calling some other coninuation than the standard one, MUST use the
+    'cont' return type.  Otherwise the standard continuation will be called
+    anyways.  This includes e.g. all the procedures in the LogoControl
+    module. *)
+
+module Lga : sig
+  val int : int ty
+  val num : float ty
+  val word : string ty
+  val list : 'a ty -> 'a list ty
+  val array : 'a ty -> ('a array * int) ty
+  val any : atom ty
+  val pos_int : int ty
+  val pos_num : float ty
+  val nn_int : int ty
+  val nn_num : float ty
+  val ne_list : 'a ty -> 'a list ty
+  val alt : 'a ty -> 'b ty -> [ `L of 'a | `R of 'b ] ty
+  val fix_list : 'a ty -> int -> 'a list ty
+      
+  val cont : ((atom option -> unit) -> unit) ret
+  val retvoid : unit ret
+  val value : 'a ty -> 'a ret
+  
+  val (@->) : 'a ty -> 'b fn -> ('a -> 'b) fn
+  
+  val opt : 'a ty -> 'b ret -> ('a option -> 'b) fn
+  val rest : 'a ty -> 'b ret -> ('a list -> 'b) fn
+  val ret : 'a ret -> 'a fn
+  val void : 'a fn -> (unit -> 'a) fn
+  val env : 'a fn -> (env -> 'a) fn
+  val turtle : 'a fn -> (turtle -> 'a) fn
+end
+
+val wrap : env -> string -> 'a fn -> 'a -> atom list -> (atom option -> unit) -> unit

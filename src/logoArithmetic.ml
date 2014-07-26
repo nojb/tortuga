@@ -27,32 +27,46 @@ open LogoEnv
 
 (** 4.1 Numeric Operations *)
 
-let binaux name op a b =
-  let err = name ^ ": bad argument types" in
-  let a = num_atom a err in
-  let b = num_atom b err in
-  Num (op a b)
-
-let sum2 = binaux "sum" (+.)
+let binaux env name f a b k =
+  wrap env name Lga.(num @-> num @-> ret (value num)) f [a; b]
+    (function
+      | Some a -> k a
+      | None -> assert false)
 
 let sum num1 num2 nums =
   List.fold_left (+.) (num1 +. num2) nums
 
+let sum_infix env a b k = binaux env "+" (+.) a b k
+
 let difference num1 num2 =
   num1 -. num2
+
+let difference_infix env a b k =
+  binaux env "-" (-.) a b k
 
 let minus n =
   -. n
 
-let product2 = binaux "product" ( *.)
+let minus_infix env n k =
+  wrap env "-" Lga.(num @-> ret (value num)) minus [n]
+    (function
+      | Some a -> k a
+      | None -> assert false)
+
+let product_infix env a b k =
+  binaux env "+" ( *.) a b k
 
 let product num1 num2 nums =
   List.fold_left ( *. ) (num1 *. num2) nums
 
-let quotient2 = binaux "quotient" (/.)
+let quotient_infix env a b k =
+  binaux env "quotient" (/.) a b k
 
 let remainder a b =
   mod_float a b
+
+let remainder_infix env a b k =
+  binaux env "%" remainder a b k
 
 (* modulo: not implemented *)
 
@@ -67,25 +81,43 @@ let sqrt num =
   
 let power a b = a ** b
 
+let power_infix env a b k =
+  wrap env "^" Lga.(num @-> num @-> ret (value num)) power [a; b]
+    (function
+      | Some a -> k a
+      | None -> assert false)
+
 (** 4.2 Numeric Predicates *)
 
-let compaux name op a b =
-  let err = name ^ ": bad argument types" in
-  let a = num_atom a err in
-  let b = num_atom b err in
-  if op a b then true_word else false_word
+let compaux env name f a b k =
+  wrap env name Lga.(num @-> num @-> ret (value any)) f [a; b]
+    (function
+      | Some a -> k a
+      | None -> assert false)
 
 let lessp a b =
   if a < b then true_word else false_word
 
+let lessp_infix env =
+  compaux env "<" lessp
+
 let greaterp a b =
   if a > b then true_word else false_word
+
+let greaterp_infix env =
+  compaux env ">" greaterp
     
 let lessequalp a b =
   if a <= b then true_word else false_word
+
+let lessequalp_infix env =
+  compaux env "<=" lessequalp
     
 let greaterequalp a b =
   if a >= b then true_word else false_word
+
+let greaterequalp_infix env =
+  compaux env ">=" greaterequalp
 
 (** 4.3 Random Numbers *)
 

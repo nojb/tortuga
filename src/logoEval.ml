@@ -33,15 +33,15 @@ and relational_expression env strm k =
   additive_expression env strm (fun lhs ->
       let rec app op lhs =
         Stream.junk strm;
-        additive_expression env strm (fun rhs -> loop (op lhs rhs))
+        additive_expression env strm (fun rhs -> op env lhs rhs loop)
       and loop lhs =
         match Stream.peek strm with
-        (* | Some (Word "=") -> app LogoPrim.equalp lhs *)
-        (* | Some (Word "<") -> app LogoArithmetic.lessp lhs *)
-        (* | Some (Word ">") -> app LogoArithmetic.greaterp lhs *)
-        (* | Some (Word "<=") -> app LogoArithmetic.lessequalp lhs *)
-        (* | Some (Word ">=") -> app LogoArithmetic.greaterequalp lhs *)
-        (* | Some (Word "<>") -> app LogoPrim.notequalp lhs *)
+        | Some (Word "=") -> app LogoPrim.equalp_infix lhs
+        | Some (Word "<") -> app LogoArithmetic.lessp_infix lhs
+        | Some (Word ">") -> app LogoArithmetic.greaterp_infix lhs
+        | Some (Word "<=") -> app LogoArithmetic.lessequalp_infix lhs
+        | Some (Word ">=") -> app LogoArithmetic.greaterequalp_infix lhs
+        | Some (Word "<>") -> app LogoPrim.notequalp_infix lhs
         | _ -> k lhs
       in
       loop lhs)
@@ -50,11 +50,11 @@ and additive_expression env strm k =
   multiplicative_expression env strm (fun lhs ->
       let rec app op lhs =
         Stream.junk strm;
-        multiplicative_expression env strm (fun rhs -> loop (op lhs rhs))
+        multiplicative_expression env strm (fun rhs -> op env lhs rhs loop)
       and loop lhs =
         match Stream.peek strm with
-        | Some (Word "+") -> app LogoArithmetic.sum2 lhs
-        (* | Some (Word "-") -> app LogoArithmetic.difference lhs *)
+        | Some (Word "+") -> app LogoArithmetic.sum_infix lhs
+        | Some (Word "-") -> app LogoArithmetic.difference_infix lhs
         | _ -> k lhs
       in
       loop lhs)
@@ -63,12 +63,12 @@ and multiplicative_expression env strm k =
   power_expression env strm (fun lhs ->
       let rec app op lhs =
         Stream.junk strm;
-        power_expression env strm (fun rhs -> loop (op lhs rhs))
+        power_expression env strm (fun rhs -> op env lhs rhs loop)
       and loop lhs =
         match Stream.peek strm with
-        | Some (Word "*") -> app LogoArithmetic.product2 lhs
-        | Some (Word "/") -> app LogoArithmetic.quotient2 lhs
-        (* | Some (Word "%") -> app LogoArithmetic.remainder lhs *)
+        | Some (Word "*") -> app LogoArithmetic.product_infix lhs
+        | Some (Word "/") -> app LogoArithmetic.quotient_infix lhs
+        | Some (Word "%") -> app LogoArithmetic.remainder_infix lhs
         | _ -> k lhs
       in
       loop lhs)
@@ -77,18 +77,20 @@ and power_expression env strm k =
   unary_expression env strm (fun lhs ->
       let rec loop lhs =
         match Stream.peek strm with
-        (* | Some (Word "^") -> *)
-          (* Stream.junk strm; *)
-          (* unary_expression env strm (fun rhs -> loop (LogoArithmetic.power lhs rhs)) *)
+        | Some (Word "^") ->
+          Stream.junk strm;
+          unary_expression env strm
+            (fun rhs -> LogoArithmetic.power_infix env lhs rhs loop)
         | _ -> k lhs
       in
       loop lhs)
 
 and unary_expression env strm k =
   match Stream.peek strm with
-  (* | Some w when w == minus_word -> *)
-    (* Stream.junk strm; *)
-    (* unary_expression env strm (fun rhs -> k (LogoArithmetic.minus rhs)) *)
+  | Some w when w == minus_word ->
+    Stream.junk strm;
+    unary_expression env strm
+      (fun rhs -> LogoArithmetic.minus_infix env rhs k)
   | _ ->
     final_expression env strm k
 
@@ -164,54 +166,55 @@ and dispatch env proc strm natural k =
     | Not_found -> error "Don't know how to %s" (String.uppercase proc)
   in
   getargs (minargs fn) natural begin fun args ->
-    let return : type a. a ret -> a -> unit = fun ret f ->
-      match ret with
-        Kcont ->
-        f k
-      | Kretvoid ->
-        k None
-      | Kvalue ty ->
-        k (Some (argatom ty f))
-    in
-    let rec loop : type a. int -> a fn -> atom list -> a -> unit = fun i fn args f ->
-      match fn, args with
-      | Kvoid fn, _ ->
-        loop i fn args (f ())
-      | Kenv fn, _ ->
-        loop i fn args (f env)
-      | Kturtle fn, _ ->
-        loop i fn args (f env.turtle)
-      | Kfix _, [] ->
-        error "%s requires at least %d more arguments" (String.uppercase proc) (minargs fn)
-      | Kfix (typ, fn), a :: args ->
-        begin match matcharg typ a with
-          | Some a -> loop (i+1) fn args (f a)
-          | None ->
-            error "argument %i of %s should be a %s, found %a" i (String.uppercase proc)
-              (argstring typ) sprint a
-        end
-      | Kopt (_, ret), [] ->
-        return ret (f None)
-      | Kopt (ty, ret), a :: [] ->
-        begin match matcharg ty a with
-          | Some _ as a -> return ret (f a)
-          | None ->
-            error "optional argument %i of %s should be a %s, found %a" i (String.uppercase proc)
-              (argstring ty) sprint a
-        end
-      | Kopt _, _ :: _ :: _ ->
-        error "too many arguments for %s" (String.uppercase proc)
-      | Krest (ty, ret), args ->
-        let args = List.map (fun a ->
-            match matcharg ty a with
-            | Some a -> a | None -> assert false) args in
-        return ret (f args)
-      | Kret ret, [] ->
-        return ret f
-      | Kret _, _ :: _ ->
-        error "too many arguments for %s" (String.uppercase proc)
-    in
-    loop 1 fn args f
+    wrap env proc fn f args k
+    (* let return : type a. a ret -> a -> unit = fun ret f -> *)
+    (*   match ret with *)
+    (*     Kcont -> *)
+    (*     f k *)
+    (*   | Kretvoid -> *)
+    (*     k None *)
+    (*   | Kvalue ty -> *)
+    (*     k (Some (argatom ty f)) *)
+    (* in *)
+    (* let rec loop : type a. int -> a fn -> atom list -> a -> unit = fun i fn args f -> *)
+    (*   match fn, args with *)
+    (*   | Kvoid fn, _ -> *)
+    (*     loop i fn args (f ()) *)
+    (*   | Kenv fn, _ -> *)
+    (*     loop i fn args (f env) *)
+    (*   | Kturtle fn, _ -> *)
+    (*     loop i fn args (f env.turtle) *)
+    (*   | Kfix _, [] -> *)
+    (*     error "%s requires at least %d more arguments" (String.uppercase proc) (minargs fn) *)
+    (*   | Kfix (typ, fn), a :: args -> *)
+    (*     begin match matcharg typ a with *)
+    (*       | Some a -> loop (i+1) fn args (f a) *)
+    (*       | None -> *)
+    (*         error "argument %i of %s should be a %s, found %a" i (String.uppercase proc) *)
+    (*           (argstring typ) sprint a *)
+    (*     end *)
+    (*   | Kopt (_, ret), [] -> *)
+    (*     return ret (f None) *)
+    (*   | Kopt (ty, ret), a :: [] -> *)
+    (*     begin match matcharg ty a with *)
+    (*       | Some _ as a -> return ret (f a) *)
+    (*       | None -> *)
+    (*         error "optional argument %i of %s should be a %s, found %a" i (String.uppercase proc) *)
+    (*           (argstring ty) sprint a *)
+    (*     end *)
+    (*   | Kopt _, _ :: _ :: _ -> *)
+    (*     error "too many arguments for %s" (String.uppercase proc) *)
+    (*   | Krest (ty, ret), args -> *)
+    (*     let args = List.map (fun a -> *)
+    (*         match matcharg ty a with *)
+    (*         | Some a -> a | None -> assert false) args in *)
+    (*     return ret (f args) *)
+    (*   | Kret ret, [] -> *)
+    (*     return ret f *)
+    (*   | Kret _, _ :: _ -> *)
+    (*     error "too many arguments for %s" (String.uppercase proc) *)
+    (* in *)
+    (* loop 1 fn args f *)
   end
     
 let parse_to strm =
