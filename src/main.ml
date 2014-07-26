@@ -28,9 +28,9 @@ let make_env () =
   LogoPrim.init env;
   LogoComm.init env;
   LogoArithmetic.init env;
-  LogoControl.init env;
-  LogoWork.init env;
   LogoGraphics.init env;
+  LogoWork.init env;
+  LogoControl.init env;
   env
 
 let main () =

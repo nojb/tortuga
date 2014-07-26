@@ -28,15 +28,15 @@ type atom =
 exception Error of string
 
 module type TURTLE = sig
-  val get_heading : unit -> int
-  val set_heading : int -> unit
-  val get_pos : unit -> int * int
-  val set_pos : int -> int -> unit
+  val get_heading : unit -> float
+  val set_heading : float -> unit
+  val get_pos : unit -> float * float
+  val set_pos : float -> float -> unit
   val set_color : Gg.color -> unit
-  val move : int -> unit
-  val turn : int -> unit
-  val arc : int -> int -> unit
-  val set_size : int -> unit
+  val move : float -> unit
+  val turn : float -> unit
+  val arc : float -> float -> unit
+  val set_size : float -> unit
   val pen_down : unit -> unit
   val pen_up : unit -> unit
   val clean_screen : unit -> unit

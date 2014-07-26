@@ -32,10 +32,10 @@ let forward (module T : TURTLE) dist =
   T.move dist
 
 let back (module T : TURTLE) dist =
-  T.move (-dist)
+  T.move (-. dist)
 
 let left (module T : TURTLE) deg =
-  T.turn (-deg)
+  T.turn (-. deg)
 
 let right (module T : TURTLE) deg =
   T.turn deg
@@ -58,8 +58,8 @@ let setheading (module T : TURTLE) h =
   T.set_heading h
 
 let home (module T : TURTLE) =
-  T.set_pos 0 0;
-  T.set_heading 0
+  T.set_pos 0.0 0.0;
+  T.set_heading 0.0
 
 let arc (module T : TURTLE) angle radius =
   T.arc angle radius
@@ -87,8 +87,8 @@ let clean (module T : TURTLE) =
   T.clean_screen ()
 
 let clearscreen (module T : TURTLE) =
-  T.set_pos 0 0;
-  T.set_heading 0;
+  T.set_pos 0.0 0.0;
+  T.set_heading 0.0;
   T.clean_screen ()
 
 (** 6.5 Pen and Background Control *)
@@ -143,26 +143,26 @@ let palette env col =
     error "palette: color %s not found" col
 
 let init env =
-  set_pf env "forward" Lga.(turtle @@ int @-> ret retvoid) forward;
-  set_pf env "fd" Lga.(turtle @@ int @-> ret retvoid) forward;
-  set_pf env "back" Lga.(turtle @@ int @-> ret retvoid) back;
-  set_pf env "bk" Lga.(turtle @@ int @-> ret retvoid) back;
-  set_pf env "left" Lga.(turtle @@ int @-> ret retvoid) left;
-  set_pf env "lt" Lga.(turtle @@ int @-> ret retvoid) left;
-  set_pf env "right" Lga.(turtle @@ int @-> ret retvoid) right;
-  set_pf env "rt" Lga.(turtle @@ int @-> ret retvoid) right;
-  set_pf env "setpos" Lga.(turtle @@ fix_list int 2 @-> ret retvoid) setpos;
-  set_pf env "setxy" Lga.(turtle @@ int @-> int @-> ret retvoid) setxy;
-  set_pf env "setx" Lga.(turtle @@ int @-> ret retvoid) setx;
-  set_pf env "sety" Lga.(turtle @@ int @-> ret retvoid) sety;
-  set_pf env "setheading" Lga.(turtle @@ int @-> ret retvoid) setheading;
+  set_pf env "forward" Lga.(turtle @@ num @-> ret retvoid) forward;
+  set_pf env "fd" Lga.(turtle @@ num @-> ret retvoid) forward;
+  set_pf env "back" Lga.(turtle @@ num @-> ret retvoid) back;
+  set_pf env "bk" Lga.(turtle @@ num @-> ret retvoid) back;
+  set_pf env "left" Lga.(turtle @@ num @-> ret retvoid) left;
+  set_pf env "lt" Lga.(turtle @@ num @-> ret retvoid) left;
+  set_pf env "right" Lga.(turtle @@ num @-> ret retvoid) right;
+  set_pf env "rt" Lga.(turtle @@ num @-> ret retvoid) right;
+  set_pf env "setpos" Lga.(turtle @@ fix_list num 2 @-> ret retvoid) setpos;
+  set_pf env "setxy" Lga.(turtle @@ num @-> num @-> ret retvoid) setxy;
+  set_pf env "setx" Lga.(turtle @@ num @-> ret retvoid) setx;
+  set_pf env "sety" Lga.(turtle @@ num @-> ret retvoid) sety;
+  set_pf env "setheading" Lga.(turtle @@ num @-> ret retvoid) setheading;
   set_pf env "home" Lga.(turtle @@ ret retvoid) home;
-  set_pf env "arc" Lga.(turtle @@ int @-> int @-> ret retvoid) arc;
+  set_pf env "arc" Lga.(turtle @@ num @-> num @-> ret retvoid) arc;
 
-  set_pf env "pos" Lga.(turtle @@ ret (value (list int))) pos;
-  set_pf env "xcor" Lga.(turtle @@ ret (value int)) xcor;
-  set_pf env "ycor" Lga.(turtle @@ ret (value int)) ycor;
-  set_pf env "heading" Lga.(turtle @@ ret (value int)) heading;
+  set_pf env "pos" Lga.(turtle @@ ret (value (list num))) pos;
+  set_pf env "xcor" Lga.(turtle @@ ret (value num)) xcor;
+  set_pf env "ycor" Lga.(turtle @@ ret (value num)) ycor;
+  set_pf env "heading" Lga.(turtle @@ ret (value num)) heading;
   
   set_pf env "clean" Lga.(turtle @@ ret retvoid) clean;
   set_pf env "clearscreen" Lga.(turtle @@ ret retvoid) clearscreen;
@@ -176,6 +176,6 @@ let init env =
   set_pf env "setpc" Lga.(env @@ turtle @@ alt word (fix_list int 3) @-> ret retvoid)
     setpencolor;
   set_pf env "setpalette" Lga.(env @@ word @-> fix_list int 3 @-> ret retvoid) setpalette;
-  set_pf env "setpensize" Lga.(turtle @@ int @-> ret retvoid) setpensize;
+  set_pf env "setpensize" Lga.(turtle @@ num @-> ret retvoid) setpensize;
 
   set_pf env "palette" Lga.(env @@ word @-> ret (value (list int))) palette

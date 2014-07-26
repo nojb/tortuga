@@ -21,11 +21,14 @@
 
 module G = Graphics
 
+let round d =
+  truncate (d +. 0.5)
+    
 let _ =
   G.open_graph "";
   G.moveto (G.size_x () / 2) (G.size_y () / 2)
 
-let theta = ref 90
+let theta = ref 90.0
 
 let pendown = ref true
 
@@ -33,41 +36,44 @@ let get_heading () =
   !theta
 
 let set_heading h =
-  theta := 90 - h
+  theta := 90.0 -. h
 
 let get_pos () =
   let x, y = G.current_point () in
-  (x - (G.size_x () / 2), y - (G.size_y () / 2))
+  float (x - (G.size_x () / 2)), float (y - (G.size_y () / 2))
 
 let set_pos x y =
-  G.moveto (x + G.size_x () / 2) (y + G.size_y () / 2)
+  G.moveto (round (x +. float (G.size_x ()) /. 2.0)) (round (y +. float (G.size_y ()) /. 2.0))
 
 let set_color c =
-  let r c = truncate (Gg.Color.r c *. 255.) in
-  let g c = truncate (Gg.Color.g c *. 255.) in
-  let b c = truncate (Gg.Color.b c *. 255.) in
+  let r c = round (Gg.Color.r c *. 255.) in
+  let g c = round (Gg.Color.g c *. 255.) in
+  let b c = round (Gg.Color.b c *. 255.) in
   G.set_color (G.rgb (r c) (g c) (b c))
 
 let pi = 4.0 *. atan 1.0
 
 let rad_of_deg d =
-  float d /. 180.0 *. pi
+  d /. 180.0 *. pi
 
 let move d =
-  let dx = float d *. cos (rad_of_deg !theta) in
-  let dx = truncate dx in
-  let dy = float d *. sin (rad_of_deg !theta) in
-  let dy = truncate dy in
+  let dx = d *. cos (rad_of_deg !theta) in
+  let dx = round dx in
+  let dy = d *. sin (rad_of_deg !theta) in
+  let dy = round dy in
   if !pendown then G.rlineto dx dy
   
 let turn r =
-  theta := !theta - r
+  theta := !theta -. r
 
 let arc angle r =
-  if !pendown then G.draw_arc (G.current_x ()) (G.current_y ()) r r !theta (!theta - r)
+  let rr = round r in
+  if !pendown then
+    G.draw_arc (G.current_x ()) (G.current_y ())
+      rr rr (round !theta) (round (!theta -. r))
 
 let set_size sz =
-  G.set_line_width sz
+  G.set_line_width (round sz)
 
 let pen_down () =
   pendown := true
