@@ -22,6 +22,8 @@
 open LogoTypes
 
 val expression : env -> atom Stream.t -> (atom -> unit) -> unit
+val expressionlist : env -> atom Stream.t -> (atom -> unit) -> unit
+val instruction : env -> atom Stream.t -> (atom option -> unit) -> unit
 val command : env -> atom Stream.t -> (unit -> unit) -> unit
 val instructionlist : env -> atom Stream.t -> (atom option -> unit) -> unit
 val toplevel : env -> atom Stream.t -> unit

@@ -95,28 +95,34 @@ and unary_expression env strm k =
     final_expression env strm k
 
 and final_expression env strm k =
+  instruction env strm
+    (function
+      | Some a -> k a
+      | None -> error "did not produce a result")
+      
+and instruction env strm k =
   match Stream.peek strm with
-  | Some (Num _) ->
-    assert false
+    Some (Num _ as atom)
   | Some (List _ as atom)
   | Some (Array _ as atom) ->
     Stream.junk strm;
-    k atom
+    k (Some atom)
   | Some (Word w) ->
     Stream.junk strm;
     if isnumber w then
       let n = float_of_string w in
-      k (Num n)
+      k (Some (Num n))
     else if w.[0] = '\"' then
       let w = stringfrom 1 w in
-      k (Word w)
+      k (Some (Word w))
     else if w.[0] = ':' then
       let w = stringfrom 1 w in
-      k (get_var env w)
+      k (Some (get_var env w))
     else
-      apply env w strm (function
-          | Some a -> k a
-          | None -> error "%s did not produce a result" (String.uppercase w))
+      apply env w strm k
+        (* (function *)
+        (*   | Some a -> k a *)
+        (*   | None -> error "%s did not produce a result" (String.uppercase w)) *)
   | None ->
     assert false
 
@@ -244,28 +250,41 @@ let parse_to strm =
   (name, inputs, body)
 
 let command env strm k =
-  match Stream.peek strm with
-  | Some (Word w) ->
-    Stream.junk strm;
-    apply env w strm
-      (function
-        | None -> k ()
-        | Some a -> error "don't know what to do with %a" sprint a)
-  | Some a ->
-    error "don't know how to %a" sprint a
-  | None ->
-    error "premature eof"
+  instruction env strm
+    (function
+      | None -> k ()
+      | Some a -> error "don't know what to do with %a" sprint a)
+  (* match Stream.peek strm with *)
+  (* | Some (Word w) -> *)
+  (*   Stream.junk strm; *)
+  (*   apply env w strm *)
+  (*     (function *)
+  (*       | None -> k () *)
+  (*       | Some a -> error "don't know what to do with %a" sprint a) *)
+  (* | Some a -> *)
+  (*   error "don't know how to %a" sprint a *)
+  (* | None -> *)
+  (*   error "premature eof" *)
 
 (* FIXME 'step' should only be called if 'k' it not invoked! *)
+
 let instructionlist env strm k =
-  let rec step () =
-    match Stream.peek strm with
-    | Some _ ->
-      command env strm step
-    | None ->
-      k None
+  let rec step last =
+    match Stream.peek strm, last with
+    | Some _, Some a ->
+      error "You don't say what to do with %a" sprint a
+    | Some _, None ->
+      instruction env strm step
+    | None, _ ->
+      k last
   in
-  step ()
+  step None
+
+let expressionlist env strm k =
+  instructionlist env strm
+    (function
+      | Some a -> k a
+      | None -> error "value expected")
 
 type aux =
   { k : 'a. 'a fn -> (env -> 'a) -> unit }
