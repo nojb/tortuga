@@ -23,83 +23,96 @@ open Gg
 open Vg
 
 type state = {
-  point : Gg.V2.t;
-  angle : float;
-  image : Vg.image;
-  (* outline : P.outline; *)
-  penup : bool;
-  color : Gg.Color.t;
-  alpha : float
+  pos     : v2;
+  theta   : float;
+  image   : Vg.image;
+  outline : P.outline;
+  pendown : bool;
+  color   : color
 }
 
-let t = ref {
-    point = V2.zero;
-    angle = Float.pi_div_2;
-    image = I.void;
-    penup = false;
-    color = Color.black;
-    alpha = 1.
+let t =
+  ref {
+    pos     = V2.zero;
+    theta   = Float.pi_div_2;
+    image   = I.const Gg.Color.black;
+    outline = { P.o with P.cap = `Round };
+    pendown = true;
+    color   = Color.white
   }
 
+let render () =
+  let out = open_out_bin "test.pdf" in
+
+  (* 1. Define your image *)
+      
+  let size = Size2.v 400. 400. (* mm *) in
+  let view = Box2.v_mid P2.o (Size2.v 800. 800.) in
+  let image = !t.image in
+
+  (* 2. Render *)
+  
+  let xmp = Vgr.xmp () in
+  let warn w = Vgr.pp_warning Format.err_formatter w in
+  let r = Vgr.create ~warn (Vgr_pdf.target ~xmp ()) (`Channel out) in
+  ignore (Vgr.render r (`Image (size, view, image)));
+  ignore (Vgr.render r `End);
+  
+  close_out out
+
 let get_heading () =
-  0
+  !t.theta
 
 let set_heading h =
-  ()
+  t := { !t with theta = !t.theta -. Float.rad_of_deg h }
 
 let get_pos () =
-  let p = !t.point in
-  truncate (V2.x p), truncate (V2.y p)
+  let p = !t.pos in
+  V2.x p, V2.y p
 
 let set_pos x y =
-  let x = float x in
-  let y = float y in
-  let p = V2.v x y in
-  t := { !t with point = p }
+  t := { !t with pos = V2.v x y }
 
 let set_color c =
   t := { !t with color = c }
 
 let move d =
-  let d = float d in
-  let dest = V2.(!t.point + of_polar (v d !t.angle)) in
-  let fg = if !t.penup then I.void else I.const (Color.with_a !t.color !t.alpha) in
-  let line = P.line dest (P.sub !t.point P.empty) in
-  let outline = I.cut ~area:(`O P.o) line fg in
-  let image = outline >> I.blend !t.image in
-  t := { !t with point = dest; image }
+  let pt = V2.of_polar (V2.v d !t.theta) in
+  let pos = V2.add !t.pos pt in
+  let path = P.empty >> P.sub !t.pos >> P.line pos in
+  let paintcol = if !t.pendown then I.const !t.color else I.void in
+  let outl = I.cut ~area:(`O !t.outline) path paintcol in
+  let image = !t.image >> I.blend outl in
+  t := { !t with image; pos }
 
 let turn r =
-  let r = float r in
-  t := { !t with angle = !t.angle -. Float.rad_of_deg r }
+  t := { !t with theta = !t.theta -. Float.rad_of_deg r }
 
 let arc angle r =
-  assert false
-  (* let src = V2.(t.point + of_polar (v r t.angle)) in *)
-  (* let dst = V2.add t.point (V2.of_polar (V2.v r (t.angle -. Float.rad_of_deg angle))) in *)
-  (* let base = if t.penup then I.void else I.const (Color.with_a t.color t.alpha) in *)
-  (* let p = P.earc ~large:false ~angle (Size2.v r r) dst (P.sub src P.empty) in *)
-  (* let outline = I.cut ~area:(`O P.o) p base in *)
-  (* let image = outline >> I.blend t.image in *)
-(* { t with image } *)
-
+  let p = V2.of_polar (V2.v r !t.theta) in
+  let pos1 = V2.add !t.pos p in
+  let pos2 = V2.to_polar pos1 in
+  let pos2 = V2.of_polar (V2.v (V2.x pos2) (V2.y pos2 -. Float.rad_of_deg angle)) in
+  let path = P.empty >> P.sub pos1 >> P.earc ~large:false ~cw:true (V2.v r r) pos2 in
+  let paintcol = if !t.pendown then I.const !t.color else I.void in
+  let outl = I.cut ~area:(`O !t.outline) path paintcol in
+  let image = !t.image >> I.blend outl in
+  t := { !t with image }
+  
 let set_size size =
-  () (* TODO *)
+  let outline = { !t.outline with P.width = size } in
+  t := { !t with outline }
+
+let pen_up () =
+  t := { !t with pendown = false }
+
+let pen_down () =
+  t := { !t with pendown = true }
 
 let clean_screen () =
-  t := { !t with point = V2.zero; image = I.void }
+  t := { !t with image = I.void }
 
-(* let render t out = *)
-(*   (\* 1. Define your image *\) *)
+open LogoEnv
 
-(*   let size = Size2.v 100. 100. (\* mm *\) in *)
-(*   let view = Box2.v_mid P2.o (Size2.v 100. 100.) in *)
-(*   let image = t.image in *)
-
-(*   (\* 2. Render *\) *)
-  
-(*   let xmp = Vgr.xmp () in *)
-(*   let warn w = Vgr.pp_warning Format.err_formatter w in *)
-(*   let r = Vgr.create ~warn (Vgr_pdf.target ~xmp ()) (`Channel out) in *)
-(*   ignore (Vgr.render r (`Image (size, view, image)));  *)
-(*   ignore (Vgr.render r `End) *)
+let init env =
+  set_pf env "render" LogoAtom.Lga.(void @@ ret retvoid) render

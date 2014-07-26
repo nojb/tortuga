@@ -23,14 +23,23 @@ open LogoTypes
 open LogoEnv
 open LogoEval
 
+module type T = sig
+  include TURTLE
+  val init : env -> unit
+end
+
+(* module TurtleGraphics = LogoTurtleGraphics *)
+module TurtleVg : T = LogoTurtleVg
+
 let make_env () =
-  let env = create_env (module LogoTurtleGraphics) in
+  let env = create_env (module TurtleVg) in
   LogoPrim.init env;
   LogoComm.init env;
   LogoArithmetic.init env;
   LogoGraphics.init env;
   LogoWork.init env;
   LogoControl.init env;
+  TurtleVg.init env;
   env
 
 let main () =
