@@ -28,7 +28,8 @@ type state = {
   image   : Vg.image;
   outline : P.outline;
   pendown : bool;
-  color   : color
+  color   : color;
+  background : color
 }
 
 let t =
@@ -38,7 +39,8 @@ let t =
     image   = I.const Gg.Color.black;
     outline = { P.o with P.cap = `Round };
     pendown = true;
-    color   = Color.white
+    color   = Color.white;
+    background = Color.black
   }
 
 let render name =
@@ -117,7 +119,7 @@ let pen_down () =
   t := { !t with pendown = true }
 
 let clean_screen () =
-  t := { !t with image = I.void }
+  t := { !t with image = I.const !t.background }
 
 open LogoEnv
 
