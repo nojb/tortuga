@@ -258,7 +258,6 @@ let command env strm k =
 
 (* FIXME 'step' should only be called if 'k' it not invoked! *)
 let instructionlist env strm k =
-  let env = new_exit env k in
   let rec step () =
     match Stream.peek strm with
     | Some _ ->
@@ -279,7 +278,7 @@ let to_ env strm =
       loop inputs
         { k = fun fn f -> k.k Lga.(any @-> fn) (fun env a -> set_var env input a; f env) }
     | [] ->
-      k.k Lga.(ret cont) (fun env k -> instructionlist env (Stream.of_list body) k)
+      k.k Lga.(ret cont) (fun env k -> instructionlist (new_exit env k) (Stream.of_list body) k)
   in
   loop inputs
     { k = fun fn f -> set_pf env name (Kenv fn) (fun env -> f (new_frame env)) }

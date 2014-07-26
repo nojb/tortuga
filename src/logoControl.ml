@@ -89,7 +89,7 @@ let ifthen env tf iftrue iffalse k =
 
 let ifelse env tf iftrue iffalse k =
   if is_true tf then
-      instructionlist env (reparse iftrue) k
+    instructionlist env (reparse iftrue) k
   else if is_false tf then
     instructionlist env (reparse iffalse) k
   else
