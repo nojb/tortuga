@@ -63,6 +63,9 @@ let localmake env varname value =
   create_var env varname;
   set_var env varname value
 
+let thing env varname =
+  get_var env varname
+
 (** 7.4 Workspace Predicates *)
 
 let definedp env name =
@@ -76,6 +79,7 @@ let init env =
   set_pf env "name" Lga.(env @@ any @-> word @-> ret retvoid) name;
   set_pf env "local" Lga.(env @@ alt word (list word) @-> rest word retvoid) local;
   set_pf env "localmake" Lga.(env @@ word @-> any @-> ret retvoid) localmake;
+  set_pf env "thing" Lga.(env @@ word @-> ret (value any)) thing;
 
   set_pf env "definedp" Lga.(env @@ word @-> ret (value any)) definedp;
   set_pf env "defined?" Lga.(env @@ word @-> ret (value any)) definedp;
