@@ -61,7 +61,7 @@ let move d =
   let dx = round dx in
   let dy = d *. sin (rad_of_deg !theta) in
   let dy = round dy in
-  if !pendown then G.rlineto dx dy
+  if !pendown then G.rlineto dx dy else G.rmoveto dx dy
   
 let turn r =
   theta := !theta -. r
