@@ -30,8 +30,8 @@ open LogoEnv
 let word word1 word2 words =
   String.concat "" (word1 :: word2 :: words)
     
-let list things =
-  things
+let list thing1 thing2 things =
+  thing1 :: thing2 :: things
 
 let sentence thing1 thing2 things =
   List.concat (List.map (function List l -> l | _ as a -> [a]) (thing1 :: thing2 :: things))
@@ -260,7 +260,7 @@ let count = function
 
 let init env =
   set_pf env "word" Lga.(word @-> word @-> rest word (value word)) word;
-  set_pf env "list" Lga.(rest any (value (list any))) list;
+  set_pf env "list" Lga.(any @-> any @-> rest any (value (list any))) list;
   set_pf env "sentence" Lga.(any @-> any @-> rest any (value (list any))) sentence;
   set_pf env "se" Lga.(any @-> any @-> rest any (value (list any))) sentence;
   (* set_pf2 env "fput" fput; *)
