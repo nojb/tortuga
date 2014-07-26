@@ -1,7 +1,7 @@
 Tortuga - a Logo implementation in OCaml
 -----------------------------------------------------------------
 
-Toruga is an implementation of the Logo programming language in OCaml.  It aims
+Tortuga is an implementation of the Logo programming language in OCaml.  It aims
 to support the language as specified by the
 [Berkley Logo](http://www.cs.berkeley.edu/~bh/v2ch14/manual.html).  It is
 distributed under the MIT license.  It is currently under development but it is
