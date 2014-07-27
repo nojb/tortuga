@@ -33,3 +33,7 @@ val set_var : env -> string -> atom -> unit
 val create_var : env -> string -> unit
 val get_var : env -> string -> atom
 val has_var : env -> string -> bool
+
+val repcount : env -> int
+val start_repcount : env -> env
+val step_repcount : env -> env

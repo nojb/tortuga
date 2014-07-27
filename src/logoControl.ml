@@ -85,16 +85,16 @@ Command. Runs the instructionlist repeatedly, num times."
   in
   let args = Lga.(env @@ int @-> list any @-> ret cont) in
   let f env num list k =
-    let rec loop i =
+    let rec loop env i =
       if i > num then k None
       else
         instructionlist env (reparse list)
           (function
             | Some _ ->
               raise (Error "repeat: instruction list should not produce a value")
-            | None -> loop (i+1))
+            | None -> loop (step_repcount env) (i+1))
     in
-    loop 1
+    loop (start_repcount env) 1
   in
   prim ~names ~doc ~args ~f
 
@@ -110,14 +110,32 @@ instructionlist (such as STOP or THROW) makes it stop."
   in
   let args = Lga.(env @@ list any @-> ret retvoid) in
   let f env list =
-    let rec loop () =
+    let rec loop env =
       instructionlist env (reparse list)
         (function
           | Some _ -> raise (Error "forever: instruction list should not produce a value")
-          | None -> loop ())
+          | None -> loop (step_repcount env))
     in
-    loop ()
+    loop (start_repcount env)
   in
+  prim ~names ~doc ~args ~f
+
+let repcount =
+  let names = ["repcount"; "#"] in
+  let doc =
+
+    "REPCOUNT
+
+Outputs the repetition count of the innermost current REPEAT or FOREVER,
+starting from 1. If no REPEAT or FOREVER is active, outputs –1.
+
+The abbreviation # can be used for REPCOUNT unless the REPEAT is inside the
+template input to a higher order procedure such as FOREACH, in which case # has
+a different meaning."
+
+  in
+  let args = Lga.(env @@ ret (value int)) in
+  let f env = LogoEnv.repcount env in
   prim ~names ~doc ~args ~f
 
 let if_ =
@@ -515,6 +533,7 @@ let () =
       runresult;
       repeat;
       forever;
+      repcount;
       if_;
       ifelse;
       stop;

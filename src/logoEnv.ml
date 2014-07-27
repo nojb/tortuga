@@ -26,7 +26,8 @@ let create_env turtle = {
   locals = [];
   output = (fun _ -> raise (Error "output: not inside a function"));
   turtle;
-  continue = (fun _ -> raise (Error "continue: no pause"))
+  continue = (fun _ -> raise (Error "continue: no pause"));
+  repcount = []
 }
 
 let new_frame env =
@@ -85,3 +86,16 @@ let has_var env name =
       H.mem top name || loop rest
   in
   loop env.locals
+
+let repcount env =
+  match env.repcount with
+  | [] -> -1
+  | top :: _ -> top
+
+let start_repcount env =
+  { env with repcount = 1 :: env.repcount }
+
+let step_repcount env =
+  match env.repcount with
+  | [] -> invalid_arg "next_repcount"
+  | top :: rest -> { env with repcount = (top + 1) :: rest }
