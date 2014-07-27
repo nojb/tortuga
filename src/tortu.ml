@@ -31,6 +31,7 @@ module L2 = LogoComm
 module L3 = LogoControl
 module L4 = LogoPrim
 module L5 = LogoArithmetic
+module L6 = LogoLogic
 
 let main () =
   let lexbuf = Lexing.from_channel stdin in
