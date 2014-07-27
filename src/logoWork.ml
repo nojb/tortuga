@@ -74,6 +74,58 @@ let definedp name =
 
 let namep env name =
   if has_var env name then true_word else false_word
+
+(** 7.7 Workspace Control *)
+
+(* From Homebrew:
+def puts_columns items, star_items=[]
+  return if items.empty?
+
+  if star_items && star_items.any?
+    items = items.map{|item| star_items.include?(item) ? "#{item}*" : item}
+  end
+
+  if $stdout.tty?
+    # determine the best width to display for different console sizes
+    console_width = `/bin/stty size`.chomp.split(" ").last.to_i
+    console_width = 80 if console_width <= 0
+    longest = items.sort_by { |item| item.length }.last
+    optimal_col_width = (console_width.to_f / (longest.length + 2).to_f).floor
+    cols = optimal_col_width > 1 ? optimal_col_width : 1
+
+    IO.popen("/usr/bin/pr -#{cols} -t -w#{console_width}", "w"){|io| io.puts(items) }
+  else
+    puts items
+  end
+end
+*)
+
+let help = function
+  | None ->
+    let rs = fold_routines (fun x l -> x :: l) [] in
+    let l = List.length rs in
+    if l > 0 then begin
+      let a = Array.of_list rs in
+      Array.sort (fun s1 s2 -> String.length s1 - String.length s2) a;
+      let last = a.(l-1) in
+      let cols = truncate (80.0 /. float (String.length last + 3)) in
+      let cols = max 1 cols in
+      let nc = l / cols in
+      Array.sort compare a;
+      for i = 0 to nc - 1 do
+        for j = 0 to cols - 1 do
+          let k = j * nc + i in
+          if k < l then print_string (Printf.sprintf "%-*s" (String.length last + 3) a.(k))
+        done;
+        print_newline ()
+      done
+    end
+  | Some name ->
+    match get_help name with
+    | Some doc ->
+      print_endline doc
+    | None ->
+      print_endline ("No help is available for " ^ name)
   
 let () =
   set_pf "make" Lga.(env @@ word @-> any @-> ret retvoid) make;
@@ -85,5 +137,6 @@ let () =
   set_pf "definedp" Lga.(word @-> ret (value any)) definedp;
   set_pf "defined?" Lga.(word @-> ret (value any)) definedp;
   set_pf "namep" Lga.(env @@ word @-> ret (value any)) namep;
-  set_pf "name?" Lga.(env @@ word @-> ret (value any)) namep
-  
+  set_pf "name?" Lga.(env @@ word @-> ret (value any)) namep;
+
+  set_pf "help" Lga.(opt word retvoid) help

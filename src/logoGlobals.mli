@@ -20,11 +20,17 @@
    CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. *)
 
 open LogoTypes
-  
+
+type primitive
+
+val prim : names:string list -> ?doc:string -> args:'a fn -> f:'a -> primitive
+val add_prim : primitive -> unit
 val set_pf : string -> 'a fn -> 'a -> unit
   
 val has_routine : string -> bool
 val get_routine : string -> proc
+val fold_routines : (string -> 'a -> 'a) -> 'a -> 'a
+val get_help : string -> string option
 
 val set_global : string -> atom -> unit
 val get_global : string -> atom
