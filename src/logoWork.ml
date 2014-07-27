@@ -77,7 +77,7 @@ let namep env name =
 
 (** 7.7 Workspace Control *)
 
-(*
+(* From Homebrew:
 def puts_columns items, star_items=[]
   return if items.empty?
 
@@ -102,7 +102,24 @@ end
 
 let help = function
   | None ->
-    iter_routines print_endline
+    let rs = fold_routines (fun x l -> x :: l) [] in
+    let l = List.length rs in
+    if l > 0 then begin
+      let a = Array.of_list rs in
+      Array.sort (fun s1 s2 -> String.length s1 - String.length s2) a;
+      let last = a.(l-1) in
+      let cols = truncate (80.0 /. float (String.length last + 3)) in
+      let cols = max 1 cols in
+      let nc = l / cols in
+      Array.sort compare a;
+      for i = 0 to nc - 1 do
+        for j = 0 to cols - 1 do
+          let k = j * nc + i in
+          if k < l then print_string (Printf.sprintf "%-*s" (String.length last + 3) a.(k))
+        done;
+        print_newline ()
+      done
+    end
   | Some name ->
     match get_help name with
     | Some doc ->

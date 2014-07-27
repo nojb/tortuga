@@ -79,8 +79,8 @@ let get_routine name =
   let p = H.find routines name in
   p.proc_fun
 
-let iter_routines f =
-  H.iter (fun name _ -> f name) routines
+let fold_routines f b =
+  H.fold (fun name _ b -> f name b) routines b
 
 let get_help name =
   try

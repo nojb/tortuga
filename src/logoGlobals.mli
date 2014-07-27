@@ -29,7 +29,7 @@ val set_pf : string -> 'a fn -> 'a -> unit
   
 val has_routine : string -> bool
 val get_routine : string -> proc
-val iter_routines : (string -> unit) -> unit
+val fold_routines : (string -> 'a -> 'a) -> 'a -> 'a
 val get_help : string -> string option
 
 val set_global : string -> atom -> unit
