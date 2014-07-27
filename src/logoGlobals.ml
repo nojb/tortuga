@@ -21,8 +21,13 @@
 
 open LogoTypes
 open LogoAtom
-  
-let routines : proc H.t = H.create 17
+
+type proc_info = {
+  proc_doc : string option;
+  proc_fun : proc
+}
+
+let routines : proc_info H.t = H.create 17
 
 let globals : atom H.t = H.create 17
 
@@ -54,15 +59,25 @@ let palette =
       H.add pal name col) default_colors;
   pal
 
+type primitive =
+  string list * proc_info
+
+let prim ~names ?doc ~args ~f =
+  names, { proc_doc = doc; proc_fun = Pf (args, f) }
+
+let add_prim (names, p) =
+  List.iter (fun n -> H.add routines n p) names
+
 let set_pf : 'a. string -> 'a fn -> 'a -> unit =
   fun name args f ->
-    H.add routines name (Pf (args, f))
+    H.add routines name { proc_doc = None; proc_fun = Pf (args, f) }
 
 let has_routine name =
   H.mem routines name
 
 let get_routine name =
-  H.find routines name
+  let p = H.find routines name in
+  p.proc_fun
   
 let set_global name data =
   H.replace globals name data
