@@ -22,40 +22,11 @@
 open LogoTypes
 open LogoAtom
   
-let default_colors =
-  let open Gg.Color in
-  [
-    0 , "black"     , black;
-    1 , "blue"      , blue;
-    2 , "lime"      , v_srgbi 191 255 0;
-    3 , "cyan"      , v_srgbi 0 255 255;
-    4 , "red"       , red;
-    5 , "magenta"   , v_srgbi 255 0 255;
-    6 , "yellow"    , v_srgbi 255 255 0;
-    7 , "white"     , white;
-    8 , "brown"     , v_srgbi 150 75 0;
-    9 , "tan"       , v_srgbi 210 180 140;
-    10, "green"     , green;
-    11, "aquamarine", v_srgbi 127 255 212;
-    12, "salmon"    , v_srgbi 250 128 114;
-    13, "purple"    , v_srgbi 128 0 128;
-    14, "orange"    , v_srgbi 255 127 0;
-    15, "grey"      , v_srgbi 128 128 128
-  ]
-
 let create_env turtle = {
-  routines = H.create 17;
-  globals = H.create 17;
   locals = [];
   output = (fun _ -> raise (Error "output: not inside a function"));
   turtle;
-  continue = (fun _ -> raise (Error "continue: no pause"));
-  palette =
-    let pal = H.create 17 in
-    List.iter (fun (id, name, col) ->
-        H.add pal (string_of_int id) col;
-        H.add pal name col) default_colors;
-    pal
+  continue = (fun _ -> raise (Error "continue: no pause"))
 }
 
 let new_frame env =
@@ -73,33 +44,10 @@ let new_continue env k =
 let continue env a =
   env.continue a
 
-let set_pf : 'a. env -> string -> 'a fn -> 'a -> unit =
-  fun env name args f ->
-    H.add env.routines name (Pf (args, f))
-
-let has_routine env name =
-  H.mem env.routines name
-
-let get_routine env name =
-  H.find env.routines name
-  
-let set_global env name data =
-  H.add env.globals name data
-
-let get_global env name =
-  try
-    H.find env.globals name
-  with
-  | Not_found ->
-    error "Don't know about variable %s" name
-
-let has_global env name =
-  H.mem env.globals name
-
 let set_var env name data =
   let rec loop = function
     | [] ->
-      set_global env name data
+      LogoGlobals.set_global name data
     | top :: rest ->
       if H.mem top name then
         H.replace top name (Some data)
@@ -118,7 +66,7 @@ let create_var env name =
 let get_var env name =
   let rec loop = function
     | [] ->
-      get_global env name
+      LogoGlobals.get_global name
     | top :: rest ->
       try match H.find top name with
         | None ->
@@ -132,7 +80,7 @@ let get_var env name =
 let has_var env name =
   let rec loop = function
     | [] ->
-      has_global env name
+      LogoGlobals.has_global name
     | top :: rest ->
       H.mem top name || loop rest
   in

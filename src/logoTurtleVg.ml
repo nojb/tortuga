@@ -21,6 +21,7 @@
 
 open Gg
 open Vg
+open LogoGlobals
 
 type state = {
   pos     : v2;
@@ -121,7 +122,5 @@ let pen_down () =
 let clean_screen () =
   t := { !t with image = I.const !t.background }
 
-open LogoEnv
-
-let init env =
-  set_pf env "render" LogoAtom.Lga.(opt word retvoid) render
+let _ =
+  set_pf "render" LogoAtom.Lga.(opt word retvoid) render

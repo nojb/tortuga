@@ -22,7 +22,8 @@
 open LogoTypes
 open LogoAtom
 open LogoEnv
-
+open LogoGlobals
+  
 let stringfrom pos str =
   String.sub str pos (String.length str - pos)
 
@@ -129,7 +130,7 @@ and instruction env strm k =
 and apply env w strm k =
   if w = "(" then
     match Stream.peek strm with
-    | Some (Word proc) when has_routine env proc ->
+    | Some (Word proc) when has_routine proc ->
       Stream.junk strm;
       dispatch env proc strm false k
     | _ ->
@@ -167,7 +168,7 @@ and dispatch env proc strm natural k =
   in
   let Pf (fn, f) =
     try
-      get_routine env proc
+      get_routine proc
     with
     | Not_found -> error "Don't know how to %s" (String.uppercase proc)
   in
@@ -289,7 +290,7 @@ let expressionlist env strm k =
 type aux =
   { k : 'a. 'a fn -> (env -> 'a) -> unit }
   
-let to_ env strm =
+let to_ strm =
   let name, inputs, body = parse_to strm in
   let rec loop : string list -> aux -> unit = fun inputs k ->
     match inputs with
@@ -300,13 +301,13 @@ let to_ env strm =
       k.k Lga.(ret cont) (fun env k -> instructionlist (new_exit env k) (Stream.of_list body) k)
   in
   loop inputs
-    { k = fun fn f -> set_pf env name (Kenv fn) (fun env -> f (new_frame env)) }
+    { k = fun fn f -> set_pf name (Kenv fn) (fun env -> f (new_frame env)) }
 
 let rec toplevel env strm =
   match Stream.peek strm with
   | Some (Word w) when String.uppercase w = "TO" ->
     Stream.junk strm;
-    to_ env strm;
+    to_ strm;
     toplevel env strm
   | Some _ ->
     command env strm (fun () -> ());

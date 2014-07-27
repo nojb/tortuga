@@ -23,6 +23,7 @@
 
 open LogoTypes
 open LogoAtom
+open LogoGlobals
 open LogoEnv
   
 (** 7.2 Variable Definition *)
@@ -68,21 +69,21 @@ let thing env varname =
 
 (** 7.4 Workspace Predicates *)
 
-let definedp env name =
-  if has_routine env name then true_word else false_word
+let definedp name =
+  if has_routine name then true_word else false_word
 
 let namep env name =
   if has_var env name then true_word else false_word
   
-let init env =
-  set_pf env "make" Lga.(env @@ word @-> any @-> ret retvoid) make;
-  set_pf env "name" Lga.(env @@ any @-> word @-> ret retvoid) name;
-  set_pf env "local" Lga.(env @@ alt word (list word) @-> rest word retvoid) local;
-  set_pf env "localmake" Lga.(env @@ word @-> any @-> ret retvoid) localmake;
-  set_pf env "thing" Lga.(env @@ word @-> ret (value any)) thing;
+let () =
+  set_pf "make" Lga.(env @@ word @-> any @-> ret retvoid) make;
+  set_pf "name" Lga.(env @@ any @-> word @-> ret retvoid) name;
+  set_pf "local" Lga.(env @@ alt word (list word) @-> rest word retvoid) local;
+  set_pf "localmake" Lga.(env @@ word @-> any @-> ret retvoid) localmake;
+  set_pf "thing" Lga.(env @@ word @-> ret (value any)) thing;
 
-  set_pf env "definedp" Lga.(env @@ word @-> ret (value any)) definedp;
-  set_pf env "defined?" Lga.(env @@ word @-> ret (value any)) definedp;
-  set_pf env "namep" Lga.(env @@ word @-> ret (value any)) namep;
-  set_pf env "name?" Lga.(env @@ word @-> ret (value any)) namep
+  set_pf "definedp" Lga.(word @-> ret (value any)) definedp;
+  set_pf "defined?" Lga.(word @-> ret (value any)) definedp;
+  set_pf "namep" Lga.(env @@ word @-> ret (value any)) namep;
+  set_pf "name?" Lga.(env @@ word @-> ret (value any)) namep
   

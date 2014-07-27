@@ -24,6 +24,7 @@
 open LogoTypes
 open LogoAtom
 open LogoEnv
+open LogoGlobals
 open LogoEval
 
 exception Throw of string * atom option
@@ -202,22 +203,22 @@ let until env expr list =
   in
   loop ()
       
-let init env =
-  set_pf env "run" Lga.(env @@ list any @-> ret cont) run;
-  set_pf env "runresult" Lga.(env @@ list any @-> ret cont) runresult;
-  set_pf env "repeat" Lga.(env @@ int @-> list any @-> ret cont) repeat;
-  set_pf env "forever" Lga.(env @@ list any @-> ret retvoid) forever;
-  set_pf env "if" Lga.(env @@ any @-> list any @-> opt (list any) cont)  ifthen;
-  set_pf env "ifelse" Lga.(env @@ any @-> list any @-> list any @-> ret cont) ifelse;
-  set_pf env "stop" Lga.(env @@ ret cont) stop;
-  set_pf env "output" Lga.(env @@ any @-> ret cont) output;
-  set_pf env "catch" Lga.(env @@ word @-> list any @-> ret cont) catch;
-  set_pf env "throw" Lga.(word @-> opt any retvoid) throw;
-  set_pf env "pause" Lga.(env @@ ret cont) pause;
-  set_pf env "continue" Lga.(env @@ opt any cont) continue;
-  set_pf env "bye" Lga.(void @@ ret retvoid) bye;
-  set_pf env "ignore" Lga.(any @-> ret retvoid) ignore;
-  set_pf env "do.while" Lga.(env @@ list any @-> list any @-> ret retvoid) do_while;
-  set_pf env "while" Lga.(env @@ list any @-> list any @-> ret retvoid) while_;
-  set_pf env "do.until" Lga.(env @@ list any @-> list any @-> ret retvoid) do_until;
-  set_pf env "until" Lga.(env @@ list any @-> list any @-> ret retvoid) until
+let () =
+  set_pf "run" Lga.(env @@ list any @-> ret cont) run;
+  set_pf "runresult" Lga.(env @@ list any @-> ret cont) runresult;
+  set_pf "repeat" Lga.(env @@ int @-> list any @-> ret cont) repeat;
+  set_pf "forever" Lga.(env @@ list any @-> ret retvoid) forever;
+  set_pf "if" Lga.(env @@ any @-> list any @-> opt (list any) cont)  ifthen;
+  set_pf "ifelse" Lga.(env @@ any @-> list any @-> list any @-> ret cont) ifelse;
+  set_pf "stop" Lga.(env @@ ret cont) stop;
+  set_pf "output" Lga.(env @@ any @-> ret cont) output;
+  set_pf "catch" Lga.(env @@ word @-> list any @-> ret cont) catch;
+  set_pf "throw" Lga.(word @-> opt any retvoid) throw;
+  set_pf "pause" Lga.(env @@ ret cont) pause;
+  set_pf "continue" Lga.(env @@ opt any cont) continue;
+  set_pf "bye" Lga.(void @@ ret retvoid) bye;
+  set_pf "ignore" Lga.(any @-> ret retvoid) ignore;
+  set_pf "do.while" Lga.(env @@ list any @-> list any @-> ret retvoid) do_while;
+  set_pf "while" Lga.(env @@ list any @-> list any @-> ret retvoid) while_;
+  set_pf "do.until" Lga.(env @@ list any @-> list any @-> ret retvoid) do_until;
+  set_pf "until" Lga.(env @@ list any @-> list any @-> ret retvoid) until

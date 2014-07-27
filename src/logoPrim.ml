@@ -23,7 +23,7 @@
 
 open LogoTypes
 open LogoAtom
-open LogoEnv
+open LogoGlobals
 
 (** 2.1 Constructors *)
 
@@ -258,36 +258,36 @@ let count = function
   | List l -> List.length l
   | Array (a, _) -> Array.length a
 
-let init env =
-  set_pf env "word" Lga.(word @-> word @-> rest word (value word)) word;
-  set_pf env "list" Lga.(any @-> any @-> rest any (value (list any))) list;
-  set_pf env "sentence" Lga.(any @-> any @-> rest any (value (list any))) sentence;
-  set_pf env "se" Lga.(any @-> any @-> rest any (value (list any))) sentence;
+let () =
+  set_pf "word" Lga.(word @-> word @-> rest word (value word)) word;
+  set_pf "list" Lga.(any @-> any @-> rest any (value (list any))) list;
+  set_pf "sentence" Lga.(any @-> any @-> rest any (value (list any))) sentence;
+  set_pf "se" Lga.(any @-> any @-> rest any (value (list any))) sentence;
   (* set_pf2 env "fput" fput; *)
   (* set_pf2 env "lput" lput; *)
-  set_pf env "array" Lga.(int @-> opt int (value any)) array;
+  set_pf "array" Lga.(int @-> opt int (value any)) array;
   (* set_pf2 env "combine" combine; *)
-  set_pf env "listtoarray" Lga.(list any @-> opt int (value (array any))) listtoarray;
-  set_pf env "arraytolist" Lga.(array any @-> ret (value (list any))) arraytolist;
-  set_pf env "reverse" Lga.(list any @-> ret (value (list any))) reverse;
-  set_pf env "gensym" Lga.(void @@ ret (value word)) gensym;
+  set_pf "listtoarray" Lga.(list any @-> opt int (value (array any))) listtoarray;
+  set_pf "arraytolist" Lga.(array any @-> ret (value (list any))) arraytolist;
+  set_pf "reverse" Lga.(list any @-> ret (value (list any))) reverse;
+  set_pf "gensym" Lga.(void @@ ret (value word)) gensym;
 
-  set_pf env "first" Lga.(any @-> ret (value any)) first;
-  set_pf env "firsts" Lga.(list any @-> ret (value (list any))) firsts;
-  set_pf env "last" Lga.(alt word (ne_list any) @-> ret (value any)) last;
-  set_pf env "butfirst" Lga.(alt word (ne_list any) @-> ret (value any)) butfirst;
-  set_pf env "item" Lga.(int @-> any @-> ret (value any)) item;
-  set_pf env "pick" Lga.(ne_list any @-> ret (value any)) pick;
-  set_pf env "quoted" Lga.(alt word (list any) @-> ret (value any)) quoted;
+  set_pf "first" Lga.(any @-> ret (value any)) first;
+  set_pf "firsts" Lga.(list any @-> ret (value (list any))) firsts;
+  set_pf "last" Lga.(alt word (ne_list any) @-> ret (value any)) last;
+  set_pf "butfirst" Lga.(alt word (ne_list any) @-> ret (value any)) butfirst;
+  set_pf "item" Lga.(int @-> any @-> ret (value any)) item;
+  set_pf "pick" Lga.(ne_list any @-> ret (value any)) pick;
+  set_pf "quoted" Lga.(alt word (list any) @-> ret (value any)) quoted;
 
-  set_pf env "equalp" Lga.(any @-> any @-> ret (value any)) equalp;
-  set_pf env "equal?" Lga.(any @-> any @-> ret (value any)) equalp;
-  set_pf env "notequalp" Lga.(any @-> any @-> ret (value any)) notequalp;
-  set_pf env "notequal?" Lga.(any @-> any @-> ret (value any)) notequalp;
-  set_pf env "beforep" Lga.(word @-> word @-> ret (value any)) beforep;
-  set_pf env ".eq" Lga.(any @-> any @-> ret (value any)) _eq;
+  set_pf "equalp" Lga.(any @-> any @-> ret (value any)) equalp;
+  set_pf "equal?" Lga.(any @-> any @-> ret (value any)) equalp;
+  set_pf "notequalp" Lga.(any @-> any @-> ret (value any)) notequalp;
+  set_pf "notequal?" Lga.(any @-> any @-> ret (value any)) notequalp;
+  set_pf "beforep" Lga.(word @-> word @-> ret (value any)) beforep;
+  set_pf ".eq" Lga.(any @-> any @-> ret (value any)) _eq;
   (* missing : "memberp" *)
   (* set_pf env "substringp" Lga.(any @-> any @-> ret (value any)) substringp *)
-  set_pf env "numberp" Lga.(any @-> ret (value any)) numberp;
+  set_pf "numberp" Lga.(any @-> ret (value any)) numberp;
 
-  set_pf env "count" Lga.(any @-> ret (value int)) count
+  set_pf "count" Lga.(any @-> ret (value int)) count

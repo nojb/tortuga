@@ -23,7 +23,7 @@
 
 open LogoTypes
 open LogoAtom
-open LogoEnv
+open LogoGlobals
 open LogoEval
 
 (** 3.1 Transmitters *)
@@ -61,7 +61,7 @@ let show thing1 things =
   LogoAtom.print thing1;
   loop things
     
-let init env =
-  set_pf env "print" Lga.(any @-> rest any retvoid) print;
-  set_pf env "type" Lga.(any @-> rest any retvoid) type_;
-  set_pf env "show" Lga.(any @-> rest any retvoid) show
+let () =
+  set_pf "print" Lga.(any @-> rest any retvoid) print;
+  set_pf "type" Lga.(any @-> rest any retvoid) type_;
+  set_pf "show" Lga.(any @-> rest any retvoid) show

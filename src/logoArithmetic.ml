@@ -23,8 +23,8 @@
 
 open LogoTypes
 open LogoAtom
-open LogoEnv
-
+open LogoGlobals
+  
 (** 4.1 Numeric Operations *)
 
 let binaux env name f a b k =
@@ -162,32 +162,32 @@ let bitxor num1 num2 nums =
 let bitnot num =
   lnot num
 
-let init env =
-  set_pf env "sum" Lga.(num @-> num @-> rest num (value num)) sum;
-  set_pf env "difference" Lga.(num @-> num @-> ret (value num)) difference;
-  set_pf env "minus" Lga.(num @-> ret (value num)) minus;
-  set_pf env "product" Lga.(num @-> num @-> rest num (value num)) product;
-  set_pf env "remainder" Lga.(num @-> num @-> ret (value num)) remainder;
-  set_pf env "int" Lga.(num @-> ret (value int)) int;
-  set_pf env "round" Lga.(num @-> ret (value num)) round;
-  set_pf env "sqrt" Lga.(nn_num @-> ret (value num)) sqrt;
-  set_pf env "power" Lga.(num @-> num @-> ret (value num)) power;
+let () =
+  set_pf "sum" Lga.(num @-> num @-> rest num (value num)) sum;
+  set_pf "difference" Lga.(num @-> num @-> ret (value num)) difference;
+  set_pf "minus" Lga.(num @-> ret (value num)) minus;
+  set_pf "product" Lga.(num @-> num @-> rest num (value num)) product;
+  set_pf "remainder" Lga.(num @-> num @-> ret (value num)) remainder;
+  set_pf "int" Lga.(num @-> ret (value int)) int;
+  set_pf "round" Lga.(num @-> ret (value num)) round;
+  set_pf "sqrt" Lga.(nn_num @-> ret (value num)) sqrt;
+  set_pf "power" Lga.(num @-> num @-> ret (value num)) power;
 
-  set_pf env "lessp" Lga.(num @-> num @-> ret (value any)) lessp;
-  set_pf env "less?" Lga.(num @-> num @-> ret (value any)) lessp;
-  set_pf env "greaterp" Lga.(num @-> num @-> ret (value any)) greaterp;
-  set_pf env "greater?" Lga.(num @-> num @-> ret (value any)) greaterp;
-  set_pf env "lessequalp" Lga.(num @-> num @-> ret (value any)) lessequalp;
-  set_pf env "lessequal?" Lga.(num @-> num @-> ret (value any)) lessequalp;
-  set_pf env "greaterequalp" Lga.(num @-> num @-> ret (value any)) greaterequalp;
-  set_pf env "greaterequal?" Lga.(num @-> num @-> ret (value any)) greaterequalp;
+  set_pf "lessp" Lga.(num @-> num @-> ret (value any)) lessp;
+  set_pf "less?" Lga.(num @-> num @-> ret (value any)) lessp;
+  set_pf "greaterp" Lga.(num @-> num @-> ret (value any)) greaterp;
+  set_pf "greater?" Lga.(num @-> num @-> ret (value any)) greaterp;
+  set_pf "lessequalp" Lga.(num @-> num @-> ret (value any)) lessequalp;
+  set_pf "lessequal?" Lga.(num @-> num @-> ret (value any)) lessequalp;
+  set_pf "greaterequalp" Lga.(num @-> num @-> ret (value any)) greaterequalp;
+  set_pf "greaterequal?" Lga.(num @-> num @-> ret (value any)) greaterequalp;
   
-  set_pf env "random" Lga.(int @-> opt int (value int)) random;
-  set_pf env "rerandom" Lga.(opt int retvoid) rerandom;
+  set_pf "random" Lga.(int @-> opt int (value int)) random;
+  set_pf "rerandom" Lga.(opt int retvoid) rerandom;
 
-  set_pf env "form" Lga.(num @-> int @-> int @-> ret (value word)) form;
+  set_pf "form" Lga.(num @-> int @-> int @-> ret (value word)) form;
 
-  set_pf env "bitand" Lga.(int @-> int @-> rest int (value int)) bitand;
-  set_pf env "bitor" Lga.(int @-> int @-> rest int (value int)) bitor;
-  set_pf env "bitxor" Lga.(int @-> int @-> rest int (value int)) bitxor;
-  set_pf env "bitnot" Lga.(int @-> ret (value int)) bitnot
+  set_pf "bitand" Lga.(int @-> int @-> rest int (value int)) bitand;
+  set_pf "bitor" Lga.(int @-> int @-> rest int (value int)) bitor;
+  set_pf "bitxor" Lga.(int @-> int @-> rest int (value int)) bitxor;
+  set_pf "bitnot" Lga.(int @-> ret (value int)) bitnot

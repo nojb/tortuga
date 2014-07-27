@@ -82,12 +82,9 @@ and proc =
     Pf : 'a fn * 'a -> proc
 
 and env = {
-  routines : proc H.t;
-  globals : atom H.t;
   locals : atom option H.t list;
   output : atom option -> unit;
   turtle : turtle;
-  continue : atom option -> unit;
-  palette : Gg.color H.t
+  continue : atom option -> unit
 }
 

@@ -21,4 +21,14 @@
 
 open LogoTypes
   
-val init : env -> unit
+val set_pf : string -> 'a fn -> 'a -> unit
+  
+val has_routine : string -> bool
+val get_routine : string -> proc
+
+val set_global : string -> atom -> unit
+val get_global : string -> atom
+val has_global : string -> bool
+
+val set_palette : string -> Gg.color -> unit
+val get_palette : string -> Gg.color option

@@ -29,15 +29,6 @@ val output : env -> atom option -> unit
 val new_continue : env -> (atom option -> unit) -> env
 val continue : env -> atom option -> unit
 
-val set_pf : env -> string -> 'a fn -> 'a -> unit
-  
-val has_routine : env -> string -> bool
-val get_routine : env -> string -> proc
-
-val set_global : env -> string -> atom -> unit
-val get_global : env -> string -> atom
-val has_global : env -> string -> bool
-  
 val set_var : env -> string -> atom -> unit
 val create_var : env -> string -> unit
 val get_var : env -> string -> atom
