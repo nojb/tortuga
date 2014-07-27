@@ -65,7 +65,7 @@ let get_routine name =
   H.find routines name
   
 let set_global name data =
-  H.add globals name data
+  H.replace globals name data
 
 let get_global name =
   try
