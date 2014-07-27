@@ -29,6 +29,8 @@ val set_pf : string -> 'a fn -> 'a -> unit
   
 val has_routine : string -> bool
 val get_routine : string -> proc
+val iter_routines : (string -> unit) -> unit
+val get_help : string -> string option
 
 val set_global : string -> atom -> unit
 val get_global : string -> atom

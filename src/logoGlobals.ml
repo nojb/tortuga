@@ -78,6 +78,16 @@ let has_routine name =
 let get_routine name =
   let p = H.find routines name in
   p.proc_fun
+
+let iter_routines f =
+  H.iter (fun name _ -> f name) routines
+
+let get_help name =
+  try
+    let p = H.find routines name in
+    p.proc_doc
+  with
+  | Not_found -> None
   
 let set_global name data =
   H.replace globals name data

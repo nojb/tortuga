@@ -74,6 +74,41 @@ let definedp name =
 
 let namep env name =
   if has_var env name then true_word else false_word
+
+(** 7.7 Workspace Control *)
+
+(*
+def puts_columns items, star_items=[]
+  return if items.empty?
+
+  if star_items && star_items.any?
+    items = items.map{|item| star_items.include?(item) ? "#{item}*" : item}
+  end
+
+  if $stdout.tty?
+    # determine the best width to display for different console sizes
+    console_width = `/bin/stty size`.chomp.split(" ").last.to_i
+    console_width = 80 if console_width <= 0
+    longest = items.sort_by { |item| item.length }.last
+    optimal_col_width = (console_width.to_f / (longest.length + 2).to_f).floor
+    cols = optimal_col_width > 1 ? optimal_col_width : 1
+
+    IO.popen("/usr/bin/pr -#{cols} -t -w#{console_width}", "w"){|io| io.puts(items) }
+  else
+    puts items
+  end
+end
+*)
+
+let help = function
+  | None ->
+    iter_routines print_endline
+  | Some name ->
+    match get_help name with
+    | Some doc ->
+      print_endline doc
+    | None ->
+      print_endline ("No help is available for " ^ name)
   
 let () =
   set_pf "make" Lga.(env @@ word @-> any @-> ret retvoid) make;
@@ -85,5 +120,6 @@ let () =
   set_pf "definedp" Lga.(word @-> ret (value any)) definedp;
   set_pf "defined?" Lga.(word @-> ret (value any)) definedp;
   set_pf "namep" Lga.(env @@ word @-> ret (value any)) namep;
-  set_pf "name?" Lga.(env @@ word @-> ret (value any)) namep
-  
+  set_pf "name?" Lga.(env @@ word @-> ret (value any)) namep;
+
+  set_pf "help" Lga.(opt word retvoid) help
