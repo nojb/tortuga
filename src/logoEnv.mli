@@ -39,5 +39,6 @@ val get_global : env -> string -> atom
 val has_global : env -> string -> bool
   
 val set_var : env -> string -> atom -> unit
+val create_var : env -> string -> unit
 val get_var : env -> string -> atom
 val has_var : env -> string -> bool

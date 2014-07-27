@@ -20,7 +20,8 @@
    CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. *)
 
 open LogoTypes
-
+open LogoAtom
+  
 let default_colors =
   let open Gg.Color in
   [
@@ -90,26 +91,41 @@ let get_global env name =
     H.find env.globals name
   with
   | Not_found ->
-    let a = List [] in
-    H.add env.globals name a;
-    a
+    error "Don't know about variable %s" name
 
 let has_global env name =
   H.mem env.globals name
 
 let set_var env name data =
+  let rec loop = function
+    | [] ->
+      set_global env name data
+    | top :: rest ->
+      if H.mem top name then
+        H.replace top name (Some data)
+      else
+        loop rest
+  in
+  loop env.locals
+
+let create_var env name =
   match env.locals with
   | [] ->
-    set_global env name data
+    failwith "create_var"
   | top :: _ ->
-    H.add top name data
+    H.add top name None
 
 let get_var env name =
   let rec loop = function
     | [] ->
       get_global env name
     | top :: rest ->
-      try H.find top name with | Not_found -> loop rest
+      try match H.find top name with
+        | None ->
+          error "variable %s does not have a value" name
+        | Some a -> a
+      with
+      | Not_found -> loop rest
   in
   loop env.locals
 
