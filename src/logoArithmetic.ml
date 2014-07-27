@@ -26,44 +26,58 @@ open LogoEnv
 (** 4.1 Numeric Operations *)
 
 let binaux name op a b =
-  try match a, b with
-    | Int n, Int m ->
-      Int (op n m)
-    | Int n, Word word
-    | Word word, Int n ->
-      Int (op n (int_of_string word))
-    | Word word1, Word word2 ->
-      Int (op (int_of_string word1) (int_of_string word2))
-    | _ ->
-      raise Exit
-  with
-  | _ -> raise (Error (name ^ ": bad types"))
+  let err = name ^ ": bad argument types" in
+  let a = num_atom a err in
+  let b = num_atom b err in
+  Num (op a b)
 
-let sum2 = binaux "sum" (+)
+let sum2 = binaux "sum" (+.)
 
 let sum things =
-  List.fold_left sum2 (Int 0) things
+  List.fold_left sum2 (Num 0.) things
 
-let difference = binaux "difference" (-)
+let difference = binaux "difference" (-.)
 
 let minus n =
-  let n = try iexpr n with _ -> raise (Error "minus: argument must be number") in
-  Int (-n)
+  let n = num_atom n "minus: argument must be number" in
+  Num (-.n)
 
-let product2 = binaux "product" ( * )
+let product2 = binaux "product" ( *.)
 
 let product things =
-  List.fold_left product2 (Int 1) things
+  List.fold_left product2 (Num 1.) things
 
-let quotient2 = binaux "quotient" (/)
+let quotient2 = binaux "quotient" (/.)
 
-let remainder = binaux "remainder" (mod)
+let remainder a b =
+  let a = num_atom a "remainder: NUM1 must be a number" in
+  let b = num_atom b "remainder: NUM2 must be a number" in
+  Num (mod_float a b)
 
-let power = binaux "power" (fun a b -> truncate (float a ** float b))
+(* modulo: not implemented *)
+
+let int num =
+  let num = num_atom num "int: NUM must be a number" in
+  Num (float (truncate num))
+
+let round num =
+  let num = num_atom num "round: NUM must be a number" in
+  Num (floor (num +. 0.5))
+
+let sqrt num =
+  let num = num_atom num "sqrt: NUM must be a number" in
+  if num >= 0.0 then Num (sqrt num)
+  else raise (Error "sqrt: NUM must be non-negative")
+
+let power = binaux "power" ( ** )
 
 let init env =
   set_pfn env "sum" 2 sum;
   set_pf2 env "difference" difference;
   set_pf1 env "minus" minus;
   set_pfn env "product" 2 product;
-  set_pf2 env "remainder" remainder
+  set_pf2 env "remainder" remainder;
+  set_pf1 env "int" int;
+  set_pf1 env "round" round;
+  set_pf1 env "sqrt" sqrt;
+  set_pf2 env "power" power

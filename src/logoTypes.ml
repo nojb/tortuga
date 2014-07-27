@@ -20,7 +20,7 @@
    CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. *)
 
 type atom =
-  | Int of int
+  | Num of float
   | Word of string
   | List of atom list
   | Array of atom array * int

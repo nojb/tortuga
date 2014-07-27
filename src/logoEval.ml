@@ -96,15 +96,14 @@ and unary_expression env strm k =
     final_expression env strm k
 
 and final_expression env strm k =
-  let isnumber w =
-    let rec loop i =
-      if i >= String.length w then true
-      else match w.[i] with '0'..'9' -> loop (i+1) | _ -> false
-    in
-    loop 0
+  let isnumber =
+    (* keep in sync with [number_literal] in LogoLex.mll *)
+    let re = Str.regexp "[0-9]*\\.?[0-9]+\\([eE][-+]?[0-9]+\\)?" in
+    fun w ->
+      Str.string_match re w 0 && Str.match_end () = String.length w
   in
   match Stream.peek strm with
-  | Some (Int _) ->
+  | Some (Num _) ->
     assert false
   | Some (List _ as atom)
   | Some (Array _ as atom) ->
@@ -113,8 +112,8 @@ and final_expression env strm k =
   | Some (Word w) ->
     Stream.junk strm;
     if isnumber w then
-      let n = int_of_string w in
-      k (Int n)
+      let n = float_of_string w in
+      k (Num n)
     else if w.[0] = '\"' then
       let w = stringfrom 1 w in
       k (Word w)

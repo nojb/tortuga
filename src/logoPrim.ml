@@ -81,9 +81,9 @@ Outputs LIST with one extra member, THING, at the end.  If LIST is a word, then
 THING must be a one-letter word, and 'lput THING LIST' is equivalent to 'word
 LIST THING'."
 
-  let array size ?(opt = Int 1) () =
-    let size = try iexpr size with _ -> raise (Error "array: SIZE must be a number") in
-    let origin = try iexpr opt with _ -> raise (Error "array: ORIGIN must be a number") in
+  let array size ?(opt = Num 1.0) () =
+    let size = int_atom size "array: SIZE must be an integer" in
+    let origin = int_atom opt "array: ORIGIN must be an integer" in
     if size < 0 then raise (Error "array: SIZE must be a positive integer");
     Array (Array.create size (List []), origin)
 
@@ -110,8 +110,8 @@ braces; indicate an origin with {a b c}@0."
       let s2 = sexpr thing2 in
       Word (s1 ^ s2)
 
-  let listtoarray list ?(opt = Int 1) () =
-    let origin = try iexpr opt with _ -> raise (Error "listtoarray: ORIGIN must be a number") in
+  let listtoarray list ?(opt = Num 1.0) () =
+    let origin = int_atom opt "listtoarray: ORIGIN must be a number" in
     match list with
     | List l -> Array (Array.of_list l, origin)
     | _ -> raise (Error "listtoarray: LIST must be a list")
@@ -176,8 +176,8 @@ end
 
 module DataSelectors = struct
   let first = function
-    | Int n ->
-      Word (String.make 1 (string_of_int n).[0])
+    | Num n ->
+      Word (String.make 1 (string_of_float n).[0])
     | Word "" ->
       raise (Error "first: empty word")
     | Word w ->
@@ -187,7 +187,7 @@ module DataSelectors = struct
     | List (x :: _) ->
       x
     | Array (_, orig) ->
-      Int orig
+      Num (float orig)
 
   let firsts = function
     | List l ->
@@ -196,8 +196,8 @@ module DataSelectors = struct
       raise (Error "firsts: list expected")
 
   let last = function
-    | Int n ->
-      let s = string_of_int n in
+    | Num n ->
+      let s = string_of_float n in
       let l = String.length s in
       Word (String.make 1 (s.[l-1]))
     | Word w ->
@@ -212,8 +212,8 @@ module DataSelectors = struct
       raise (Error "last: LIST or WORD expected")
 
   let butfirst = function
-    | Int n ->
-      let s = string_of_int n in
+    | Num n ->
+      let s = string_of_float n in
       let l = String.length s in
       Word (String.sub s 1 (l-1))
     | Word w ->
@@ -227,10 +227,10 @@ module DataSelectors = struct
       raise (Error "butfirst: expected WORD or LIST")
 
   let item index thing =
-    let index = try iexpr index with _ -> raise (Error "INDEX must be number") in
+    let index = int_atom index "item: INDEX must be an integer" in
     match thing with
-    | Int n ->
-      let s = string_of_int n in
+    | Num n ->
+      let s = string_of_float n in
       Word (String.make 1 s.[index-1])
     | Word w ->
       Word (String.make 1 w.[index-1])
@@ -249,8 +249,8 @@ module DataSelectors = struct
 
   let quoted = function
     | List _ as a -> a
-    | Int n ->
-      let s = string_of_int n in
+    | Num n ->
+      let s = string_of_float n in
       Word ("\"" ^ s)
     | Word w ->
       Word ("\"" ^ w)
@@ -269,50 +269,19 @@ end
 
 module Transmitters = struct
   let print things =
-    let rec pr top = function
-      | Int n -> print_int n
-      | Word w -> print_string w
-      | List [] -> if top then () else print_string "[]"
-      | List (x :: rest) ->
-        if top then begin
-          pr false x;
-          List.iter (fun x -> print_char ' '; pr false x) rest
-        end else begin
-          print_char '[';
-          pr false x;
-          List.iter (fun x -> print_char ' '; pr false x) rest;
-          print_char ']'
-        end
-      | Array ([| |], 1) ->
-        print_string "{}"
-      | Array ([| |], orig) ->
-        print_string "{}@";
-        print_int orig
-      | Array (a, 1) ->
-        print_char '{';
-        pr false a.(0);
-        for i = 1 to Array.length a - 1 do
-          print_char ' ';
-          pr false a.(i)
-        done;
-        print_char '}'
-      | Array (a, orig) ->
-        print_char '{';
-        pr false a.(0);
-        for i = 1 to Array.length a - 1 do
-          print_char ' ';
-          pr false a.(i)
-        done;
-        print_string "}@";
-        print_int orig
+    let rec loop first = function
+      | [] ->
+        print_newline ()
+      | List l :: xs ->
+        if not first then print_char ' ';
+        print_list l;
+        loop false xs
+      | x :: xs ->
+        if not first then print_char ' ';
+        print x;
+        loop false xs
     in
-    match things with
-    | [] ->
-      print_newline ()
-    | x :: rest ->
-      pr true x;
-      List.iter (fun x -> print_char ' '; pr true x) rest;
-      print_newline ()
+    loop true things
     
   let init env =
     set_cfn env "print" 1 print
@@ -339,7 +308,7 @@ module Control = struct
   let repeat env things k =
     match things with
     | num :: List list :: [] ->
-      let num = iexpr num in
+      let num = int_atom num "repeat: NUM must be an integer" in
       let rec loop i =
         if i > num then k None
         else
