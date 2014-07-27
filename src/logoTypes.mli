@@ -44,22 +44,61 @@ type turtle = (module TURTLE)
 
 module H : Hashtbl.S with type key = string
 
-type env = {
-  routines : routine H.t;
+type _ ty =
+    Kint : int ty
+  | Knum : float ty
+  | Kword : string ty
+  | Klist : 'a ty -> 'a list ty
+  | Karray : 'a ty -> ('a array * int) ty
+  | Kany : atom ty
+
+and _ ret =
+    Kcont : ((atom option -> unit) -> unit) ret
+  | Kretvoid : unit ret
+  | Kvalue : 'a ty -> 'a ret
+  
+and _ fn =
+    Kfix : 'a ty * 'b fn -> ('a -> 'b) fn
+  | Kopt : 'a ty * 'b ret -> ('a option -> 'b) fn
+  | Krest : 'a ty * 'b ret -> ('a list -> 'b) fn
+  | Kret : 'a ret -> 'a fn
+  | Kvoid : 'a fn -> (unit -> 'a) fn
+  | Kenv : 'a fn -> (env -> 'a) fn
+  | Kturtle : 'a fn -> (turtle -> 'a) fn
+
+and proc =
+    Pf : 'a fn * 'a -> proc
+
+and env = {
+  routines : proc H.t;
   globals : atom H.t;
   locals : atom H.t list;
   output : atom option -> unit;
   turtle : turtle
 }
 
-and routine =
-  | Pf0 of (unit -> atom option)
-  | Pf1 of (atom -> atom option)
-  | Pf2 of (atom -> atom -> atom option)
-  | Pfn of int * (atom list -> atom option)
-  | Pf12 of (atom -> ?opt:atom -> unit -> atom option)
-  | Pfc0 of (env -> (atom option -> unit) -> unit)
-  | Pfc1 of (env -> atom -> (atom option -> unit) -> unit)
-  | Pfc2 of (env -> atom -> atom -> (atom option -> unit) -> unit)
-  | Pfcn of int * (env -> atom list -> (atom option -> unit) -> unit)
+val argatom : 'a ty -> 'a -> atom
+val minargs : 'a fn -> int
+val matcharg : 'a ty -> atom -> 'a option
+
+module Lga : sig
+  val int : int ty
+  val num : float ty
+  val word : string ty
+  val list : 'a ty -> 'a list ty
+  val array : 'a ty -> ('a array * int) ty
+  val any : atom ty
+
+  val cont : ((atom option -> unit) -> unit) ret
+  val retvoid : unit ret
+  val value : 'a ty -> 'a ret
   
+  val (@->) : 'a ty -> 'b fn -> ('a -> 'b) fn
+  
+  val opt : 'a ty -> 'b ret -> ('a option -> 'b) fn
+  val rest : 'a ty -> 'b ret -> ('a list -> 'b) fn
+  val ret : 'a ret -> 'a fn
+  val void : 'a fn -> (unit -> 'a) fn
+  val env : 'a fn -> (env -> 'a) fn
+  val turtle : 'a fn -> (turtle -> 'a) fn
+end

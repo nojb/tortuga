@@ -33,51 +33,46 @@ let binaux name op a b =
 
 let sum2 = binaux "sum" (+.)
 
-let sum things =
-  List.fold_left sum2 (Num 0.) things
+let sum num1 num2 nums =
+  List.fold_left (+.) (num1 +. num2) nums
 
-let difference = binaux "difference" (-.)
+let difference num1 num2 =
+  num1 -. num2
 
 let minus n =
-  let n = num_atom n "minus: argument must be number" in
-  Num (-.n)
+  -. n
 
 let product2 = binaux "product" ( *.)
 
-let product things =
-  List.fold_left product2 (Num 1.) things
+let product num1 num2 nums =
+  List.fold_left ( *. ) (num1 *. num2) nums
 
 let quotient2 = binaux "quotient" (/.)
 
 let remainder a b =
-  let a = num_atom a "remainder: NUM1 must be a number" in
-  let b = num_atom b "remainder: NUM2 must be a number" in
-  Num (mod_float a b)
+  mod_float a b
 
 (* modulo: not implemented *)
 
 let int num =
-  let num = num_atom num "int: NUM must be a number" in
-  Num (float (truncate num))
+  truncate num
 
 let round num =
-  let num = num_atom num "round: NUM must be a number" in
-  Num (floor (num +. 0.5))
+  floor (num +. 0.5)
 
 let sqrt num =
-  let num = num_atom num "sqrt: NUM must be a number" in
-  if num >= 0.0 then Num (sqrt num)
+  if num >= 0.0 then sqrt num
   else raise (Error "sqrt: NUM must be non-negative")
 
-let power = binaux "power" ( ** )
+let power a b = a ** b
 
 let init env =
-  set_pfn env "sum" 2 sum;
-  set_pf2 env "difference" difference;
-  set_pf1 env "minus" minus;
-  set_pfn env "product" 2 product;
-  set_pf2 env "remainder" remainder;
-  set_pf1 env "int" int;
-  set_pf1 env "round" round;
-  set_pf1 env "sqrt" sqrt;
-  set_pf2 env "power" power
+  set_pf env "sum" Lga.(num @-> num @-> rest num (value num)) sum;
+  set_pf env "difference" Lga.(num @-> num @-> ret (value num)) difference;
+  set_pf env "minus" Lga.(num @-> ret (value num)) minus;
+  set_pf env "product" Lga.(num @-> num @-> rest num (value num)) product;
+  set_pf env "remainder" Lga.(num @-> num @-> ret (value num)) remainder;
+  set_pf env "int" Lga.(num @-> ret (value int)) int;
+  set_pf env "round" Lga.(num @-> ret (value num)) round;
+  set_pf env "sqrt" Lga.(num @-> ret (value num)) sqrt;
+  set_pf env "power" Lga.(num @-> num @-> ret (value num)) power

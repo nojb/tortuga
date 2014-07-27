@@ -38,53 +38,9 @@ let new_exit env output =
 let output env a =
   env.output a
 
-let set_routine env name r =
-  H.add env.routines name r
-
-let set_pf0 env name f =
-  set_routine env name (Pf0 (fun () -> Some (f ())))
-  
-let set_pf1 env name f =
-  set_routine env name (Pf1 (fun a -> Some (f a)))
-  
-let set_pf2 env name f =
-  set_routine env name (Pf2 (fun a1 a2 -> Some (f a1 a2)))
-  
-let set_pfn env name nargs f =
-  set_routine env name (Pfn (nargs, fun al -> Some (f al)))
-
-let set_pf12 env name f =
-  set_routine env name (Pf12 (fun a1 ?opt () -> Some (f a1 ?opt ())))
-
-let set_cf0 env name f =
-  set_routine env name (Pf0 (fun () -> f (); None))
-
-let set_cf1 env name f =
-  set_routine env name (Pf1 (fun a -> f a; None))
-
-let set_cf2 env name f =
-  set_routine env name (Pf2 (fun a1 a2 -> f a1 a2; None))
-
-let set_cfn env name nargs f =
-  set_routine env name (Pfn (nargs, fun args -> f args; None))
-
-let set_pfc0 env name f =
-  set_routine env name (Pfc0 f)
-
-let set_pfc1 env name f =
-  set_routine env name (Pfc1 f)
-
-let set_pfcn env name nargs f =
-  set_routine env name (Pfcn (nargs, f))
-
-let set_pft0 env name f =
-  set_routine env name (Pfc0 (fun env k -> f env.turtle; k None))
-
-let set_pft1 env name f =
-  set_routine env name (Pfc1 (fun env arg k -> f env.turtle arg; k None))
-
-let set_pft2 env name f =
-  set_routine env name (Pfc2 (fun env arg1 arg2 k -> f env.turtle arg1 arg2; k None))
+let set_pf : 'a. env -> string -> 'a fn -> 'a -> unit =
+  fun env name args f ->
+    H.add env.routines name (Pf (args, f))
 
 let has_routine env name =
   H.mem env.routines name

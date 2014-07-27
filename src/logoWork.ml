@@ -25,24 +25,12 @@ open LogoEnv
   
 (** 7.2 Variable Definition *)
 
-let make env things k =
-  match things with
-  | varname :: value :: [] ->
-    let varname = try sexpr varname with _ -> raise (Error "make: VARNAME must be a word") in
-    set_var env varname value;
-    k None
-  | _ ->
-    raise (Error "make: bad args")
-
-let name env things k =
-  match things with
-  | value :: varname :: [] ->
-    let varname = try sexpr varname with _ -> raise (Error "name: VARNAME must be a word") in
-    set_var env varname value;
-    k None
-  | _ ->
-    raise (Error "name: bad args")
+let make env varname value =
+  set_var env varname value
+  
+let name env value varname =
+  set_var env varname value
 
 let init env =
-  set_pfcn env "make" 2 make;
-  set_pfcn env "name" 2 name
+  set_pf env "make" Lga.(env @@ word @-> any @-> ret retvoid) make;
+  set_pf env "name" Lga.(env @@ any @-> word @-> ret retvoid) name

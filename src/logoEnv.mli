@@ -27,26 +27,10 @@ val new_frame : env -> env
 val new_exit : env -> (atom option -> unit) -> env
 val output : env -> atom option -> unit
 
-val set_routine : env -> string -> routine -> unit
-
-val set_pf0 : env -> string -> (unit -> atom) -> unit
-val set_pf1 : env -> string -> (atom -> atom) -> unit
-val set_pf2 : env -> string -> (atom -> atom -> atom) -> unit
-val set_pfn : env -> string -> int -> (atom list -> atom) -> unit
-val set_pf12 : env -> string -> (atom -> ?opt:atom -> unit -> atom) -> unit
-val set_cf0 : env -> string -> (unit -> unit) -> unit
-val set_cf1 : env -> string -> (atom -> unit) -> unit
-val set_cf2 : env -> string -> (atom -> atom -> unit) -> unit
-val set_cfn : env -> string -> int -> (atom list -> unit) -> unit
-val set_pfc0 : env -> string -> (env -> (atom option -> unit) -> unit) -> unit
-val set_pfc1 : env -> string -> (env -> atom -> (atom option -> unit) -> unit) -> unit
-val set_pfcn : env -> string -> int -> (env -> atom list -> (atom option -> unit) -> unit) -> unit
-val set_pft0 : env -> string -> (turtle -> unit) -> unit
-val set_pft1 : env -> string -> (turtle -> atom -> unit) -> unit
-val set_pft2 : env -> string -> (turtle -> atom -> atom -> unit) -> unit
+val set_pf : env -> string -> 'a fn -> 'a -> unit
   
 val has_routine : env -> string -> bool
-val get_routine : env -> string -> routine
+val get_routine : env -> string -> proc
 
 val set_global : env -> string -> atom -> unit
 val get_global : env -> string -> atom
