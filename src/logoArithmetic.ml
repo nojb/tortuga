@@ -36,12 +36,6 @@ let difference num1 num2 =
 let minus n =
   -. n
 
-let minus_infix env n k =
-  wrap env "-" Lga.(num @-> ret (value num)) minus [n]
-    (function
-      | Some a -> k a
-      | None -> assert false)
-
 let product num1 num2 nums =
   List.fold_left ( *. ) (num1 *. num2) nums
 
@@ -61,43 +55,19 @@ let sqrt num =
   
 let power a b = a ** b
 
-let power_infix env a b k =
-  wrap env "^" Lga.(num @-> num @-> ret (value num)) power [a; b]
-    (function
-      | Some a -> k a
-      | None -> assert false)
-
 (** 4.2 Numeric Predicates *)
-
-let compaux env name f a b k =
-  wrap env name Lga.(num @-> num @-> ret (value any)) f [a; b]
-    (function
-      | Some a -> k a
-      | None -> assert false)
 
 let lessp a b =
   if a < b then true_word else false_word
 
-let lessp_infix env =
-  compaux env "<" lessp
-
 let greaterp a b =
   if a > b then true_word else false_word
 
-let greaterp_infix env =
-  compaux env ">" greaterp
-    
 let lessequalp a b =
   if a <= b then true_word else false_word
 
-let lessequalp_infix env =
-  compaux env "<=" lessequalp
-    
 let greaterequalp a b =
   if a >= b then true_word else false_word
-
-let greaterequalp_infix env =
-  compaux env ">=" greaterequalp
 
 (** 4.3 Random Numbers *)
 
