@@ -415,13 +415,6 @@ also change the other.)"
   in
   prim ~names ~doc ~args ~f
 
-let equalp_infix env a b k =
-  assert false
-  (* wrap env "=" Lga.(any @-> any @-> ret (value any)) equalp [a; b] *)
-  (*   (function *)
-  (*     | Some a -> k a *)
-  (*     | None -> assert false) *)
-
 let notequalp =
   let names = ["notequalp"; "notequal?"] in
   let doc =
@@ -439,13 +432,6 @@ meaning of equality for different data types."
     if equalaux a b then false_word else true_word
   in
   prim ~names ~doc ~args ~f
-
-let notequalp_infix env a b k =
-  assert false
-  (* wrap env "<>" Lga.(any @-> any @-> ret (value any)) notequalp [a; b] *)
-  (*   (function *)
-  (*     | Some a -> k a *)
-  (*     | None -> assert false) *)
 
 let beforep =
   let names = ["beforep"; "before?"] in
