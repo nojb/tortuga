@@ -60,6 +60,8 @@ val true_word : atom
 val false_word : atom
 val minus_word : atom
 
+val equalaux : atom -> atom -> bool
+
 val parse : string -> atom list
 
 val reparse : atom list -> atom Stream.t

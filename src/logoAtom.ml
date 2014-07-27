@@ -123,6 +123,15 @@ let false_word =
 let minus_word =
   Word "minus"
 
+(* TODO fix conversion between numbers and words *)
+let rec equalaux a b =
+  match a, b with
+  | Num n, Num m -> n = m
+  | Word w1, Word w2 -> w1 == w2
+  | List l1, List l2 -> List.length l1 = List.length l2 && List.for_all2 equalaux l1 l2
+  | Array (a1, _), Array (a2, _) -> a1 == a2
+  | _ -> false
+
 let sexpr = function
   | Num n -> string_of_float n
   | Word w -> w

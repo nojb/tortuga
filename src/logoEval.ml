@@ -27,6 +27,27 @@ open LogoGlobals
 let stringfrom pos str =
   String.sub str pos (String.length str - pos)
 
+let infix_float_bin op lhs rhs =
+  match matcharg Knum lhs, matcharg Knum rhs with
+  | Some n1, Some n2 -> Num (op n1 n2)
+  | _ -> error "bad types"
+
+let infix_pred : 'a. ('a -> 'a -> bool) -> 'a ty -> atom -> atom -> atom = fun op ty lhs rhs ->
+  match matcharg ty lhs, matcharg ty rhs with
+  | Some a1, Some a2 -> if op a1 a2 then true_word else false_word
+  | _ -> error "bad types"
+
+let infix_float_una op lhs =
+  match matcharg Knum lhs with
+  | Some n -> Num (op n)
+  | None -> error "bad type"
+
+let equalp lhs rhs =
+  equalaux lhs rhs
+
+let notequalp lhs rhs =
+  not (equalaux lhs rhs)
+
 let rec expression env strm =
   relational_expression env strm
 
@@ -34,15 +55,15 @@ and relational_expression env strm k =
   additive_expression env strm (fun lhs ->
       let rec app op lhs =
         Stream.junk strm;
-        additive_expression env strm (fun rhs -> op env lhs rhs loop)
+        additive_expression env strm (fun rhs -> loop (op lhs rhs))
       and loop lhs =
         match Stream.peek strm with
-        | Some (Word "=") -> app LogoPrim.equalp_infix lhs
-        | Some (Word "<") -> app LogoArithmetic.lessp_infix lhs
-        | Some (Word ">") -> app LogoArithmetic.greaterp_infix lhs
-        | Some (Word "<=") -> app LogoArithmetic.lessequalp_infix lhs
-        | Some (Word ">=") -> app LogoArithmetic.greaterequalp_infix lhs
-        | Some (Word "<>") -> app LogoPrim.notequalp_infix lhs
+        | Some (Word "=") -> app (infix_pred equalp Kany) lhs
+        | Some (Word "<") -> app (infix_pred (<) Knum) lhs
+        | Some (Word ">") -> app (infix_pred (>) Knum) lhs
+        | Some (Word "<=") -> app (infix_pred (<=) Knum) lhs
+        | Some (Word ">=") -> app (infix_pred (>=) Knum) lhs
+        | Some (Word "<>") -> app (infix_pred notequalp Kany) lhs
         | _ -> k lhs
       in
       loop lhs)
@@ -51,11 +72,11 @@ and additive_expression env strm k =
   multiplicative_expression env strm (fun lhs ->
       let rec app op lhs =
         Stream.junk strm;
-        multiplicative_expression env strm (fun rhs -> op env lhs rhs loop)
+        multiplicative_expression env strm (fun rhs -> loop (op lhs rhs))
       and loop lhs =
         match Stream.peek strm with
-        | Some (Word "+") -> app LogoArithmetic.sum_infix lhs
-        | Some (Word "-") -> app LogoArithmetic.difference_infix lhs
+        | Some (Word "+") -> app (infix_float_bin (+.)) lhs
+        | Some (Word "-") -> app (infix_float_bin (-.)) lhs
         | _ -> k lhs
       in
       loop lhs)
@@ -64,12 +85,12 @@ and multiplicative_expression env strm k =
   power_expression env strm (fun lhs ->
       let rec app op lhs =
         Stream.junk strm;
-        power_expression env strm (fun rhs -> op env lhs rhs loop)
+        power_expression env strm (fun rhs -> loop (op lhs rhs))
       and loop lhs =
         match Stream.peek strm with
-        | Some (Word "*") -> app LogoArithmetic.product_infix lhs
-        | Some (Word "/") -> app LogoArithmetic.quotient_infix lhs
-        | Some (Word "%") -> app LogoArithmetic.remainder_infix lhs
+        | Some (Word "*") -> app (infix_float_bin ( *. )) lhs
+        | Some (Word "/") -> app (infix_float_bin ( /. )) lhs
+        | Some (Word "%") -> app (infix_float_bin mod_float) lhs
         | _ -> k lhs
       in
       loop lhs)
@@ -81,7 +102,7 @@ and power_expression env strm k =
         | Some (Word "^") ->
           Stream.junk strm;
           unary_expression env strm
-            (fun rhs -> LogoArithmetic.power_infix env lhs rhs loop)
+            (fun rhs -> loop (infix_float_bin ( ** ) lhs rhs))
         | _ -> k lhs
       in
       loop lhs)
@@ -91,7 +112,7 @@ and unary_expression env strm k =
   | Some w when w == minus_word ->
     Stream.junk strm;
     unary_expression env strm
-      (fun rhs -> LogoArithmetic.minus_infix env rhs k)
+      (fun rhs -> k (infix_float_una (fun n -> -. n) rhs))
   | _ ->
     final_expression env strm k
 

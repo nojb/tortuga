@@ -27,22 +27,11 @@ open LogoGlobals
   
 (** 4.1 Numeric Operations *)
 
-let binaux env name f a b k =
-  wrap env name Lga.(num @-> num @-> ret (value num)) f [a; b]
-    (function
-      | Some a -> k a
-      | None -> assert false)
-
 let sum num1 num2 nums =
   List.fold_left (+.) (num1 +. num2) nums
 
-let sum_infix env a b k = binaux env "+" (+.) a b k
-
 let difference num1 num2 =
   num1 -. num2
-
-let difference_infix env a b k =
-  binaux env "-" (-.) a b k
 
 let minus n =
   -. n
@@ -53,20 +42,11 @@ let minus_infix env n k =
       | Some a -> k a
       | None -> assert false)
 
-let product_infix env a b k =
-  binaux env "+" ( *.) a b k
-
 let product num1 num2 nums =
   List.fold_left ( *. ) (num1 *. num2) nums
 
-let quotient_infix env a b k =
-  binaux env "quotient" (/.) a b k
-
 let remainder a b =
   mod_float a b
-
-let remainder_infix env a b k =
-  binaux env "%" remainder a b k
 
 (* modulo: not implemented *)
 
