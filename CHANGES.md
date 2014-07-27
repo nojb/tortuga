@@ -2,6 +2,7 @@
 
 * Report undefined variables (both global and unassigned locals)
 * Add primitives 'local', 'localmake', 'thing'
+* Add 'help' command
 
 ## 0.1.0 (2014-07-26)
 
