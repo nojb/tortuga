@@ -25,13 +25,13 @@ open LogoEval
 
 (* module TurtleGraphics = LogoTurtleGraphics *)
 
-module L0 = LogoGraphics
-module L1 = LogoWork
-module L2 = LogoComm
-module L3 = LogoControl
-module L4 = LogoPrim
-module L5 = LogoArithmetic
-module L6 = LogoLogic
+module L2 = LogoPrim
+module L3 = LogoComm
+module L4 = LogoArithmetic
+module L5 = LogoLogic
+module L6 = LogoGraphics
+module L7 = LogoWork
+module L8 = LogoControl
 
 let main () =
   let lexbuf = Lexing.from_channel stdin in

@@ -57,20 +57,21 @@ let and_ =
   let names = ["and"] in
   let doc =
 
-    "AND tf1 tf2
+    "\
+AND tf1 tf2
 (AND tf1 tf2 tf3 ...)
 
-Outputs TRUE if all inputs are TRUE, otherwise FALSE. All inputs must be TRUE or
-FALSE. (Comparison is case-insensitive regardless of the value of
-CASEIGNOREDP. That is, true or True or TRUE are all the same.) An input can be a
-list, in which case it is taken as an expression to run; that expression must
-produce a TRUE or FALSE value. List expressions are evaluated from left to
-right; as soon as a FALSE value is found, the remaining inputs are not
-examined. Example:
+    Outputs TRUE if all inputs are TRUE, otherwise FALSE. All inputs must be
+    TRUE or FALSE. (Comparison is case-insensitive regardless of the value of
+    CASEIGNOREDP. That is, true or True or TRUE are all the same.) An input can
+    be a list, in which case it is taken as an expression to run; that
+    expression must produce a TRUE or FALSE value. List expressions are
+    evaluated from left to right; as soon as a FALSE value is found, the
+    remaining inputs are not examined. Example:
 	
-  MAKE \"RESULT AND [NOT (:X = 0)] [(1 / :X) > .5]
+      MAKE \"RESULT AND [NOT (:X = 0)] [(1 / :X) > .5]
 
-to avoid the division by zero if the first part is false."
+    to avoid the division by zero if the first part is false."
 
   in
   let args =
@@ -84,20 +85,21 @@ let or_ =
   let names = ["or"] in
   let doc =
 
-    "OR tf1 tf2
+    "\
+OR tf1 tf2
 (OR tf1 tf2 tf3 ...)
 
-Outputs TRUE if any input is TRUE, otherwise FALSE. All inputs must be TRUE or
-FALSE. (Comparison is case-insensitive regardless of the value of
-CASEIGNOREDP. That is, true or True or TRUE are all the same.) An input can be a
-list, in which case it is taken as an expression to run; that expression must
-produce a TRUE or FALSE value. List expressions are evaluated from left to
-right; as soon as a TRUE value is found, the remaining inputs are not
-examined. Example:
+    Outputs TRUE if any input is TRUE, otherwise FALSE. All inputs must be TRUE
+    or FALSE. (Comparison is case-insensitive regardless of the value of
+    CASEIGNOREDP. That is, true or True or TRUE are all the same.) An input can
+    be a list, in which case it is taken as an expression to run; that
+    expression must produce a TRUE or FALSE value. List expressions are
+    evaluated from left to right; as soon as a TRUE value is found, the
+    remaining inputs are not examined. Example:
 	
-  IF OR :X=0 [some.long.computation] [...]
+      IF OR :X=0 [some.long.computation] [...]
 
-to avoid the long computation if the first condition is met."
+    to avoid the long computation if the first condition is met."
       
   in
   let args =
@@ -111,11 +113,12 @@ let not_ =
   let names = ["not"] in
   let doc =
 
-    "NOT tf
+    "\
+NOT tf
 
-Outputs TRUE if the input is FALSE, and vice versa. The input can be a list, in
-which case it is taken as an expression to run; that expression must produce a
-TRUE or FALSE value."
+    Outputs TRUE if the input is FALSE, and vice versa. The input can be a list,
+    in which case it is taken as an expression to run; that expression must
+    produce a TRUE or FALSE value."
 
   in
   let args = Lga.(env @@ alt word (list any) @-> ret cont) in
