@@ -249,6 +249,26 @@ NAME? name
   let f env name = if has_var env name then true_word else false_word in
   prim ~names ~doc ~args ~f
 
+let plistp =
+  let names = ["plistp"; "plist?"] in
+  let doc =
+
+    "\
+PLISTP name
+PLIST? name
+
+    Outputs TRUE if the input is the name of a nonempty property list. (In
+    principle every word is the name of a property list; if you haven't put any
+    properties in it, PLIST of that name outputs an empty list, rather than
+    giving an error message.)"
+
+  in
+  let args = Lga.(word @-> ret (value any)) in
+  let f plistname =
+    if has_plist plistname then true_word else false_word
+  in
+  prim ~names ~doc ~args ~f
+
 (** 7.7 Workspace Control *)
 
 (* From Homebrew:
@@ -344,5 +364,7 @@ let () =
 
       definedp;
       namep;
+      plistp;
+      
       help
     ]

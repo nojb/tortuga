@@ -142,3 +142,10 @@ let prop_list plist =
     H.find plists plist
   with
   | Not_found -> []
+
+let has_plist plistname =
+  try
+    let p = H.find plists plistname in
+    List.length p > 0
+  with
+  | Not_found -> false

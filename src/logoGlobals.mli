@@ -43,3 +43,4 @@ val put_prop : string -> string -> atom -> unit
 val get_prop : string -> string -> atom option
 val remove_prop : string -> string -> unit
 val prop_list : string -> (string * atom) list
+val has_plist : string -> bool
