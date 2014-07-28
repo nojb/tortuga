@@ -38,3 +38,8 @@ val has_global : string -> bool
 
 val set_palette : string -> Gg.color -> unit
 val get_palette : string -> Gg.color option
+
+val put_prop : string -> string -> atom -> unit
+val get_prop : string -> string -> atom option
+val remove_prop : string -> string -> unit
+val prop_list : string -> (string * atom) list

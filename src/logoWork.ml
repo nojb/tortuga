@@ -67,6 +67,76 @@ let localmake env varname value =
 let thing env varname =
   get_var env varname
 
+(** 7.3 Property Lists *)
+
+let pprop =
+  let names = ["pprop"] in
+  let doc =
+
+    "\
+PPROP plistname propname value
+
+    Command. Adds a property to the plistname property list with name propname
+    and value value."
+
+  in
+  let args = Lga.(word @-> word @-> any @-> ret retvoid) in
+  let f = put_prop in
+  prim ~names ~doc ~args ~f
+
+let gprop =
+  let names = ["gprop"] in
+  let doc =
+
+    "\
+GPROP plistname propname
+
+    Outputs the value of the propname property in the plistname property list,
+    or the empty list if there is no such property."
+
+  in
+  let args = Lga.(word @-> word @-> ret (value any)) in
+  let f plistname propname =
+    match get_prop plistname propname with
+    | Some a -> a
+    | None -> List []
+  in
+  prim ~names ~doc ~args ~f
+
+let remprop =
+  let names = ["remprop"] in
+  let doc =
+
+    "\
+REMPROP plistname propname
+
+    Command. Removes the property named propname from the property list named plistname."
+
+  in
+  let args = Lga.(word @-> word @-> ret retvoid) in
+  let f = remove_prop in
+  prim ~names ~doc ~args ~f
+
+let plist =
+  let names = ["plist"] in
+  let doc =
+
+    "\
+PLIST plistname
+
+    Outputs a list whose odd-numbered members are the names, and whose
+    even-numbered members are the values, of the properties in the property list
+    named plistname. The output is a copy of the actual property list; changing
+    properties later will not magically change a list output earlier by PLIST."
+
+  in
+  let args = Lga.(word @-> ret (value (list any))) in
+  let f plistname =
+    let lst = prop_list plistname in
+    List.concat (List.map (fun (n, v) -> [Word n; v]) lst)
+  in
+  prim ~names ~doc ~args ~f
+
 (** 7.4 Workspace Predicates *)
 
 let definedp name =
@@ -133,6 +203,14 @@ let () =
   set_pf "local" Lga.(env @@ alt word (list word) @-> rest word retvoid) local;
   set_pf "localmake" Lga.(env @@ word @-> any @-> ret retvoid) localmake;
   set_pf "thing" Lga.(env @@ word @-> ret (value any)) thing;
+
+  List.iter add_prim
+    [
+      pprop;
+      gprop;
+      remprop;
+      plist
+    ];
 
   set_pf "definedp" Lga.(word @-> ret (value any)) definedp;
   set_pf "defined?" Lga.(word @-> ret (value any)) definedp;
