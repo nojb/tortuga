@@ -511,6 +511,81 @@ DEQUEUE queuename				(library procedure)
       
 (** 2.4 Predicates *)
 
+let wordp =
+  let names = ["wordp"; "word?"] in
+  let doc =
+
+    "\
+WORDP thing
+WORD? thing
+
+    Outputs TRUE if the input is a word, FALSE otherwise."
+
+  in
+  let args = Lga.(any @-> ret (value any)) in
+  let f = function
+    | Num _
+    | Word _ -> true_word
+    | _ -> false_word
+  in
+  prim ~names ~doc ~args ~f
+
+let listp =
+  let names = ["listp"; "list?"] in
+  let doc =
+
+    "\
+LISTP thing
+LIST? thing
+
+    Outputs TRUE if the input is a list, FALSE otherwise."
+
+  in
+  let args = Lga.(any @-> ret (value any)) in
+  let f = function
+    | List _ -> true_word
+    | _ -> false_word
+  in
+  prim ~names ~doc ~args ~f
+
+let arrayp =
+  let names = ["arrayp"; "array?"] in
+  let doc =
+
+    "\
+ARRAYP thing
+ARRAY? thing
+
+    Outputs TRUE if the input is an array, FALSE otherwise."
+
+  in
+  let args = Lga.(any @-> ret (value any)) in
+  let f = function
+    | Array _ -> true_word
+    | _ -> false_word
+  in
+  prim ~names ~doc ~args ~f
+
+let emptyp =
+  let names = ["emptyp"; "empty?"] in
+  let doc =
+
+    "\
+EMPTYP thing
+EMPTY? thing
+
+    Outputs TRUE if the input is the empty word or the empty list, FALSE
+    otherwise."
+
+  in
+  let args = Lga.(any @-> ret (value any)) in
+  let f = function
+    | Word ""
+    | List [] -> true_word
+    | _ -> false_word
+  in
+  prim ~names ~doc ~args ~f
+
 let equalp =
   let names = ["equalp"; "equal?"] in
   let doc =
@@ -678,6 +753,10 @@ let () =
       queue;
       dequeue;
 
+      wordp;
+      listp;
+      arrayp;
+      emptyp;
       equalp;
       notequalp;
       beforep;
