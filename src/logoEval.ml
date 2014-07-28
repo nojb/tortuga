@@ -308,6 +308,13 @@ let instructionlist env strm k =
   in
   step None
 
+let commandlist env strm k =
+  instructionlist env strm
+    (function
+      | Some a ->
+        error "You don't say what to do with %a" sprint a
+      | None -> k ())
+
 let expressionlist env strm k =
   instructionlist env strm
     (function

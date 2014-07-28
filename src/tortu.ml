@@ -75,7 +75,7 @@ let main () =
         | `GotLINE l ->
           let lexbuf = Lexing.from_string l in
           let strm = Stream.of_list (LogoLex.parse_atoms [] false lexbuf) in
-          command env strm (fun () -> ())
+          commandlist env strm (fun () -> ())
         | `GotTO (name, inputs, lines) ->
           let lines = String.concat " " lines in
           let lexbuf = Lexing.from_string lines in
