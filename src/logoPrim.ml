@@ -24,7 +24,8 @@
 open LogoTypes
 open LogoAtom
 open LogoGlobals
-
+open LogoEnv
+  
 (** 2.1 Constructors *)
 
 let word =
@@ -389,6 +390,125 @@ QUOTED thing					(library procedure)
 
 (** 2.3 Data Mutators *)
 
+let setitem =
+  let names = ["setitem"] in
+  let doc =
+
+    "\
+SETITEM index array value
+
+    Command. Replaces the indexth member of array with the new value. Ensures
+    that the resulting array is not circular, i.e., value may not be a list or
+    array that contains array."
+
+  in
+  let args = Lga.(int @-> array any @-> any @-> ret retvoid) in
+  let f index (array, orig) value = array.(index-orig) <- value in
+  prim ~names ~doc ~args ~f
+
+let push =
+  let names = ["push"] in
+  let doc =
+
+    "\
+PUSH stackname thing				(library procedure)
+
+    Command. Adds the thing to the stack that is the value of the variable whose
+    name is stackname. This variable must have a list as its value; the initial
+    value should be the empty list. New members are added at the front of the
+    list."
+
+  in
+  let args = Lga.(env @@ word @-> any @-> ret retvoid) in
+  let f env stackname thing =
+    match get_var env stackname with
+    | List l ->
+      set_var env stackname (List (thing :: l))
+    | _ ->
+      error "push: %s is not a list" stackname
+  in
+  prim ~names ~doc ~args ~f
+
+let pop =
+  let names = ["pop"] in
+  let doc =
+
+    "\
+POP stackname					(library procedure)
+
+    Outputs the most recently PUSHed member of the stack that is the value of
+    the variable whose name is stackname and removes that member from the
+    stack."
+
+  in
+  let args = Lga.(env @@ word @-> ret (value any)) in
+  let f env stackname =
+    match get_var env stackname with
+    | List (x :: xs) ->
+      set_var env stackname (List xs);
+      x
+    | List [] ->
+      error "pop: empty stack"
+    | _ ->
+      error "pop: %s is not a list" stackname
+  in
+  prim ~names ~doc ~args ~f
+
+let queue =
+  let names = ["queue"] in
+  let doc =
+
+    "\
+QUEUE queuename thing				(library procedure)
+
+    Command. Adds the thing to the queue that is the value of the variable whose
+    name is queuename. This variable must have a list as its value; the initial
+    value should be the empty list. New members are added at the back of the
+    list."
+
+  in
+  let args = Lga.(env @@ word @-> any @-> ret retvoid) in
+  let f env queuename thing =
+    match get_var env queuename with
+    | List l ->
+      set_var env queuename (List (l @ [thing]))
+    | _ ->
+      error "queue: %s is not a list" queuename
+  in
+  prim ~names ~doc ~args ~f
+
+let dequeue =
+  let names = ["dequeue"] in
+  let doc =
+
+    "\
+DEQUEUE queuename				(library procedure)
+
+    Outputs the least recently QUEUEd member of the queue that is the value of
+    the variable whose name is queuename and removes that member from the
+    queue."
+
+  in
+  let args = Lga.(env @@ word @-> ret (value any)) in
+  let f env queuename =
+    match get_var env queuename with
+    | List l ->
+      let rec loop acc = function
+        | [] ->
+          error "dequeue: %s is empty" queuename
+        | x :: [] ->
+          List.rev acc, x
+        | x :: xs ->
+          loop (x :: acc) xs
+      in
+      let l, x = loop [] l in
+      set_var env queuename (List l);
+      x
+    | _ ->
+      error "dequeue: %s is not a list" queuename
+  in
+  prim ~names ~doc ~args ~f
+      
 (** 2.4 Predicates *)
 
 let equalp =
@@ -551,6 +671,12 @@ let () =
       item;
       pick;
       quoted;
+
+      setitem;
+      push;
+      pop;
+      queue;
+      dequeue;
 
       equalp;
       notequalp;
