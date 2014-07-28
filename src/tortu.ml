@@ -33,15 +33,53 @@ module L6 = LogoGraphics
 module L7 = LogoWork
 module L8 = LogoControl
 
+let process_line state str =
+  let lexbuf = Lexing.from_string str in
+  match state with
+  | `ReadingTO _ ->
+    LogoLex.line_or_end lexbuf
+  | `Ready ->
+    LogoLex.line_or_to lexbuf
+
+let read_phrase ic oc =
+  let rec loop prompt acc raw state =
+    Printf.fprintf oc "%s %!" prompt;
+    let l = input_line ic in
+    match process_line state l, state with
+    | `GotEND, `Ready ->
+      assert false
+    | `GotEND, `ReadingTO (name, inputs, lines) ->
+      List.rev (l :: raw), `GotTO (name, inputs, List.rev lines)
+    | `GotTO (name, inputs), `Ready ->
+      loop ">" [] (l :: raw) (`ReadingTO (name, inputs, []))
+    | `GotLINE, `ReadingTO (name, inputs, lines) ->
+      let line = String.concat "" (List.rev (l :: acc)) in
+      loop ">" [] (l :: raw) (`ReadingTO (name, inputs, line :: lines))
+    | `GotCONT s, _ ->
+      loop "~" (s :: acc) (l :: raw) state
+    | `GotTO _, `ReadingTO _ ->
+      assert false
+    | `GotLINE, `Ready ->
+      let line = String.concat "" (List.rev (l :: acc)) in
+      List.rev (l :: raw), `GotLINE line
+  in
+  loop "?" [] [] `Ready
+
 let main () =
-  let lexbuf = Lexing.from_channel stdin in
   let env = create_env (module LogoTurtleVg) in
   let rec loop env =
-    Printf.printf "? %!";
     begin
       try
-        let strm = Stream.of_list (LogoLex.parse_atoms [] false lexbuf) in
-        toplevel env strm
+        let raw, phr = read_phrase stdin stdout in
+        match phr with
+        | `GotLINE l ->
+          let lexbuf = Lexing.from_string l in
+          let strm = Stream.of_list (LogoLex.parse_atoms [] false lexbuf) in
+          command env strm (fun () -> ())
+        | `GotTO (name, inputs, lines) ->
+          let lines = String.concat " " lines in
+          let lexbuf = Lexing.from_string lines in
+          to_ name inputs (LogoLex.parse_atoms [] false lexbuf)
       with
       | LogoControl.Pause env ->
         loop env

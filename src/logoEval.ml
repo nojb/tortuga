@@ -317,8 +317,7 @@ let expressionlist env strm k =
 type aux =
   { k : 'a. 'a fn -> (env -> 'a) -> unit }
   
-let to_ strm =
-  let name, inputs, body = parse_to strm in
+let to_ name inputs body =
   let rec loop : string list -> aux -> unit = fun inputs k ->
     match inputs with
     | input :: inputs ->
@@ -329,15 +328,3 @@ let to_ strm =
   in
   loop inputs
     { k = fun fn f -> set_pf name (Kenv fn) (fun env -> f (new_frame env)) }
-
-let rec toplevel env strm =
-  match Stream.peek strm with
-  | Some (Word w) when String.uppercase w = "TO" ->
-    Stream.junk strm;
-    to_ strm;
-    toplevel env strm
-  | Some _ ->
-    command env strm (fun () -> ());
-    toplevel env strm
-  | None ->
-    ()
