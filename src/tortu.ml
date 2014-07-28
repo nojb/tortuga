@@ -37,7 +37,7 @@ let main () =
   let lexbuf = Lexing.from_channel stdin in
   let env = create_env (module LogoTurtleVg) in
   let rec loop env =
-    Format.fprintf Format.std_formatter "> @?";
+    Printf.printf "? %!";
     begin
       try
         let strm = Stream.of_list (LogoLex.parse_atoms [] false lexbuf) in
@@ -48,16 +48,16 @@ let main () =
       | LogoControl.Toplevel ->
         ()
       | LogoLex.Error err ->
-        Format.fprintf Format.std_formatter "%a.@." LogoLex.report_error err
+        Printf.printf "Lexer: %a.\n%!" LogoLex.report_error err
       | LogoControl.Throw (tag, None) ->
-        Format.fprintf Format.std_formatter "Unhandled exception with tag %S@." tag
+        Printf.printf "Unhandled THROW with tag %s\n%!" tag
       | LogoControl.Throw (tag, Some a) ->
-        Format.fprintf Format.std_formatter "Unhandled exception with tag %S, value %a@." tag
-          LogoAtom.pp_print a
+        Printf.printf "Unhandled THROW with tag %s, value %a\n%!" tag
+          LogoAtom.output a
       | Error err ->
-        Format.fprintf Format.std_formatter "%s.@." err
+        Printf.printf "Error: %s\n%!" err
       | exn ->
-        Format.fprintf Format.std_formatter "internal error: %s@.Backtrace:@.%s@."
+        Printf.printf "Internal: %s\nBacktrace:\n%s\n%!"
           (Printexc.to_string exn) (Printexc.get_backtrace ())
     end;
     loop env

@@ -108,12 +108,6 @@ let sprint_list () al =
   bprint_list b al;
   Buffer.contents b
 
-let pp_print ppf a =
-  Format.fprintf ppf "%s" (sprint () a)
-
-let pp_print_list ppf al =
-  Format.fprintf ppf "%s" (sprint_list () al)
-  
 let true_word =
   Word "true"
 

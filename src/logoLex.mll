@@ -35,7 +35,7 @@ let unexpected c =
 let expected c =
   raise (Error (Expected_character c))
 
-open Format
+open Printf
 
 let report_error ppf = function
   | Unexpected_character c ->
