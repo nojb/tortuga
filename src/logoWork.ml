@@ -28,44 +28,123 @@ open LogoEnv
   
 (** 7.2 Variable Definition *)
 
-let make env varname value =
-  set_var env varname value
+let make =
+  let names = ["make"] in
+  let doc =
+
+    "\
+MAKE varname value
+
+    Command. Assigns the value value to the variable named varname, which must
+    be a word. Variable names are case-insensitive. If a variable with the same
+    name already exists, the value of that variable is changed. If not, a new
+    global variable is created."
+
+  in
+  let args = Lga.(env @@ word @-> any @-> ret retvoid) in
+  let f env varname value = set_var env varname value in
+  prim ~names ~doc ~args ~f
   
-let name env value varname =
-  set_var env varname value
+let name =
+  let names = ["name"] in
+  let doc =
+
+    "\
+NAME value varname				(library procedure)
+
+    Command. Same as MAKE but with the inputs in reverse order."
+
+  in
+  let args = Lga.(env @@ any @-> word @-> ret retvoid) in
+  let f env value varname = set_var env varname value in
+  prim ~names ~doc ~args ~f
 
 (* TODO 'local' now accepts the form
    (local varlist varname2 varname3 ...)
    which should be marked as an error. *)
-let local env varname rest =
-  let create_var env w =
-    try
-      create_var env w
-    with
-    | Failure "create_var" ->
-      error "'local' used outside of any procedure"
-  in
-  begin match varname with
-  | `L w ->
-    create_var env w
-  | `R wl ->
-    List.iter (create_var env) wl
-  end;
-  List.iter (create_var env) rest
+let local =
+  let names = ["local"] in
+  let doc =
 
-let localmake env varname value =
-  let create_var env w =
-    try
-      create_var env w
-    with
-    | Failure "create_var" ->
-      error "'localmake' used outside of any procedure"
-  in
-  create_var env varname;
-  set_var env varname value
+    "\
+LOCAL varname
+LOCAL varnamelist
+(LOCAL varname1 varname2 ...)
 
-let thing env varname =
-  get_var env varname
+    Command. Accepts as inputs one or more words, or a list of words. A variable
+    is created for each of these words, with that word as its name. The
+    variables are local to the currently running procedure. Logo variables
+    follow dynamic scope rules; a variable that is local to a procedure is
+    available to any subprocedure invoked by that procedure. The variables
+    created by LOCAL have no initial value; they must be assigned a value (e.g.,
+    with MAKE) before the procedure attempts to read their value."
+
+  in
+  let args = Lga.(env @@ alt word (list word) @-> rest word retvoid) in
+  let f env varname rest =
+    let create_var env w =
+      try
+        create_var env w
+      with
+      | Failure "create_var" ->
+        error "'local' used outside of any procedure"
+    in
+    begin match varname with
+      | `L w ->
+        create_var env w
+      | `R wl ->
+        List.iter (create_var env) wl
+    end;
+    List.iter (create_var env) rest
+  in
+  prim ~names ~doc ~args ~f
+
+let localmake =
+  let names = ["localmake"] in
+  let doc =
+
+    "\
+LOCALMAKE varname value				(library procedure)
+
+    Command. Makes the named variable local, like LOCAL, and assigns it the
+    given value, like MAKE."
+
+  in
+  let args = Lga.(env @@ word @-> any @-> ret retvoid) in
+  let f env varname value =
+    let create_var env w =
+      try
+        create_var env w
+      with
+      | Failure "create_var" ->
+        error "'localmake' used outside of any procedure"
+    in
+    create_var env varname;
+    set_var env varname value
+  in
+  prim ~names ~doc ~args ~f
+
+let thing =
+  let names = ["thing"] in
+  let doc =
+
+    "\
+THING varname
+:quoted.varname
+
+    Outputs the value of the variable whose name is the input. If there is more
+    than one such variable, the innermost local variable of that name is
+    chosen. The colon notation is an abbreviation not for THING but for the
+    combination
+ 	
+      thing \"
+    
+    so that :FOO means THING \"FOO."
+
+  in
+  let args = Lga.(env @@ word @-> ret (value any)) in
+  let f env varname = get_var env varname in
+  prim ~names ~doc ~args ~f
 
 (** 7.3 Property Lists *)
 
@@ -139,11 +218,36 @@ PLIST plistname
 
 (** 7.4 Workspace Predicates *)
 
-let definedp name =
-  if has_routine name then true_word else false_word
+let definedp =
+  let names = ["definedp"; "defined?"] in
+  let doc =
 
-let namep env name =
-  if has_var env name then true_word else false_word
+    "\
+DEFINEDP name
+DEFINED? name
+
+    Outputs TRUE if the input is the name of a user-defined procedure, including
+    a library procedure."
+
+  in
+  let args = Lga.(word @-> ret (value any)) in
+  let f name = if has_routine name then true_word else false_word in
+  prim ~names ~doc ~args ~f
+
+let namep =
+  let names = ["namep"; "name?"] in
+  let doc =
+
+    "\
+NAMEP name
+NAME? name
+
+    Outputs TRUE if the input is the name of a variable."
+
+  in
+  let args = Lga.(env @@ word @-> ret (value any)) in
+  let f env name = if has_var env name then true_word else false_word in
+  prim ~names ~doc ~args ~f
 
 (** 7.7 Workspace Control *)
 
@@ -170,51 +274,75 @@ def puts_columns items, star_items=[]
 end
 *)
 
-let help = function
-  | None ->
-    let rs = fold_routines (fun x l -> x :: l) [] in
-    let l = List.length rs in
-    if l > 0 then begin
-      let a = Array.of_list rs in
-      Array.sort (fun s1 s2 -> String.length s1 - String.length s2) a;
-      let last = a.(l-1) in
-      let cols = truncate (80.0 /. float (String.length last + 3)) in
-      let cols = max 1 cols in
-      let nc = l / cols in
-      Array.sort compare a;
-      for i = 0 to nc - 1 do
-        for j = 0 to cols - 1 do
-          let k = j * nc + i in
-          if k < l then print_string (Printf.sprintf "%-*s" (String.length last + 3) a.(k))
-        done;
-        print_newline ()
-      done
-    end
-  | Some name ->
-    match get_help name with
-    | Some doc ->
-      print_endline doc
+let help =
+  let names = ["help"] in
+  let doc =
+
+    "\
+HELP name
+(HELP)
+
+    Command. Prints information from the reference manual about the primitive
+    procedure named by the input. With no input, lists all the primitives about
+    which help is available. If there is an environment variable LOGOHELP, then
+    its value is taken as the directory in which to look for help files, instead
+    of the default help directory.
+
+    If HELP is called with the name of a defined procedure for which there is no
+    help file, it will print the title line of the procedure followed by lines
+    from the procedure body that start with semicolon, stopping when a
+    non-semicolon line is seen.
+
+    Exceptionally, the HELP command can be used without its default input and
+    without parentheses provided that nothing follows it on the instruction
+    line."
+
+  in
+  let args = Lga.(opt word retvoid) in
+  let f = function
     | None ->
-      print_endline ("No help is available for " ^ name)
+      let rs = fold_routines (fun x l -> x :: l) [] in
+      let l = List.length rs in
+      if l > 0 then begin
+        let a = Array.of_list rs in
+        Array.sort (fun s1 s2 -> String.length s1 - String.length s2) a;
+        let last = a.(l-1) in
+        let cols = truncate (80.0 /. float (String.length last + 3)) in
+        let cols = max 1 cols in
+        let nc = l / cols in
+        Array.sort compare a;
+        for i = 0 to nc - 1 do
+          for j = 0 to cols - 1 do
+            let k = j * nc + i in
+            if k < l then print_string (Printf.sprintf "%-*s" (String.length last + 3) a.(k))
+          done;
+          print_newline ()
+        done
+      end
+    | Some name ->
+      match get_help name with
+      | Some doc ->
+        print_endline doc
+      | None ->
+        print_endline ("No help is available for " ^ name)
+  in
+  prim ~names ~doc ~args ~f
   
 let () =
-  set_pf "make" Lga.(env @@ word @-> any @-> ret retvoid) make;
-  set_pf "name" Lga.(env @@ any @-> word @-> ret retvoid) name;
-  set_pf "local" Lga.(env @@ alt word (list word) @-> rest word retvoid) local;
-  set_pf "localmake" Lga.(env @@ word @-> any @-> ret retvoid) localmake;
-  set_pf "thing" Lga.(env @@ word @-> ret (value any)) thing;
-
   List.iter add_prim
     [
+      make;
+      name;
+      local;
+      localmake;
+      thing;
+      
       pprop;
       gprop;
       remprop;
-      plist
-    ];
+      plist;
 
-  set_pf "definedp" Lga.(word @-> ret (value any)) definedp;
-  set_pf "defined?" Lga.(word @-> ret (value any)) definedp;
-  set_pf "namep" Lga.(env @@ word @-> ret (value any)) namep;
-  set_pf "name?" Lga.(env @@ word @-> ret (value any)) namep;
-
-  set_pf "help" Lga.(opt word retvoid) help
+      definedp;
+      namep;
+      help
+    ]
