@@ -173,7 +173,11 @@ and dispatch env proc strm natural k =
       let rec loop acc i =
         if i >= len then k (List.rev acc)
         else
-          expression env strm (fun arg1 -> loop (arg1 :: acc) (i+1))
+          match Stream.peek strm with
+          | Some _ ->
+            expression env strm (fun arg1 -> loop (arg1 :: acc) (i+1))
+          | None ->
+            error "not enough arguments for %s" (String.uppercase proc)
       in
       loop [] 0
     else
@@ -182,8 +186,10 @@ and dispatch env proc strm natural k =
         | Some (Word ")") ->
           Stream.junk strm;
           k (List.rev acc)
-        | _ ->
+        | Some _ ->
           expression env strm (fun arg1 -> loop (arg1 :: acc))
+        | None ->
+          error "expected ')'"
       in
       loop []
   in
