@@ -116,41 +116,41 @@ let get_palette name =
 let plists = H.create 17
 
 let put_prop plist name value =
-  let name = String.uppercase name in
-  let p = try H.find plists plist with Not_found -> [] in
-  let p = List.remove_assoc name p in
-  let p = (name, value) :: p in
-  H.replace plists plist p
+  let p =
+    try
+      H.find plists plist
+    with
+    | Not_found ->
+      let h = H.create 5 in
+      H.add plists plist h;
+      h
+  in
+  H.replace p name value
   
 let get_prop plist name =
-  let name = String.uppercase name in
   try
     let p = H.find plists plist in
-    Some (List.assoc name p)
+    Some (H.find p name)
   with
   | Not_found -> None
 
 let remove_prop plist name =
-  let name = String.uppercase name in
   try
     let p = H.find plists plist in
-    let p = List.remove_assoc name p in
-    if List.length p = 0 then
-      H.remove plists plist
-    else
-      H.replace plists plist p
+    H.remove p name;
+    if H.length p = 0 then H.remove plists plist
   with
   | Not_found -> ()
 
 let prop_list plist =
   try
-    H.find plists plist
+    H.fold (fun k v l -> (k, v) :: l) (H.find plists plist) []
   with
   | Not_found -> []
 
 let has_plist plistname =
   try
     let p = H.find plists plistname in
-    List.length p > 0
+    H.length p > 0
   with
   | Not_found -> false
