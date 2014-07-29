@@ -20,7 +20,8 @@
    CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. *)
 
 open LogoTop
+open Lwt
   
-let _ =
-  print_endline "Tortuga 0.1";
+lwt () =
+  (* print_endline "Tortuga 0.1"; *)
   main ()
