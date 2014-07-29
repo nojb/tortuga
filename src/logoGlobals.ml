@@ -73,9 +73,9 @@ let set_pf : 'a. string -> 'a fn -> 'a -> unit =
   fun name args f ->
     H.add routines name { proc_doc = None; proc_fun = Pf (args, f); proc_raw = None }
 
-let add_proc: 'a. name:string -> raw:string list -> args:'a fn -> f:'a -> unit =
-  fun ~name ~raw ~args ~f ->
-    H.add routines name { proc_doc = None; proc_fun = Pf (args, f); proc_raw = Some raw }
+let add_proc: 'a. name:string -> raw:string list -> ?doc:string -> args:'a fn -> f:'a -> unit =
+  fun ~name ~raw ?doc ~args ~f ->
+    H.add routines name { proc_doc = doc; proc_fun = Pf (args, f); proc_raw = Some raw }
 
 let has_routine name =
   H.mem routines name

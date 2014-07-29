@@ -321,24 +321,42 @@ let expressionlist env strm k =
       | Some a -> k a
       | None -> error "value expected")
 
+let comment_re =
+  let open Re in
+  let re =
+    whole_string (seq [rep space; char ';'; greedy (rep space); group (rep any)])
+  in
+  compile re
+
+let get_comment_line str =
+  try
+    let subs = Re.exec comment_re str in
+    Some (Re.get subs 1)
+  with
+  | Not_found -> None
+
 type aux =
   { k : 'a. 'a fn -> (env -> 'a) -> unit }
   
 let to_ ~raw ~name ~inputs ~body =
-  (* let get_docs = function *)
-  (*   | _ :: docs -> *)
-  (*     let rec loop = function *)
-  (*       | doc :: docs -> *)
-  (*         begin match is_doc doc with *)
-  (*         | Some doc -> doc ^ "\n" ^ loop docs *)
-  (*         | None -> "" *)
-  (*         end *)
-  (*       | [] -> *)
-  (*         "" *)
-  (*     in *)
-  (*     loop docs *)
-  (*   | [] -> None *)
-  (* in *)
+  let get_doc body =
+    let b = Buffer.create 17 in
+    Buffer.add_string b
+      (Printf.sprintf "%s %s\n" (String.uppercase name) (String.concat " " inputs));
+    let rec loop = function
+      | (l :: lines) as rest ->
+        begin match get_comment_line l with
+        | None -> rest
+        | Some doc ->
+          Buffer.add_char b '\n';
+          Buffer.add_string b doc;
+          loop lines
+        end
+      | [] -> []
+    in
+    let body = loop body in
+    Buffer.contents b, body
+  in
   let rec dobody env lines k =
     match lines with
     | l :: lines ->
@@ -349,6 +367,7 @@ let to_ ~raw ~name ~inputs ~body =
     | [] ->
       k ()
   in
+  let doc, body = get_doc body in
   let rec loop : string list -> aux -> unit = fun inputs k ->
     match inputs with
     | input :: inputs ->
@@ -358,4 +377,4 @@ let to_ ~raw ~name ~inputs ~body =
       k.k Lga.(ret cont) (fun env k -> dobody (new_exit env k) body (fun () -> k None))
   in
   loop inputs
-    { k = fun fn f -> add_proc ~name ~raw ~args:(Kenv fn) ~f:(fun env -> f (new_frame env)) }
+    { k = fun fn f -> add_proc ~name ~raw ~doc ~args:(Kenv fn) ~f:(fun env -> f (new_frame env)) }
