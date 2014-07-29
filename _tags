@@ -1,0 +1,3 @@
+true: package(uutf), package(gg), package(vg), package(vg.pdf)
+true: package(str), package(re), package(re.str)
+true: debug
