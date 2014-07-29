@@ -84,7 +84,7 @@ LOCAL varnamelist
   let f env varname rest =
     let create_var env w =
       try
-        create_var env w
+        create_var env w None
       with
       | Failure "create_var" ->
         error "'local' used outside of any procedure"

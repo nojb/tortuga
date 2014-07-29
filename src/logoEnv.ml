@@ -57,12 +57,12 @@ let set_var env name data =
   in
   loop env.locals
 
-let create_var env name =
+let create_var env name data =
   match env.locals with
   | [] ->
     failwith "create_var"
   | top :: _ ->
-    H.add top name None
+    H.add top name data
 
 let get_var env name =
   let rec loop = function

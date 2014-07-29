@@ -372,7 +372,7 @@ let to_ ~raw ~name ~inputs ~body =
     match inputs with
     | input :: inputs ->
       loop inputs
-        { k = fun fn f -> k.k Lga.(any @-> fn) (fun env a -> set_var env input a; f env) }
+        { k = fun fn f -> k.k Lga.(any @-> fn) (fun env a -> create_var env input (Some a); f env) }
     | [] ->
       k.k Lga.(ret cont) (fun env k -> dobody (new_exit env k) body (fun () -> k None))
   in

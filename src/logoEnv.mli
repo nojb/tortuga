@@ -30,7 +30,7 @@ val new_continue : env -> (atom option -> unit) -> env
 val continue : env -> atom option -> unit
 
 val set_var : env -> string -> atom -> unit
-val create_var : env -> string -> unit
+val create_var : env -> string -> atom option -> unit
 val get_var : env -> string -> atom
 val has_var : env -> string -> bool
 
