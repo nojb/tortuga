@@ -46,9 +46,7 @@ Type the following in a fresh session of the interpreter:
       bk :size * 2
     end
     clearscreen pu bk 150 lt 90 fd 90 rt 90 pd
-    fern 25 1 render .
-
-(note the dot at the end - this is needed for now because of the way the lexer works ...)
+    fern 25 1 render
 
 The last command, `render`, produces the actual `pdf` file.  Don't forget to call
 `render` if you want to see your images!
