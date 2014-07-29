@@ -19,56 +19,8 @@
    IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
    CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. *)
 
-open LogoTypes
-open LogoEnv
-open LogoEval
-
-(* module TurtleGraphics = LogoTurtleGraphics *)
-
-module L2 = LogoPrim
-module L3 = LogoComm
-module L4 = LogoArithmetic
-module L5 = LogoLogic
-module L6 = LogoGraphics
-module L7 = LogoWork
-module L8 = LogoControl
-
-let main () =
-  let lexbuf = Lexing.from_channel stdin in
-  let env = create_env (module LogoTurtleVg) in
-  let rec loop env =
-    Format.fprintf Format.std_formatter "> @?";
-    begin
-      try
-        let strm = Stream.of_list (LogoLex.parse_atoms [] false lexbuf) in
-        toplevel env strm
-      with
-      | LogoControl.Pause env ->
-        loop env
-      | LogoControl.Toplevel ->
-        ()
-      | LogoLex.Error err ->
-        Format.fprintf Format.std_formatter "%a.@." LogoLex.report_error err
-      | LogoControl.Throw (tag, None) ->
-        Format.fprintf Format.std_formatter "Unhandled exception with tag %S@." tag
-      | LogoControl.Throw (tag, Some a) ->
-        Format.fprintf Format.std_formatter "Unhandled exception with tag %S, value %a@." tag
-          LogoAtom.pp_print a
-      | Error err ->
-        Format.fprintf Format.std_formatter "%s.@." err
-      | exn ->
-        Format.fprintf Format.std_formatter "internal error: %s@.Backtrace:@.%s@."
-          (Printexc.to_string exn) (Printexc.get_backtrace ())
-    end;
-    loop env
-  in
-  try
-    loop env
-  with
-  | LogoControl.Bye
-  | Exit ->
-    Format.fprintf Format.std_formatter "Goodbye.@."
- 
+open LogoTop
+  
 let _ =
   print_endline "Tortuga 0.1";
   main ()

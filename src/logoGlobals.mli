@@ -26,6 +26,7 @@ type primitive
 val prim : names:string list -> ?doc:string -> args:'a fn -> f:'a -> primitive
 val add_prim : primitive -> unit
 val set_pf : string -> 'a fn -> 'a -> unit
+val add_proc : name:string -> raw:string list -> ?doc:string -> args:'a fn -> f:'a -> unit
   
 val has_routine : string -> bool
 val get_routine : string -> proc

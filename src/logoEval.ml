@@ -308,36 +308,73 @@ let instructionlist env strm k =
   in
   step None
 
+let commandlist env strm k =
+  instructionlist env strm
+    (function
+      | Some a ->
+        error "You don't say what to do with %a" sprint a
+      | None -> k ())
+
 let expressionlist env strm k =
   instructionlist env strm
     (function
       | Some a -> k a
       | None -> error "value expected")
 
+let comment_re =
+  let open Re in
+  let re =
+    whole_string (seq [rep space; char ';'; greedy (rep space); group (rep any)])
+  in
+  compile re
+
+let get_comment_line str =
+  try
+    let subs = Re.exec comment_re str in
+    Some (Re.get subs 1)
+  with
+  | Not_found -> None
+
 type aux =
   { k : 'a. 'a fn -> (env -> 'a) -> unit }
   
-let to_ strm =
-  let name, inputs, body = parse_to strm in
+let to_ ~raw ~name ~inputs ~body =
+  let get_doc body =
+    let b = Buffer.create 17 in
+    Buffer.add_string b
+      (Printf.sprintf "%s %s\n" (String.uppercase name) (String.concat " " inputs));
+    let rec loop = function
+      | (l :: lines) as rest ->
+        begin match get_comment_line l with
+        | None -> rest
+        | Some doc ->
+          Buffer.add_char b '\n';
+          Buffer.add_string b doc;
+          loop lines
+        end
+      | [] -> []
+    in
+    let body = loop body in
+    Buffer.contents b, body
+  in
+  let rec dobody env lines k =
+    match lines with
+    | l :: lines ->
+      let lexbuf = Lexing.from_string l in
+      let atoms = LogoLex.parse_atoms [] false lexbuf in
+      let strm = Stream.of_list atoms in
+      commandlist env strm (fun () -> dobody env lines k)
+    | [] ->
+      k ()
+  in
+  let doc, body = get_doc body in
   let rec loop : string list -> aux -> unit = fun inputs k ->
     match inputs with
     | input :: inputs ->
       loop inputs
         { k = fun fn f -> k.k Lga.(any @-> fn) (fun env a -> set_var env input a; f env) }
     | [] ->
-      k.k Lga.(ret cont) (fun env k -> instructionlist (new_exit env k) (Stream.of_list body) k)
+      k.k Lga.(ret cont) (fun env k -> dobody (new_exit env k) body (fun () -> k None))
   in
   loop inputs
-    { k = fun fn f -> set_pf name (Kenv fn) (fun env -> f (new_frame env)) }
-
-let rec toplevel env strm =
-  match Stream.peek strm with
-  | Some (Word w) when String.uppercase w = "TO" ->
-    Stream.junk strm;
-    to_ strm;
-    toplevel env strm
-  | Some _ ->
-    command env strm (fun () -> ());
-    toplevel env strm
-  | None ->
-    ()
+    { k = fun fn f -> add_proc ~name ~raw ~doc ~args:(Kenv fn) ~f:(fun env -> f (new_frame env)) }

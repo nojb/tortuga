@@ -35,7 +35,7 @@ let unexpected c =
 let expected c =
   raise (Error (Expected_character c))
 
-open Format
+open Printf
 
 let report_error ppf = function
   | Unexpected_character c ->
@@ -61,8 +61,8 @@ let rewind lexbuf n =
 let minus_word = Word "minus"
 }
 
-let space = [' ' '\010'-'\014']
-let nonspace = [^ ' ' '\010'-'\014']
+let space = [' ' '\t']
+let nonspace = [^ ' ' '\t']
 let identifier = '.'? ['a'-'z' 'A'-'Z'](['a'-'z' 'A'-'Z' '0'-'9' '_' '.' '?']*['a'-'z' 'A'-'Z' '0'-'9' '_' '?'])?
 let string_literal = '\"' [^ ' ' '[' ']' '{' '}' '(' ')']*
 let variable = ':' ['a'-'z' 'A'-'Z']['a'-'z' 'A'-'Z' '0'-'9' '_']*
@@ -71,11 +71,9 @@ let signed_literal = '-'? ['0'-'9']+
 let operator = "<=" | ">=" | "<>" | ['+' '-' '*' '/' '%' '^' '=' '<' '>' '[' ']' '{' '}' '(' ')']
 
 rule parse_atoms acc leading_space = parse
-  | '.'
-    { List.rev acc }
   | space+
     { parse_atoms acc true lexbuf }
-  | ';' [^ '\n']*
+  | ';' [^ '~' '\n']*
     { parse_atoms acc leading_space lexbuf }
   | identifier
   | string_literal
@@ -103,7 +101,7 @@ rule parse_atoms acc leading_space = parse
 and parse_list acc = parse
   | space+
     { parse_list acc lexbuf }
-  | [^ ' ' '\010'-'\014' '{' '}' '[' ']']+
+  | [^ ' ' '\t' '{' '}' '[' ']']+
     { parse_list (Word (Lexing.lexeme lexbuf) :: acc) lexbuf }
   | ']'
     { List (List.rev acc) }
@@ -119,7 +117,7 @@ and parse_list acc = parse
 and parse_array acc = parse
   | space+
     { parse_array acc lexbuf }
-  | [^ ' ' '\010'-'\014' '[' ']' '{' '}']+
+  | [^ ' ' '\t' '[' ']' '{' '}']+
     { parse_array (Word (Lexing.lexeme lexbuf) :: acc) lexbuf }
   | '}' space* '@' space* (signed_literal as origin)
     { Array (Array.of_list (List.rev acc), int_of_string origin) }
@@ -131,5 +129,41 @@ and parse_array acc = parse
     { parse_array (parse_array [] lexbuf :: acc) lexbuf }
   | eof
     { expected '}' }
+  | _ as c
+    { unexpected c }
+
+and line_or_to = parse
+  | space+
+    { line_or_to lexbuf }
+  | ['t' 'T'] ['o' 'O'] space+ (identifier as name)
+    { to_arg name [] lexbuf }
+  | _ as c
+    { line_or_cont (String.make 1 c) lexbuf }
+
+and line_or_end = parse
+  | space+
+    { line_or_end lexbuf }
+  | ['e''E']['n''N']['d''D'] space* eof
+    { `GotEND }
+  | _ as c
+    { line_or_cont (String.make 1 c) lexbuf }
+
+and line_or_cont buf = parse
+  | '~' space* eof
+    { `GotCONT buf }
+  | '~'
+    { line_or_cont (buf ^ "~") lexbuf }
+  | eof
+    { `GotLINE }
+  | [^ '~']+
+    { line_or_cont (buf ^ Lexing.lexeme lexbuf) lexbuf }
+
+and to_arg name acc = parse
+  | space+
+    { to_arg name acc lexbuf }
+  | variable as input
+    { to_arg name ((Re_str.string_after input 1) :: acc) lexbuf }
+  | eof
+    { `GotTO (name, List.rev acc) }
   | _ as c
     { unexpected c }

@@ -26,4 +26,5 @@ val expressionlist : env -> atom Stream.t -> (atom -> unit) -> unit
 val instruction : env -> atom Stream.t -> (atom option -> unit) -> unit
 val command : env -> atom Stream.t -> (unit -> unit) -> unit
 val instructionlist : env -> atom Stream.t -> (atom option -> unit) -> unit
-val toplevel : env -> atom Stream.t -> unit
+val commandlist : env -> atom Stream.t -> (unit -> unit) -> unit
+val to_ : raw:string list -> name:string -> inputs:string list -> body:string list -> unit

@@ -24,7 +24,8 @@ open LogoAtom
 
 type proc_info = {
   proc_doc : string option;
-  proc_fun : proc
+  proc_fun : proc;
+  proc_raw : string list option
 }
 
 let routines : proc_info H.t = H.create 17
@@ -63,14 +64,18 @@ type primitive =
   string list * proc_info
 
 let prim ~names ?doc ~args ~f =
-  names, { proc_doc = doc; proc_fun = Pf (args, f) }
+  names, { proc_doc = doc; proc_fun = Pf (args, f); proc_raw = None }
 
 let add_prim (names, p) =
   List.iter (fun n -> H.add routines n p) names
 
 let set_pf : 'a. string -> 'a fn -> 'a -> unit =
   fun name args f ->
-    H.add routines name { proc_doc = None; proc_fun = Pf (args, f) }
+    H.add routines name { proc_doc = None; proc_fun = Pf (args, f); proc_raw = None }
+
+let add_proc: 'a. name:string -> raw:string list -> ?doc:string -> args:'a fn -> f:'a -> unit =
+  fun ~name ~raw ?doc ~args ~f ->
+    H.add routines name { proc_doc = doc; proc_fun = Pf (args, f); proc_raw = Some raw }
 
 let has_routine name =
   H.mem routines name
