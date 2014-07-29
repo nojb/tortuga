@@ -341,15 +341,14 @@ type aux =
 let to_ ~raw ~name ~inputs ~body =
   let get_doc body =
     let b = Buffer.create 17 in
-    Buffer.add_string b
-      (Printf.sprintf "%s %s\n" (String.uppercase name) (String.concat " " inputs));
+    Buffer.add_string b (String.uppercase name);
+    List.iter (Printf.bprintf b " %s") inputs;
     let rec loop = function
       | (l :: lines) as rest ->
         begin match get_comment_line l with
         | None -> rest
         | Some doc ->
-          Buffer.add_char b '\n';
-          Buffer.add_string b doc;
+          Printf.bprintf b "\n%s" doc;
           loop lines
         end
       | [] -> []
