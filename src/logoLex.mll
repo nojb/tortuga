@@ -161,8 +161,8 @@ and line_or_cont buf = parse
 and to_arg name acc = parse
   | space+
     { to_arg name acc lexbuf }
-  | ':' (variable as id)
-    { to_arg name (id :: acc) lexbuf }
+  | variable as input
+    { to_arg name ((Re_str.string_after input 1) :: acc) lexbuf }
   | eof
     { `GotTO (name, List.rev acc) }
   | _ as c
