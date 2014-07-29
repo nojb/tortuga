@@ -112,15 +112,14 @@ LOCALMAKE varname value				(library procedure)
   in
   let args = Lga.(env @@ word @-> any @-> ret retvoid) in
   let f env varname value =
-    let create_var env w =
+    let create_var env w v =
       try
-        create_var env w
+        create_var env w v
       with
       | Failure "create_var" ->
         error "'localmake' used outside of any procedure"
     in
-    create_var env varname;
-    set_var env varname value
+    create_var env varname (Some value)
   in
   prim ~names ~doc ~args ~f
 
