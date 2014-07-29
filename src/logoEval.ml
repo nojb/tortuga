@@ -339,13 +339,23 @@ let to_ ~raw ~name ~inputs ~body =
   (*     loop docs *)
   (*   | [] -> None *)
   (* in *)
+  let rec dobody env lines k =
+    match lines with
+    | l :: lines ->
+      let lexbuf = Lexing.from_string l in
+      let atoms = LogoLex.parse_atoms [] false lexbuf in
+      let strm = Stream.of_list atoms in
+      commandlist env strm (fun () -> dobody env lines k)
+    | [] ->
+      k ()
+  in
   let rec loop : string list -> aux -> unit = fun inputs k ->
     match inputs with
     | input :: inputs ->
       loop inputs
         { k = fun fn f -> k.k Lga.(any @-> fn) (fun env a -> set_var env input a; f env) }
     | [] ->
-      k.k Lga.(ret cont) (fun env k -> instructionlist (new_exit env k) (Stream.of_list body) k)
+      k.k Lga.(ret cont) (fun env k -> dobody (new_exit env k) body (fun () -> k None))
   in
   loop inputs
     { k = fun fn f -> add_proc ~name ~raw ~args:(Kenv fn) ~f:(fun env -> f (new_frame env)) }

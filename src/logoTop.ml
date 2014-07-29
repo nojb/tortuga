@@ -76,10 +76,8 @@ let main () =
           let lexbuf = Lexing.from_string l in
           let strm = Stream.of_list (LogoLex.parse_atoms [] false lexbuf) in
           commandlist env strm (fun () -> ())
-        | `GotTO (name, inputs, lines) ->
-          let lines = String.concat " " lines in
-          let lexbuf = Lexing.from_string lines in
-          to_ ~raw ~name ~inputs ~body:(LogoLex.parse_atoms [] false lexbuf)
+        | `GotTO (name, inputs, body) ->
+          to_ ~raw ~name ~inputs ~body
       with
       | LogoControl.Pause env ->
         loop env
