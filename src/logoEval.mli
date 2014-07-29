@@ -27,4 +27,4 @@ val instruction : env -> atom Stream.t -> (atom option -> unit) -> unit
 val command : env -> atom Stream.t -> (unit -> unit) -> unit
 val instructionlist : env -> atom Stream.t -> (atom option -> unit) -> unit
 val commandlist : env -> atom Stream.t -> (unit -> unit) -> unit
-val to_ : string -> string list -> atom list -> unit
+val to_ : raw:string list -> name:string -> inputs:string list -> body:atom list -> unit

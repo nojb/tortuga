@@ -324,7 +324,21 @@ let expressionlist env strm k =
 type aux =
   { k : 'a. 'a fn -> (env -> 'a) -> unit }
   
-let to_ name inputs body =
+let to_ ~raw ~name ~inputs ~body =
+  (* let get_docs = function *)
+  (*   | _ :: docs -> *)
+  (*     let rec loop = function *)
+  (*       | doc :: docs -> *)
+  (*         begin match is_doc doc with *)
+  (*         | Some doc -> doc ^ "\n" ^ loop docs *)
+  (*         | None -> "" *)
+  (*         end *)
+  (*       | [] -> *)
+  (*         "" *)
+  (*     in *)
+  (*     loop docs *)
+  (*   | [] -> None *)
+  (* in *)
   let rec loop : string list -> aux -> unit = fun inputs k ->
     match inputs with
     | input :: inputs ->
@@ -334,4 +348,4 @@ let to_ name inputs body =
       k.k Lga.(ret cont) (fun env k -> instructionlist (new_exit env k) (Stream.of_list body) k)
   in
   loop inputs
-    { k = fun fn f -> set_pf name (Kenv fn) (fun env -> f (new_frame env)) }
+    { k = fun fn f -> add_proc ~name ~raw ~args:(Kenv fn) ~f:(fun env -> f (new_frame env)) }

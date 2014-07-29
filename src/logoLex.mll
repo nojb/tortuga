@@ -136,7 +136,7 @@ and line_or_to = parse
   | space+
     { line_or_to lexbuf }
   | ['t' 'T'] ['o' 'O'] space+ (identifier as name)
-    { `GotTO (name, to_arg [] lexbuf) }
+    { to_arg name [] lexbuf }
   | _ as c
     { line_or_cont (String.make 1 c) lexbuf }
 
@@ -158,12 +158,12 @@ and line_or_cont buf = parse
   | [^ '~']+
     { line_or_cont (buf ^ Lexing.lexeme lexbuf) lexbuf }
 
-and to_arg acc = parse
+and to_arg name acc = parse
   | space+
-    { to_arg acc lexbuf }
+    { to_arg name acc lexbuf }
   | ':' (variable as id)
-    { to_arg (id :: acc) lexbuf }
+    { to_arg name (id :: acc) lexbuf }
   | eof
-    { List.rev acc }
+    { `GotTO (name, List.rev acc) }
   | _ as c
     { unexpected c }
