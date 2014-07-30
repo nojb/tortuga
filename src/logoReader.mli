@@ -19,9 +19,19 @@
    IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
    CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. *)
 
-open LogoTop
-open Lwt
+(** Logo Input *)
+
+open LogoTypes
+
+type reader
+
+val reader_of_in_channel : in_channel -> reader
   
-lwt () =
-  (* print_endline "Tortuga 0.1"; *)
-  main ()
+val seek_reader : reader -> int -> unit
+val pos_reader : reader -> int
+val close_reader : reader -> unit
+
+val read_line : reader -> string option
+val read_char : reader -> char option
+val read_chars : reader -> int -> string option
+val eof : reader -> bool

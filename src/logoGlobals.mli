@@ -20,7 +20,9 @@
    CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. *)
 
 open LogoTypes
-
+open LogoReader
+open LogoWriter
+  
 type primitive
 
 val prim : names:string list -> ?doc:string -> args:'a fn -> f:'a -> primitive
@@ -45,3 +47,29 @@ val get_prop : string -> string -> atom option
 val remove_prop : string -> string -> unit
 val prop_list : string -> (string * atom) list
 val has_plist : string -> bool
+
+type reader_source =
+  [ `Named of string
+  | `Keyboard ]
+
+type writer_source =
+  [ `Named of string
+  | `Screen
+  | `Buffer of Buffer.t ]
+
+val set_stdout : writer_source -> unit
+val set_stdin : reader_source -> unit
+val set_stderr : writer_source -> unit
+  
+val reader : unit -> reader_source
+val writer : unit -> writer_source
+
+val stdin : unit -> reader
+val stdout : unit -> writer
+val stderr : unit -> writer
+
+val open_reader : string -> unit
+
+val open_writer : string -> unit
+
+val close : string -> unit

@@ -19,9 +19,26 @@
    IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
    CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. *)
 
-open LogoTop
-open Lwt
+open LogoTypes
+
+type writer
+
+val writer_of_out_channel : out_channel -> writer
+val writer_of_buffer : Buffer.t -> writer
+
+val print : writer -> string -> unit
+val printl : writer -> string -> unit
+val printf : writer -> ('a, unit, string, unit) format4 -> 'a
+val printlf : writer -> ('a, unit, string, unit) format4 -> 'a
   
-lwt () =
-  (* print_endline "Tortuga 0.1"; *)
-  main ()
+val print_newline : writer -> unit
+val print_space : writer -> unit
+val print_char : writer -> char -> unit
+val flush : writer -> unit
+  
+val seek_writer : writer -> int -> unit
+val pos_writer : writer -> int
+val close_writer : writer -> unit
+
+val print_datum : writer -> atom -> unit
+val print_datum_list : writer -> atom list -> unit

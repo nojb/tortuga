@@ -35,13 +35,11 @@ let unexpected c =
 let expected c =
   raise (Error (Expected_character c))
 
-open Printf
-
-let report_error ppf = function
+let report_error = function
   | Unexpected_character c ->
-    fprintf ppf "Unexpected character (%s)" (Char.escaped c)
+    Printf.sprintf "Unexpected character (%s)" (Char.escaped c)
   | Expected_character c ->
-    fprintf ppf "Expected character (%s)" (Char.escaped c)
+    Printf.sprintf "Expected character (%s)" (Char.escaped c)
 
 let is_infix = function
   | "<=" | ">=" | "<>" | "+" | "-" | "*"
@@ -137,6 +135,8 @@ and line_or_to = parse
     { line_or_to lexbuf }
   | ['t' 'T'] ['o' 'O'] space+ (identifier as name)
     { to_arg name [] lexbuf }
+  | eof
+    { `GotEMPTY }
   | _ as c
     { line_or_cont (String.make 1 c) lexbuf }
 
@@ -145,6 +145,8 @@ and line_or_end = parse
     { line_or_end lexbuf }
   | ['e''E']['n''N']['d''D'] space* eof
     { `GotEND }
+  | eof
+    { `GotEMPTY }
   | _ as c
     { line_or_cont (String.make 1 c) lexbuf }
 

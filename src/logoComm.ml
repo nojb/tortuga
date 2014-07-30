@@ -25,7 +25,8 @@ open LogoTypes
 open LogoAtom
 open LogoGlobals
 open LogoEval
-
+open LogoWriter
+  
 (** 3.1 Transmitters *)
 
 let print =
@@ -47,20 +48,14 @@ PR thing
   in
   let args = Lga.(any @-> rest any retvoid) in
   let f thing1 things =
-    let rec loop = function
-        [] ->
-        print_newline ()
-      | List l :: xs ->
-        print_char ' ';
-        print_list l;
-        loop xs
-      | x :: xs ->
-        print_char ' ';
-        print x;
-        loop xs
+    let pr w = function
+      | List l -> print_datum_list w l
+      | _ as d -> print_datum w d
     in
-    print thing1;
-    loop things
+    let w = stdout () in
+    pr w thing1;
+    List.iter (fun d -> print_space w; pr w d) things;
+    print_newline w
   in
   prim ~names ~doc ~args ~f
 
@@ -90,10 +85,13 @@ TYPE thing
   in
   let args = Lga.(any @-> rest any retvoid) in
   let f thing1 things =
-    List.iter
-      (function
-        | List l -> print_list l
-        | _ as a -> LogoAtom.print a) (thing1 :: things)
+    let pr w = function
+      | List l -> print_datum_list w l
+      | _ as d -> print_datum w d
+    in
+    let w = stdout () in
+    pr w thing1;
+    List.iter (pr w) things
   in
   prim ~names ~doc ~args ~f
 
@@ -111,16 +109,9 @@ SHOW thing
   in
   let args = Lga.(any @-> rest any retvoid) in
   let f thing1 things =
-    let rec loop = function
-      | [] ->
-        print_newline ()
-      | x :: xs ->
-        print_char ' ';
-        LogoAtom.print x;
-        loop xs
-    in
-    LogoAtom.print thing1;
-    loop things
+    let w = stdout () in
+    print_datum_list (stdout ()) (thing1 :: things);
+    print_newline w
   in
   prim ~names ~doc ~args ~f
     

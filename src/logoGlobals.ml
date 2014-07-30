@@ -21,7 +21,9 @@
 
 open LogoTypes
 open LogoAtom
-
+open LogoReader
+open LogoWriter
+  
 type proc_info = {
   proc_doc : string option;
   proc_fun : proc;
@@ -154,3 +156,66 @@ let has_plist plistname =
     H.length p > 0
   with
   | Not_found -> false
+
+type reader_source =
+  [ `Named of string
+  | `Keyboard ]
+
+type writer_source =
+  [ `Named of string
+  | `Screen
+  | `Buffer of Buffer.t ]
+
+let _screen = writer_of_out_channel stdout
+let _keyboard = reader_of_in_channel stdin
+let _screen2 = writer_of_out_channel stderr
+    
+let _stdin = ref (_keyboard, `Keyboard)
+let _stdout = ref (_screen, `Screen)
+let _stderr = ref (_screen2, `Screen)
+
+let stdin () = fst !_stdin
+let stdout () = fst !_stdout
+let stderr () = fst !_stderr
+
+let readers = H.create 5
+let writers = H.create 7
+
+let set_stdout src =
+  match src with
+  | `Named n ->
+    _stdout := (H.find writers n, src)
+  | `Buffer b ->
+    _stdout := (writer_of_buffer b, src)
+  | `Screen ->
+    _stdout := (_screen, src)
+
+let set_stdin src =
+  match src with
+  | `Named n ->
+    _stdin := (H.find readers n, src)
+  | `Keyboard ->
+    _stdin := (_keyboard, src)
+
+let set_stderr src =
+  match src with
+  | `Named n ->
+    _stderr := (H.find writers n, src)
+  | `Buffer b ->
+    _stderr := (writer_of_buffer b, src)
+  | `Screen ->
+    _stderr := (_screen, src)
+      
+let reader () = snd !_stdin
+    
+let writer () = snd !_stdout
+
+let open_reader n =
+  H.replace readers n (reader_of_in_channel (open_in_bin n))
+
+let open_writer n =
+  H.replace writers n (writer_of_out_channel (open_out_bin n))
+
+let close n =
+  begin try close_writer (H.find writers n) with Not_found -> () end;
+  begin try close_reader (H.find readers n) with Not_found -> () end
