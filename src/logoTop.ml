@@ -73,6 +73,7 @@ let read_phrase ~term ~history =
     let procedures = get_procedures () in
     let rl = new read_line ~term ~history:(LTerm_history.contents history) ~prompt ~procedures in
     lwt l = rl#run in
+    LTerm_history.add history l;
     match process_line state l, state with
     | `GotEMPTY, _ ->
       loop prompt acc (l :: raw) state
