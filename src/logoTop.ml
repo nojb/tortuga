@@ -96,66 +96,74 @@ let read_phrase ~term ~history =
   in
   loop prompt_normal [] [] `Ready
 
+let print_terminated term s =
+  lwt () = LTerm.fprint term s in
+  if String.length s > 0 && s.[String.length s - 1] <> '\n' then
+    LTerm.fprint term "~\n"
+  else
+    return ()
+
 let main () =
   let env = create_env (module LogoTurtleVg) in
   let history = LTerm_history.create [] in
   let b = Buffer.create 17 in
   set_stderr (`Buffer b);
   set_stdout (`Buffer b);
-  let rec loop env =
-    lwt () =
+  lwt term = Lazy.force LTerm.stdout in
+  let rec execute_phrase env raw phr =
+    try_lwt
+      begin match phr with
+      | `GotLINE l ->
+        let lexbuf = Lexing.from_string l in
+        let strm = Stream.of_list (LogoLex.parse_atoms [] false lexbuf) in
+        commandlist env strm (fun () -> ())
+      | `GotTO (name, inputs, body) ->
+        to_ ~raw ~name ~inputs ~body
+      end;
+      return ()
+    with
+    | LogoControl.Pause env ->
+      loop env
+    | LogoControl.Toplevel ->
+      return ()
+    | LogoControl.Throw (tag, None) ->
+      LogoWriter.printlf (stderr ()) "Unhandled THROW with tag %s" tag;
+      return ()
+    | LogoControl.Throw (tag, Some a) ->
+      LogoWriter.printlf (stderr ()) "Unhandled THROW with tag %s, value %s" tag (string_of_datum a);
+      return ()
+    | Error err ->
+      LogoWriter.printlf (stderr ()) "Error: %s" err;
+      return ()
+    | exn ->
+      LogoWriter.printlf (stderr ()) "Internal: %s. Backtrace:\n%s"
+        (Printexc.to_string exn) (Printexc.get_backtrace ());
+      raise_lwt exn
+  and loop env =
+    lwt resp =
       try_lwt
-        lwt term = Lazy.force LTerm.stdout in
-        Buffer.clear b;
-        lwt raw, phr = read_phrase term history in
-        begin match phr with
-        | `GotLINE l ->
-          let lexbuf = Lexing.from_string l in
-          let strm = Stream.of_list (LogoLex.parse_atoms [] false lexbuf) in
-          commandlist env strm (fun () -> ())
-        | `GotTO (name, inputs, body) ->
-          to_ ~raw ~name ~inputs ~body
-        | `GotEMPTY ->
-          ()
-        end;
-        let s = Buffer.contents b in
-        lwt () = LTerm.fprint term s in
-        lwt () =
-          if String.length s > 0 && s.[String.length s - 1] <> '\n' then
-            LTerm.fprint term "~\n"
-          else
-            return ()
-        in
-        LTerm.flush term
+        lwt x = read_phrase term history in
+        return (Some x)
       with
-      | LogoControl.Pause env ->
-        loop env
-      | LogoControl.Toplevel ->
-        return ()
+      | Sys.Break ->
+        return None
       | LogoLex.Error err ->
-        (* LTerm.printlf "Lexer: %a." LogoLex.report_error err; *)
-        (* LTerm.printlf "Lexer: %a" *)
-        return ()
-      | LogoControl.Throw (tag, None) ->
-        LTerm.printlf "Unhandled THROW with tag %s" tag
-      | LogoControl.Throw (tag, Some a) ->
-        LTerm.printlf "Unhandled THROW with tag %s, value %s" tag
-          (string_of_datum a)
-      | Error err ->
-        LTerm.printlf "Error: %s" err
-      | exn ->
-        lwt () =
-          LTerm.printlf "Internal: %s. Backtrace:\n%s"
-            (Printexc.to_string exn) (Printexc.get_backtrace ())
-        in
-        raise_lwt Exit
+        LogoWriter.printlf (stderr ()) "Lexer: %s." (LogoLex.report_error err);
+        return None
     in
-    loop env
+    match resp with
+    | Some (raw, phr) ->
+      Buffer.clear b;
+      lwt () = execute_phrase env raw phr in
+      lwt () = print_terminated term (Buffer.contents b) in
+      lwt () = LTerm.flush term in
+      loop env
+    | None ->
+      loop env
   in
   try_lwt
     loop env
   with
   | LogoControl.Bye
-  | Exit
   | LTerm_read_line.Interrupt ->
     return ()

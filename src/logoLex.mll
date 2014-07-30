@@ -35,13 +35,11 @@ let unexpected c =
 let expected c =
   raise (Error (Expected_character c))
 
-open Printf
-
-let report_error ppf = function
+let report_error = function
   | Unexpected_character c ->
-    fprintf ppf "Unexpected character (%s)" (Char.escaped c)
+    Printf.sprintf "Unexpected character (%s)" (Char.escaped c)
   | Expected_character c ->
-    fprintf ppf "Expected character (%s)" (Char.escaped c)
+    Printf.sprintf "Expected character (%s)" (Char.escaped c)
 
 let is_infix = function
   | "<=" | ">=" | "<>" | "+" | "-" | "*"
