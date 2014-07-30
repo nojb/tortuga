@@ -37,8 +37,13 @@ module L8 = LogoControl
 
 open React
 open Lwt
-(* open LTerm_text *)
+open LTerm_text
+open LTerm_style
 
+let prompt_normal = eval [B_fg green; S "? "; E_fg]
+let prompt_to = eval [B_fg red; S "> "; E_fg]
+let prompt_cont = eval [B_fg yellow; S "~ "; E_fg]
+  
 class read_line ~term ~history ~prompt = object(self)
   inherit LTerm_read_line.read_line ~history ()
   inherit [Zed_utf8.t] LTerm_read_line.term term
@@ -49,7 +54,7 @@ class read_line ~term ~history ~prompt = object(self)
   (*   self#set_completion 0 (List.map (fun file -> (file, " ")) binaries) *)
 
   initializer
-    self#set_prompt (S.const (LTerm_text.of_string (prompt ^ " ")))
+    self#set_prompt (S.const prompt)
 end
 
 let process_line state str =
@@ -72,19 +77,19 @@ let read_phrase ~term ~history =
     | `GotEND, `ReadingTO (name, inputs, lines) ->
       return (List.rev (l :: raw), `GotTO (name, inputs, List.rev lines))
     | `GotTO (name, inputs), `Ready ->
-      loop ">" [] (l :: raw) (`ReadingTO (name, inputs, []))
+      loop prompt_to [] (l :: raw) (`ReadingTO (name, inputs, []))
     | `GotLINE, `ReadingTO (name, inputs, lines) ->
       let line = String.concat "" (List.rev (l :: acc)) in
-      loop ">" [] (l :: raw) (`ReadingTO (name, inputs, line :: lines))
+      loop prompt_to [] (l :: raw) (`ReadingTO (name, inputs, line :: lines))
     | `GotCONT s, _ ->
-      loop "~" (s :: acc) (l :: raw) state
+      loop prompt_cont (s :: acc) (l :: raw) state
     | `GotTO _, `ReadingTO _ ->
       assert false
     | `GotLINE, `Ready ->
       let line = String.concat "" (List.rev (l :: acc)) in
       return (List.rev (l :: raw), `GotLINE line)
   in
-  loop "?" [] [] `Ready
+  loop prompt_normal [] [] `Ready
 
 let main () =
   let env = create_env (module LogoTurtleVg) in
