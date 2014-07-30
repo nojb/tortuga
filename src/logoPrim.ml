@@ -83,33 +83,33 @@ SE thing1 thing2
   in
   prim ~names ~doc ~args ~f
 
-let fput thing list =
-  match thing, list with
-  | _, List l -> List (thing :: l)
-  | Array _, _
-  | _, Array _ ->
-    raise (Error "fput: bad types")
-  | _ ->
-    let s1 = sexpr thing in
-    let s2 = sexpr list in
-    if String.length s1 = 1 then
-      Word (s1 ^ s2)
-    else
-      raise (Error "fput: first arg must be a character")
+(* let fput thing list = *)
+(*   match thing, list with *)
+(*   | _, List l -> List (thing :: l) *)
+(*   | Array _, _ *)
+(*   | _, Array _ -> *)
+(*     raise (Error "fput: bad types") *)
+(*   | _ -> *)
+(*     let s1 = sexpr thing in *)
+(*     let s2 = sexpr list in *)
+(*     if String.length s1 = 1 then *)
+(*       Word (s1 ^ s2) *)
+(*     else *)
+(*       raise (Error "fput: first arg must be a character") *)
 
-let lput thing list =
-  match thing, list with
-  | _, List l -> List (l @ [thing])
-  | Array _, _
-  | _, Array _ ->
-    raise (Error "lput: bad types")
-  | _ ->
-    let s1 = sexpr thing in
-    let s2 = sexpr list in
-    if String.length s1 = 1 then
-      Word (s2 ^ s1)
-    else
-      raise (Error "lput: first arg must be a character")
+(* let lput thing list = *)
+(*   match thing, list with *)
+(*   | _, List l -> List (l @ [thing]) *)
+(*   | Array _, _ *)
+(*   | _, Array _ -> *)
+(*     raise (Error "lput: bad types") *)
+(*   | _ -> *)
+(*     let s1 = sexpr thing in *)
+(*     let s2 = sexpr list in *)
+(*     if String.length s1 = 1 then *)
+(*       Word (s2 ^ s1) *)
+(*     else *)
+(*       raise (Error "lput: first arg must be a character") *)
 
 let array =
   let names = ["array"] in
@@ -138,16 +138,16 @@ ARRAY size
   in
   prim ~names ~doc ~args ~f
 
-let combine thing1 thing2 =
-  match thing1, thing2 with
-  | _, List l -> List (thing1 :: l)
-  | _, Array _
-  | Array _, _ ->
-    raise (Error "combine: bad types")
-  | _ ->
-    let s1 = sexpr thing1 in
-    let s2 = sexpr thing2 in
-    Word (s1 ^ s2)
+(* let combine thing1 thing2 = *)
+(*   match thing1, thing2 with *)
+(*   | _, List l -> List (thing1 :: l) *)
+(*   | _, Array _ *)
+(*   | Array _, _ -> *)
+(*     raise (Error "combine: bad types") *)
+(*   | _ -> *)
+(*     let s1 = sexpr thing1 in *)
+(*     let s2 = sexpr thing2 in *)
+(*     Word (s1 ^ s2) *)
 
 let listtoarray =
   let names = ["listtoarray"] in

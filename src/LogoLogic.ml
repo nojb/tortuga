@@ -40,7 +40,7 @@ let aux op env tf1 tf2 rest k =
     | `R l ->
       expressionlist env (reparse l)
         (fun a ->
-           match matcharg Kword a with
+           match value_of_atom Kword a with
            | Some w -> k (b w)
            | None ->
              error "Don't know what to do with %s" (string_of_datum a))
@@ -129,7 +129,7 @@ NOT tf
     | `R l ->
       expressionlist env (reparse l)
         (fun a ->
-           match matcharg Kword a with
+           match value_of_atom Kword a with
            | Some w -> k (if b w then false_word else true_word)
            | None ->
              error "Don't know what to do with %s" (string_of_datum a))

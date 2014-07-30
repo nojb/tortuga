@@ -30,12 +30,6 @@ val is_true : atom -> bool
 
 val is_false : atom -> bool
 
-val sexpr : atom -> string
-
-val num_atom : atom -> string -> float
-
-val int_atom : atom -> string -> int
-
 val string_of_datum : atom -> string
 
 val string_of_datum_list : atom list -> string
@@ -49,11 +43,6 @@ val equalaux : atom -> atom -> bool
 val parse : string -> atom list
 
 val reparse : atom list -> atom Stream.t
-
-val argatom : 'a ty -> 'a -> atom
-val minargs : 'a fn -> int
-val matcharg : 'a ty -> atom -> 'a option
-val argstring : 'a ty -> string
 
 (** Very important: procedures that can potentially altern the natural control
     flow by calling some other coninuation than the standard one, MUST use the
@@ -90,4 +79,3 @@ module Lga : sig
   val turtle : 'a fn -> (turtle -> 'a) fn
 end
 
-val wrap : env -> string -> 'a fn -> 'a -> atom list -> (atom option -> unit) -> unit

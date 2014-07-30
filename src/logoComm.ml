@@ -114,11 +114,69 @@ SHOW thing
     print_newline w
   in
   prim ~names ~doc ~args ~f
+
+(** 3.2 Receivers *)
+
+let readlist =
+  let names = ["readlist"; "rl"] in
+  let doc =
+
+    "\
+READLIST
+RL
+
+    Reads a line from the read stream (initially the keyboard) and outputs that
+    line as a list. The line is separated into members as though it were typed
+    in square brackets in an instruction. If the read stream is a file, and the
+    end of file is reached, READLIST outputs the empty word (not the empty
+    list). READLIST processes backslash, vertical bar, and tilde characters in
+    the read stream; the output list will not contain these characters but they
+    will have had their usual effect. READLIST does not, however, treat
+    semicolon as a comment character."
+
+  in
+  let args = Lga.(void @@ ret (value any)) in
+  let f () =
+    match LogoReader.read_line (stdin ()) with
+    | Some l ->
+      let lexbuf = Lexing.from_string l in
+      LogoLex.parse_list [] lexbuf
+    | None ->
+      Word ""
+  in
+  prim ~names ~doc ~args ~f
+
+let readrawline =
+  let names = ["readrawline"] in
+  let doc =
+
+    "\
+READRAWLINE
+
+    Reads a line from the read stream and outputs that line as a word. The
+    output is a single word even if the line contains spaces, brackets, etc. If
+    the read stream is a file, and the end of file is reached, READRAWLINE
+    outputs the empty list (not the empty word). READRAWLINE outputs the exact
+    string of characters as they appear in the line, with no special meaning for
+    backslash, vertical bar, tilde, or any other formatting characters."
+
+  in
+  let args = Lga.(void @@ ret (value word)) in
+  let f () =
+    match LogoReader.read_line (stdin ()) with
+    | Some l -> l
+    | None -> ""
+  in
+  prim ~names ~doc ~args ~f
     
 let () =
   List.iter add_prim
     [
       print;
       type_;
-      show
+      show;
+
+      readlist;
+      (* readword *)
+      readrawline
     ]
