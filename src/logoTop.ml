@@ -46,15 +46,23 @@ let prompt_cont = eval [B_fg yellow; S "~ "; E_fg]
 
 let get_procedures () =
   fold_routines (fun name l -> name :: l) []
-  
+
+let id_re = Re_str.regexp "[a-zA-Z][a-zA-Z0-9_]*$"
+
 class read_line ~term ~history ~prompt ~procedures = object(self)
   inherit LTerm_read_line.read_line ~history ()
   inherit [Zed_utf8.t] LTerm_read_line.term term
 
   method completion =
     let prefix  = Zed_rope.to_string self#input_prev in
-    let procedures = List.filter (fun proc -> Zed_utf8.starts_with proc prefix) procedures in
-    self#set_completion 0 (List.map (fun proc -> (proc, " ")) procedures)
+    try
+      let i = Re_str.search_forward id_re prefix 0 in
+      let prefix = Zed_utf8.after prefix i in
+      let procedures = List.filter (fun proc -> Zed_utf8.starts_with proc prefix) procedures in
+      self#set_completion i (List.map (fun proc -> (proc, " ")) procedures)
+    with
+    | Not_found ->
+      ()
 
   initializer
     self#set_prompt (S.const prompt)
