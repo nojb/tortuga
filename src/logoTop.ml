@@ -92,10 +92,10 @@ let main () =
   let b = Buffer.create 17 in
   set_stderr (`Buffer b);
   set_stdout (`Buffer b);
-  lwt term = Lazy.force LTerm.stdout in
   let rec loop env =
     lwt () =
       try_lwt
+        lwt term = Lazy.force LTerm.stdout in
         Buffer.clear b;
         lwt raw, phr = read_phrase term history in
         begin match phr with
@@ -108,8 +108,15 @@ let main () =
         | `GotEMPTY ->
           ()
         end;
-        lwt () = LTerm.fprint term (Buffer.contents b) in
-        LTerm.flush term        
+        let s = Buffer.contents b in
+        lwt () = LTerm.fprint term s in
+        lwt () =
+          if String.length s > 0 && s.[String.length s - 1] <> '\n' then
+            LTerm.fprint term "~\n"
+          else
+            return ()
+        in
+        LTerm.flush term
       with
       | LogoControl.Pause env ->
         loop env
