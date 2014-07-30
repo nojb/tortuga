@@ -68,7 +68,7 @@ class read_line ~term ~history ~prompt ~procedures = object(self)
     self#set_prompt (S.const prompt)
 end
 
-let process_line state str =
+let classify_line state str =
   let lexbuf = Lexing.from_string str in
   match state with
   | `ReadingTO _ ->
@@ -82,7 +82,7 @@ let read_phrase ~term ~history =
     let rl = new read_line ~term ~history:(LTerm_history.contents history) ~prompt ~procedures in
     lwt l = rl#run in
     LTerm_history.add history l;
-    match process_line state l, state with
+    match classify_line state l, state with
     | `GotEMPTY, _ ->
       loop prompt acc (l :: raw) state
     | `GotEND, `Ready ->
@@ -143,10 +143,6 @@ let main () =
     | Error err ->
       LogoWriter.printlf (stderr ()) "Error: %s" err;
       return ()
-    | exn ->
-      LogoWriter.printlf (stderr ()) "Internal: %s. Backtrace:\n%s"
-        (Printexc.to_string exn) (Printexc.get_backtrace ());
-      raise_lwt exn
   and loop env =
     lwt resp =
       try_lwt
@@ -175,3 +171,7 @@ let main () =
   | LogoControl.Bye
   | LTerm_read_line.Interrupt ->
     return ()
+  | exn ->
+    LogoWriter.printlf (stderr ()) "Internal: %s. Backtrace:\n%s"
+      (Printexc.to_string exn) (Printexc.get_backtrace ());
+    raise_lwt exn
