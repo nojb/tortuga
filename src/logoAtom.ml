@@ -20,6 +20,7 @@
    CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. *)
 
 open LogoTypes
+open LogoWriter
   
 let error fmt =
   Printf.ksprintf (fun err -> raise (Error err)) fmt
@@ -52,60 +53,14 @@ let is_false = function
   | _ ->
     false
   
-let rec bprint b = function
-  | Num n ->
-    Printf.bprintf b "%g" n
-  | Word w ->
-    Printf.bprintf b "%s" w
-  | List [] ->
-    Printf.bprintf b "[]"
-  | List (x :: xs) ->
-    Printf.bprintf b "[%a" bprint x;
-    List.iter (fun x -> Printf.bprintf b " %a" bprint x) xs;
-    Printf.bprintf b "]"
-  | Array ([| |], orig) ->
-    Printf.bprintf b "{}@%i" orig
-  | Array (a, orig) ->
-    Printf.bprintf b "{%a" bprint a.(0);
-    for i = 1 to Array.length a - 1 do
-      Printf.bprintf b " %a" bprint a.(i)
-    done;
-    Printf.bprintf b "}@%i" orig
-
-let bprint_list b = function
-  | [] -> ()
-  | x :: xs ->
-    let rec loop b = function
-      | [] -> ()
-      | x :: xs ->
-        Printf.bprintf b " %a%a" bprint x loop xs
-    in
-    Printf.bprintf b "%a%a" bprint x loop xs
-
-let output out a =
-  let b = Buffer.create 17 in
-  bprint b a;
-  Buffer.output_buffer out b
-
-let output_list out al =
-  let b = Buffer.create 17 in
-  bprint_list b al;
-  Buffer.output_buffer out b
-
-let print a =
-  output stdout a
-
-let print_list al =
-  output_list stdout al
-
-let sprint () a =
-  let b = Buffer.create 17 in
-  bprint b a;
+let string_of_datum a =
+  let b = Buffer.create 17 in  
+  print_datum (writer_of_buffer b) a;
   Buffer.contents b
 
-let sprint_list () al =
+let string_of_datum_list al =
   let b = Buffer.create 17 in
-  bprint_list b al;
+  print_datum_list (writer_of_buffer b) al;
   Buffer.contents b
 
 let true_word =
@@ -150,7 +105,7 @@ let parse str =
   LogoLex.parse_atoms [] false lexbuf
 
 let reparse list =
-  Stream.of_list (parse (sprint_list () list))
+  Stream.of_list (parse (string_of_datum_list list))
 
 let rec argatom : type a. a ty -> a -> atom = fun ty a ->
   match ty with
@@ -298,8 +253,8 @@ let wrap : type a. env -> string -> a fn -> a -> atom list -> (atom option -> un
         begin match matcharg typ a with
           | Some a -> loop (i+1) fn (f a) args
           | None ->
-            error "argument %i of %s should be a %s, found %a" i (String.uppercase proc)
-              (argstring typ) sprint a
+            error "argument %i of %s should be a %s, found %s" i (String.uppercase proc)
+              (argstring typ) (string_of_datum a)
         end
       | Kopt (_, ret), [] ->
         return ret (f None) k
@@ -307,8 +262,8 @@ let wrap : type a. env -> string -> a fn -> a -> atom list -> (atom option -> un
         begin match matcharg ty a with
           | Some _ as a -> return ret (f a) k
           | None ->
-            error "optional argument %i of %s should be a %s, found %a" i (String.uppercase proc)
-              (argstring ty) sprint a
+            error "optional argument %i of %s should be a %s, found %s" i (String.uppercase proc)
+              (argstring ty) (string_of_datum a)
         end
       | Kopt _, _ :: _ :: _ ->
         error "too many arguments for %s" (String.uppercase proc)

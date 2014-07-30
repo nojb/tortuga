@@ -43,7 +43,7 @@ let aux op env tf1 tf2 rest k =
            match matcharg Kword a with
            | Some w -> k (b w)
            | None ->
-             error "Don't know what to do with %a" sprint a)
+             error "Don't know what to do with %s" (string_of_datum a))
   in
   let rec loop = function
     | [] ->
@@ -132,7 +132,7 @@ NOT tf
            match matcharg Kword a with
            | Some w -> k (if b w then false_word else true_word)
            | None ->
-             error "Don't know what to do with %a" sprint a)
+             error "Don't know what to do with %s" (string_of_datum a))
   in
   prim ~names ~doc ~args ~f
 

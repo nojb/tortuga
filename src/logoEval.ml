@@ -161,7 +161,7 @@ and apply env w strm k =
             Stream.junk strm;
             k (Some result)
           | Some a ->
-            error "expected ')', found %a" sprint a
+            error "expected ')', found %s" (string_of_datum a)
           | None ->
             error "expected ')'")
   else
@@ -281,7 +281,7 @@ let command env strm k =
   instruction env strm
     (function
       | None -> k ()
-      | Some a -> error "don't know what to do with %a" sprint a)
+      | Some a -> error "don't know what to do with %s" (string_of_datum a))
   (* match Stream.peek strm with *)
   (* | Some (Word w) -> *)
   (*   Stream.junk strm; *)
@@ -300,7 +300,7 @@ let instructionlist env strm k =
   let rec step last =
     match Stream.peek strm, last with
     | Some _, Some a ->
-      error "You don't say what to do with %a" sprint a
+      error "You don't say what to do with %s" (string_of_datum a)
     | Some _, None ->
       instruction env strm step
     | None, _ ->
@@ -312,7 +312,7 @@ let commandlist env strm k =
   instructionlist env strm
     (function
       | Some a ->
-        error "You don't say what to do with %a" sprint a
+        error "You don't say what to do with %s" (string_of_datum a)
       | None -> k ())
 
 let expressionlist env strm k =

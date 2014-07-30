@@ -22,7 +22,9 @@
 open LogoTypes
 open LogoEnv
 open LogoEval
-
+open LogoGlobals
+open LogoAtom
+  
 (* module TurtleGraphics = LogoTurtleGraphics *)
 
 module L2 = LogoPrim
@@ -85,42 +87,49 @@ let read_phrase ~term ~history =
 let main () =
   let env = create_env (module LogoTurtleVg) in
   let history = LTerm_history.create [] in
+  let b = Buffer.create 17 in
+  set_stderr (`Buffer b);
+  set_stdout (`Buffer b);
+  lwt term = Lazy.force LTerm.stdout in
   let rec loop env =
     lwt () =
       try_lwt
-        lwt term = Lazy.force LTerm.stdout in
+        Buffer.clear b;
         lwt raw, phr = read_phrase term history in
-        match phr with
+        begin match phr with
         | `GotLINE l ->
           let lexbuf = Lexing.from_string l in
           let strm = Stream.of_list (LogoLex.parse_atoms [] false lexbuf) in
-          commandlist env strm (fun () -> ());
-          return ()
+          commandlist env strm (fun () -> ())
         | `GotTO (name, inputs, body) ->
-          to_ ~raw ~name ~inputs ~body;
-          return ()
+          to_ ~raw ~name ~inputs ~body
+        | `GotEMPTY ->
+          ()
+        end;
+        lwt () = LTerm.fprint term (Buffer.contents b) in
+        LTerm.flush term        
       with
       | LogoControl.Pause env ->
         loop env
       | LogoControl.Toplevel ->
         return ()
       | LogoLex.Error err ->
-        Printf.printf "Lexer: %a.\n%!" LogoLex.report_error err;
+        (* LTerm.printlf "Lexer: %a." LogoLex.report_error err; *)
+        (* LTerm.printlf "Lexer: %a" *)
         return ()
       | LogoControl.Throw (tag, None) ->
-        Printf.printf "Unhandled THROW with tag %s\n%!" tag;
-        return ()
+        LTerm.printlf "Unhandled THROW with tag %s" tag
       | LogoControl.Throw (tag, Some a) ->
-        Printf.printf "Unhandled THROW with tag %s, value %a\n%!" tag
-          LogoAtom.output a;
-        return ()
+        LTerm.printlf "Unhandled THROW with tag %s, value %s" tag
+          (string_of_datum a)
       | Error err ->
-        Printf.printf "Error: %s\n%!" err;
-        return ()
+        LTerm.printlf "Error: %s" err
       | exn ->
-        Printf.printf "Internal: %s\nBacktrace:\n%s\n%!"
-          (Printexc.to_string exn) (Printexc.get_backtrace ());
-        return ()
+        lwt () =
+          LTerm.printlf "Internal: %s. Backtrace:\n%s"
+            (Printexc.to_string exn) (Printexc.get_backtrace ())
+        in
+        raise_lwt Exit
     in
     loop env
   in

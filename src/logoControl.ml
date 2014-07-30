@@ -330,7 +330,7 @@ THROW tag
   let args = Lga.(word @-> opt any retvoid) in
   let f tag value =
     if String.uppercase tag = "ERROR" then
-      raise (Error (match value with Some value -> sprint () value | None -> ""))
+      raise (Error (match value with Some value -> string_of_datum value | None -> ""))
     else if String.uppercase tag = "SYSTEM" then
       raise Bye
     else if String.uppercase tag = "TOPLEVEL" then
@@ -435,18 +435,18 @@ DO.WHILE instructionlist tfexpression		(library procedure)
   in
   let args = Lga.(env @@ list any @-> list any @-> ret retvoid) in
   let f env list expr =
-    let list = parse (sprint_list () list) in
-    let expr = parse (sprint_list () expr) in
+    let list = parse (string_of_datum_list list) in
+    let expr = parse (string_of_datum_list expr) in
     let rec loop () =
       instructionlist env (Stream.of_list list)
         (function
-            None ->
+          | None ->
             expression env (Stream.of_list expr)
               (fun a ->
                  if is_true a then loop ()
                  else if is_false a then ()
                  else error "do.while condition should produce true or false")
-          | Some a -> error "do.while should not produce a value, got %a" sprint a)
+          | Some a -> error "do.while should not produce a value, got %s" (string_of_datum a))
     in
     loop ()
   in
@@ -467,15 +467,15 @@ WHILE tfexpression instructionlist		(library procedure)
   in
   let args = Lga.(env @@ list any @-> list any @-> ret retvoid) in
   let f env expr list =
-    let expr = parse (sprint_list () expr) in
-    let list = parse (sprint_list () list) in
+    let expr = parse (string_of_datum_list expr) in
+    let list = parse (string_of_datum_list list) in
     let rec loop () =
       expression env (Stream.of_list expr) (fun a ->
           if is_true a then
             instructionlist env (Stream.of_list list) (function
                 | None -> loop ()
                 | Some a ->
-                  error "WHILE should not produce a value, got %a" sprint a)
+                  error "WHILE should not produce a value, got %s" (string_of_datum a))
           else if is_false a then
             ()
           else
@@ -500,18 +500,18 @@ DO.UNTIL instructionlist tfexpression		(library procedure)
   in
   let args = Lga.(env @@ list any @-> list any @-> ret retvoid) in
   let f env list expr =
-    let list = parse (sprint_list () list) in
-    let expr = parse (sprint_list () expr) in
+    let list = parse (string_of_datum_list list) in
+    let expr = parse (string_of_datum_list expr) in
     let rec loop () =
       instructionlist env (Stream.of_list list)
         (function
-            None ->
+          | None ->
             expression env (Stream.of_list expr)
               (fun a ->
                  if is_true a then ()
                  else if is_false a then loop ()
                  else error "do.until condition should produce true or false")
-          | Some a -> error "do.until should not produce a value, got %a" sprint a)
+          | Some a -> error "do.until should not produce a value, got %s" (string_of_datum a))
     in
     loop ()
   in
@@ -532,15 +532,15 @@ UNTIL tfexpression instructionlist		(library procedure)
   in
   let args = Lga.(env @@ list any @-> list any @-> ret retvoid) in
   let f env expr list =
-    let expr = parse (sprint_list () expr) in
-    let list = parse (sprint_list () list) in
+    let expr = parse (string_of_datum_list expr) in
+    let list = parse (string_of_datum_list list) in
     let rec loop () =
       expression env (Stream.of_list expr) (fun a ->
           if is_false a then
             instructionlist env (Stream.of_list list) (function
                 | None -> loop ()
                 | Some a ->
-                  error "UNTIL should not produce a value, got %a" sprint a)
+                  error "UNTIL should not produce a value, got %s" (string_of_datum a))
           else if is_true a then
             ()
           else

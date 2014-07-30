@@ -20,7 +20,7 @@
    CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. *)
 
 open LogoTypes
-
+  
 val error : ('a, unit, string, 'b) format4 -> 'a
 
 val isnumber : string -> bool
@@ -36,21 +36,9 @@ val num_atom : atom -> string -> float
 
 val int_atom : atom -> string -> int
 
-val bprint : Buffer.t -> atom -> unit
+val string_of_datum : atom -> string
 
-val bprint_list : Buffer.t -> atom list -> unit
-
-val output : out_channel -> atom -> unit
-
-val output_list : out_channel -> atom list -> unit
-
-val print : atom -> unit
-
-val print_list : atom list -> unit
-
-val sprint : unit -> atom -> string
-
-val sprint_list : unit -> atom list -> string
+val string_of_datum_list : atom list -> string
 
 val true_word : atom
 val false_word : atom
