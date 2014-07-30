@@ -137,6 +137,8 @@ and line_or_to = parse
     { line_or_to lexbuf }
   | ['t' 'T'] ['o' 'O'] space+ (identifier as name)
     { to_arg name [] lexbuf }
+  | eof
+    { `GotEMPTY }
   | _ as c
     { line_or_cont (String.make 1 c) lexbuf }
 
@@ -145,6 +147,8 @@ and line_or_end = parse
     { line_or_end lexbuf }
   | ['e''E']['n''N']['d''D'] space* eof
     { `GotEND }
+  | eof
+    { `GotEMPTY }
   | _ as c
     { line_or_cont (String.make 1 c) lexbuf }
 

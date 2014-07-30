@@ -65,6 +65,8 @@ let read_phrase ~term ~history =
     let rl = new read_line ~term ~history:(LTerm_history.contents history) ~prompt in
     lwt l = rl#run in
     match process_line state l, state with
+    | `GotEMPTY, _ ->
+      loop prompt acc (l :: raw) state
     | `GotEND, `Ready ->
       assert false
     | `GotEND, `ReadingTO (name, inputs, lines) ->
