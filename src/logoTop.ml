@@ -43,15 +43,18 @@ open LTerm_style
 let prompt_normal = eval [B_fg green; S "? "; E_fg]
 let prompt_to = eval [B_fg red; S "> "; E_fg]
 let prompt_cont = eval [B_fg yellow; S "~ "; E_fg]
+
+let get_procedures () =
+  fold_routines (fun name l -> name :: l) []
   
-class read_line ~term ~history ~prompt = object(self)
+class read_line ~term ~history ~prompt ~procedures = object(self)
   inherit LTerm_read_line.read_line ~history ()
   inherit [Zed_utf8.t] LTerm_read_line.term term
 
-  (* method completion = *)
-  (*   let prefix  = Zed_rope.to_string self#input_prev in *)
-  (*   let binaries = List.filter (fun file -> Zed_utf8.starts_with file prefix) binaries in *)
-  (*   self#set_completion 0 (List.map (fun file -> (file, " ")) binaries) *)
+  method completion =
+    let prefix  = Zed_rope.to_string self#input_prev in
+    let procedures = List.filter (fun proc -> Zed_utf8.starts_with proc prefix) procedures in
+    self#set_completion 0 (List.map (fun proc -> (proc, " ")) procedures)
 
   initializer
     self#set_prompt (S.const prompt)
@@ -67,7 +70,8 @@ let process_line state str =
 
 let read_phrase ~term ~history =
   let rec loop prompt acc raw state =
-    let rl = new read_line ~term ~history:(LTerm_history.contents history) ~prompt in
+    let procedures = get_procedures () in
+    let rl = new read_line ~term ~history:(LTerm_history.contents history) ~prompt ~procedures in
     lwt l = rl#run in
     match process_line state l, state with
     | `GotEMPTY, _ ->
