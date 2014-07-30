@@ -108,7 +108,11 @@ SHOW thing
 
   in
   let args = Lga.(any @-> rest any retvoid) in
-  let f thing1 things = print_datum_list (stdout ()) (thing1 :: things) in
+  let f thing1 things =
+    let w = stdout () in
+    print_datum_list (stdout ()) (thing1 :: things);
+    print_newline w
+  in
   prim ~names ~doc ~args ~f
     
 let () =
