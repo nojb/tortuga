@@ -26,7 +26,7 @@ javascript-based backend to see the pictures in a web browser is in the works.)
     cd ~/tmp
     git clone https://github.com/nojb/tortuga
     cd tortuga
-    ocamlbuild -use-ocamlfind -package str,uutf,otfm,vg,vg.pdf src/tortu.byte
+    make
 
 Now you can run `tortu.byte` to start the interpreter.
 
