@@ -26,10 +26,6 @@ val error : ('a, unit, string, 'b) format4 -> 'a
 val isnumber : string -> bool
 val isint : string -> bool
 
-val is_true : atom -> bool
-
-val is_false : atom -> bool
-
 val string_of_datum : atom -> string
 
 val string_of_datum_list : atom list -> string
@@ -51,6 +47,7 @@ val reparse : atom list -> atom list
     module. *)
 
 module Lga : sig
+  val bool : bool ty
   val int : int ty
   val num : float ty
   val word : string ty

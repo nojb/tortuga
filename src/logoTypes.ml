@@ -55,7 +55,8 @@ end
 module H = Hashtbl.Make (NoCaseString)
 
 type _ ty =
-    Kint : int ty
+  | Kbool : bool ty
+  | Kint : int ty
   | Knum : float ty
   | Kword : string ty
   | Klist : 'a ty -> 'a list ty
@@ -65,12 +66,12 @@ type _ ty =
   | Kalt : 'a ty * 'b ty -> [ `L of 'a | `R of 'b ] ty
 
 and _ ret =
-    Kcont : ((atom option -> unit) -> unit) ret
+  | Kcont : ((atom option -> unit) -> unit) ret
   | Kretvoid : unit ret
   | Kvalue : 'a ty -> 'a ret
   
 and _ fn =
-    Kfix : 'a ty * 'b fn -> ('a -> 'b) fn
+  | Kfix : 'a ty * 'b fn -> ('a -> 'b) fn
   | Kopt : 'a ty * 'b ret -> ('a option -> 'b) fn
   | Krest : 'a ty * 'b ret -> ('a list -> 'b) fn
   | Kret : 'a ret -> 'a fn

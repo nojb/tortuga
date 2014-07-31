@@ -47,7 +47,8 @@ type turtle = (module TURTLE)
 module H : Hashtbl.S with type key = string
 
 type _ ty =
-    Kint : int ty
+  | Kbool : bool ty
+  | Kint : int ty
   | Knum : float ty
   | Kword : string ty
   | Klist : 'a ty -> 'a list ty

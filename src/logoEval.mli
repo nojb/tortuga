@@ -28,6 +28,7 @@ val value_of_atom : 'a ty -> atom -> 'a option
 val string_of_type : 'a ty -> string
 
 val expression : env -> atom Stream.t -> (atom -> unit) -> unit
+val bool_expression : env -> atom list -> (bool -> unit) -> unit
 val instruction : env -> atom Stream.t -> (atom option -> unit) -> unit
 val command : env -> atom Stream.t -> (unit -> unit) -> unit
 val instructionlist : env -> atom list -> (atom option -> unit) -> unit

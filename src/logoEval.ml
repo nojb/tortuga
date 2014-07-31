@@ -35,6 +35,7 @@ let rec default_num_args : type a. a fn -> int = function
 
 let rec atom_of_value : type a. a ty -> a -> atom = fun ty a ->
   match ty with
+  | Kbool -> if a then true_word else false_word
   | Kint -> Num (float_of_int a)
   | Knum -> Num a
   | Kword -> Word a
@@ -50,6 +51,7 @@ let rec atom_of_value : type a. a ty -> a -> atom = fun ty a ->
     | `R a -> atom_of_value ty2 a
 
 let rec default_value : type a. a ty -> a = function
+  | Kbool -> false
   | Kint -> 0
   | Knum -> 0.0
   | Kword -> ""
@@ -61,6 +63,12 @@ let rec default_value : type a. a ty -> a = function
   
 let rec value_of_atom : type a. a ty -> atom -> a option = fun ty a ->
   match ty, a with
+  | Kbool, Word w ->
+    begin match String.uppercase w with
+    | "TRUE" -> Some true
+    | "FALSE" -> Some false
+    | _ -> None
+    end
   | Kint, Num n ->
     let n1 = truncate n in
     if n = float n1 then Some n1 else None
@@ -112,6 +120,7 @@ TEST = value_of_atom Kword (Num 123.0) = Some "123"
 TEST = value_of_atom Kword (List []) = None
 
 let rec string_of_type : type a. a ty -> string = function
+  | Kbool -> "boolean"
   | Kint -> "integer"
   | Kword -> "word"
   | Knum -> "number"
@@ -127,7 +136,7 @@ let rec string_of_type : type a. a ty -> string = function
 
 let return : type a. a ret -> a -> (atom option -> unit) -> unit = fun ret f k ->
   match ret with
-    Kcont ->
+  | Kcont ->
     f k
   | Kretvoid ->
     k None
@@ -138,7 +147,7 @@ let apply : type a. env -> string -> a fn -> a -> atom list -> (atom option -> u
   fun env proc fn f args k ->
     let rec loop : type a. int -> a fn -> a -> atom list -> unit = fun i fn f args ->
       match fn, args with
-        Kvoid fn, _ ->
+      | Kvoid fn, _ ->
         loop i fn (f ()) args
       | Kenv fn, _ ->
         loop i fn (f env) args
@@ -348,6 +357,14 @@ and eval_call env proc strm natural k =
     | Not_found -> error "Don't know how to %s" (String.uppercase proc)
   in
   eval_args (default_num_args fn) natural (fun args -> apply env proc fn f args k)
+
+let bool_expression env list k =
+  expression env (Stream.of_list list) (fun a ->
+      match value_of_atom Kbool a with
+      | Some b -> k b
+      | None ->
+        error "boolen valued expected in [%s], got %s"
+          (string_of_datum_list list) (string_of_datum a))
     
 let command env strm k =
   instruction env strm

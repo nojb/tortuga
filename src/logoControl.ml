@@ -143,6 +143,12 @@ REPCOUNT
   let f env = LogoEnv.repcount env in
   prim ~names ~doc ~args ~f
 
+let eval_tf env tf k =
+  match tf with
+  | `L w -> k w
+  | `R list ->
+    bool_expression env list k
+
 let if_ =
   let names = ["if"] in
   let doc =
@@ -164,32 +170,21 @@ IF tf instructionlist
     only the first time the procedure is invoked in each Logo session."
 
   in
-  let args = Lga.(env @@ any @-> list any @-> opt (list any) cont) in
+  let args = Lga.(env @@ alt bool (list any) @-> list any @-> opt (list any) cont) in
   let f env tf iftrue iffalse k =
     match iffalse with
     | None ->
-      if is_true tf then
-        instructionlist env (reparse iftrue)
-          (function
-            | Some _ -> raise (Error "if: arguments should not produce a value")
-            | None -> k None)
-      else if is_false tf then
-        k None
-      else
-        raise (Error "if: first argument should be either TRUE or FALSE")
+      eval_tf env tf (function
+          | true ->
+            commandlist env (reparse iftrue) (fun () -> k None)
+          | false ->
+            k None)
     | Some iffalse ->
-      if is_true tf then
-        instructionlist env (reparse iftrue)
-          (function
-            | Some _ -> raise (Error "if: arguments should not produce a value")
-            | None -> k None)
-      else if is_false tf then
-        instructionlist env (reparse iffalse)
-          (function
-            | Some _ -> raise (Error "if: arguments should not produce a value")
-            | None -> k None)
-      else
-        raise (Error "if: first argument should be either TRUE or FALSE")
+      eval_tf env tf (function
+          | true ->
+            instructionlist env (reparse iftrue) k
+          | false ->
+            instructionlist env (reparse iffalse) k)
   in
   prim ~names ~doc ~args ~f
 
@@ -206,14 +201,14 @@ IFELSE tf instructionlist1 instructionlist2
     an expression that outputs a value."
 
   in
-  let args = Lga.(env @@ any @-> list any @-> list any @-> ret cont) in
+  let args = Lga.(env @@ alt bool (list any) @-> list any @-> list any @-> ret cont) in
   let f env tf iftrue iffalse k =
-    if is_true tf then
-      instructionlist env (reparse iftrue) k
-    else if is_false tf then
-      instructionlist env (reparse iffalse) k
-    else
-      raise (Error "ifelse: first argument should be either TRUE or FALSE")
+    eval_tf env tf
+      (function
+        | true ->
+          instructionlist env (reparse iftrue) k
+        | false ->
+          instructionlist env (reparse iffalse) k)
   in
   prim ~names ~doc ~args ~f
       
@@ -280,7 +275,7 @@ CATCH tag instructionlist
     try
       instructionlist env (reparse list) k
     with
-      Error _ when String.uppercase tag = "ERROR" ->
+    | Error _ when String.uppercase tag = "ERROR" ->
       (* TODO Also, during the running of the instructionlist, the variable ERRACT
          is temporarily unbound. (If there is an error while ERRACT has a value, that
          value is taken as an instructionlist to be run after printing the error
@@ -438,15 +433,10 @@ DO.WHILE instructionlist tfexpression		(library procedure)
     let list = reparse list in
     let expr = reparse expr in
     let rec loop () =
-      instructionlist env list
-        (function
-          | None ->
-            expression env (Stream.of_list expr)
-              (fun a ->
-                 if is_true a then loop ()
-                 else if is_false a then ()
-                 else error "do.while condition should produce true or false")
-          | Some a -> error "do.while should not produce a value, got %s" (string_of_datum a))
+      commandlist env list
+        (fun () ->
+           bool_expression env expr
+             (function true -> loop () | false -> ()))
     in
     loop ()
   in
@@ -470,16 +460,8 @@ WHILE tfexpression instructionlist		(library procedure)
     let expr = reparse expr in
     let list = reparse list in
     let rec loop () =
-      expression env (Stream.of_list expr) (fun a ->
-          if is_true a then
-            instructionlist env list (function
-                | None -> loop ()
-                | Some a ->
-                  error "WHILE should not produce a value, got %s" (string_of_datum a))
-          else if is_false a then
-            ()
-          else
-            error "WHILE condition should produce true or false")
+      bool_expression env expr
+        (function true -> commandlist env list loop | false -> ())
     in
     loop ()
   in
@@ -503,15 +485,9 @@ DO.UNTIL instructionlist tfexpression		(library procedure)
     let list = reparse list in
     let expr = reparse expr in
     let rec loop () =
-      instructionlist env list
-        (function
-          | None ->
-            expression env (Stream.of_list expr)
-              (fun a ->
-                 if is_true a then ()
-                 else if is_false a then loop ()
-                 else error "do.until condition should produce true or false")
-          | Some a -> error "do.until should not produce a value, got %s" (string_of_datum a))
+      commandlist env list
+        (fun () ->
+           bool_expression env expr (function true -> () | false -> loop ()))
     in
     loop ()
   in
@@ -535,16 +511,8 @@ UNTIL tfexpression instructionlist		(library procedure)
     let expr = reparse expr in
     let list = reparse list in
     let rec loop () =
-      expression env (Stream.of_list expr) (fun a ->
-          if is_false a then
-            instructionlist env list (function
-                | None -> loop ()
-                | Some a ->
-                  error "UNTIL should not produce a value, got %s" (string_of_datum a))
-          else if is_true a then
-            ()
-          else
-            error "UNTIL condition should produce true or false")
+      bool_expression env expr
+        (function false -> commandlist env list loop | true -> ())
     in
     loop ()
   in

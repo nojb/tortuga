@@ -26,22 +26,15 @@ open LogoAtom
 open LogoEval
 open LogoGlobals
 
-let b w =
-  match String.uppercase w with
-  | "FALSE" -> false
-  | "TRUE" -> true
-  | _ -> error "don't know what to do with %s" w
-
 let aux op env tf1 tf2 rest k =
   let ev tf k =
     match tf with
-    | `L w ->
-      k (b w)
+    | `L w -> k w
     | `R l ->
       expressionlist env (reparse l)
         (fun a ->
-           match value_of_atom Kword a with
-           | Some w -> k (b w)
+           match value_of_atom Kbool a with
+           | Some w -> k w
            | None ->
              error "Don't know what to do with %s" (string_of_datum a))
   in
@@ -75,8 +68,8 @@ AND tf1 tf2
 
   in
   let args =
-    Lga.(env @@ alt word (list any) @-> alt word (list any) @->
-                rest (alt word (list any)) cont)
+    Lga.(env @@ alt bool (list any) @-> alt bool (list any) @->
+                rest (alt bool (list any)) cont)
   in
   let f = aux (fun b -> b) in
   prim ~names ~doc ~args ~f
@@ -103,8 +96,8 @@ OR tf1 tf2
       
   in
   let args =
-    Lga.(env @@ alt word (list any) @-> alt word (list any) @->
-                rest (alt word (list any)) cont)
+    Lga.(env @@ alt bool (list any) @-> alt bool (list any) @->
+                rest (alt bool (list any)) cont)
   in
   let f = aux (fun b -> not b) in
   prim ~names ~doc ~args ~f
@@ -121,16 +114,18 @@ NOT tf
     produce a TRUE or FALSE value."
 
   in
-  let args = Lga.(env @@ alt word (list any) @-> ret cont) in
+  let args = Lga.(env @@ alt bool (list any) @-> ret cont) in
   let f env tf k =
     let k x = k (Some x) in
     match tf with
-    | `L w -> k (if b w then false_word else true_word)
+    | `L true -> k false_word
+    | `L false -> k true_word
     | `R l ->
       expressionlist env (reparse l)
         (fun a ->
-           match value_of_atom Kword a with
-           | Some w -> k (if b w then false_word else true_word)
+           match value_of_atom Kbool a with
+           | Some true -> k false_word
+           | Some false -> k true_word
            | None ->
              error "Don't know what to do with %s" (string_of_datum a))
   in

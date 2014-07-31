@@ -56,18 +56,6 @@ TEST = not (isint " 123")
 TEST = not (isint "a")
 TEST = not (isint "")
 
-let is_true = function
-  | Word w ->
-    String.uppercase w = "TRUE"
-  | _ ->
-    false
-
-let is_false = function
-  | Word w ->
-    String.uppercase w = "FALSE"
-  | _ ->
-    false
-  
 let rec bprint_datum b = function
   | Num n ->
     Printf.bprintf b "%g" n
@@ -127,6 +115,7 @@ let reparse list =
   parse (string_of_datum_list list)
 
 module Lga = struct
+  let bool = Kbool
   let int = Kint
   let word = Kword
   let num = Knum
