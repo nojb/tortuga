@@ -107,6 +107,10 @@ let rec value_of_atom : type a. a ty -> atom -> a option = fun ty a ->
   | _ ->
     None
 
+TEST = value_of_atom Knum (Word "123e-34") = Some 123e-34
+TEST = value_of_atom Kword (Num 123.0) = Some "123"
+TEST = value_of_atom Kword (List []) = None
+
 let rec string_of_type : type a. a ty -> string = function
   | Kint -> "integer"
   | Kword -> "word"

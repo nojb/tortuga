@@ -26,19 +26,34 @@ let error fmt =
 
 let isnumber =
   (* keep in sync with [number_literal] in LogoLex.mll *)
-  let re = Str.regexp "[0-9]*\\.?[0-9]+\\([eE][-+]?[0-9]+\\)?" in
-  fun w ->
-    Str.string_match re w 0 && Str.match_end () = String.length w
+  let open Re in
+  let re = whole_string (seq [rep digit; opt (char '.'); rep1 digit;
+                              opt (seq [set "eE"; opt (set "-+"); rep1 digit])]) in
+  let re = compile re in
+  fun w -> execp re w
+
+TEST = isnumber "123"
+TEST = isnumber "123e-3"
+TEST = isnumber ".12e+12"
+TEST = not (isnumber "1e-")
+TEST = isnumber "3.4"
+TEST = not (isnumber "a")
+TEST = not (isnumber "3.e12")
 
 let isint s =
   let rec loop i =
-    if i >= String.length s then true
+    if i >= String.length s then i > 0
     else
       match s.[i] with
       | '0' .. '9' -> loop (i+1)
       | _ -> false
   in
   loop 0
+
+TEST = isint "1234"
+TEST = not (isint " 123")
+TEST = not (isint "a")
+TEST = not (isint "")
 
 let is_true = function
   | Word w ->
