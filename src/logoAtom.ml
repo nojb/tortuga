@@ -20,6 +20,7 @@
    CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. *)
 
 open LogoTypes
+open LogoPrint
   
 let error fmt =
   Printf.ksprintf (fun err -> raise (Error err)) fmt
@@ -67,14 +68,37 @@ let is_false = function
   | _ ->
     false
   
+let rec bprint_datum b = function
+  | Num n ->
+    Printf.bprintf b "%g" n
+  | Word s ->
+    Buffer.add_string b s
+  | List l ->
+    Printf.bprintf b "[%a]" bprint_datum_list l
+  | Array (a, orig) ->
+    Buffer.add_char b '{';
+    bprint_datum b a.(0);
+    for i = 1 to Array.length a - 1 do
+      Buffer.add_char b ' ';
+      bprint_datum b a.(i)
+    done;
+    Buffer.add_char b '}';
+    if orig <> 1 then Printf.bprintf b "@%d" orig
+
+and bprint_datum_list b = function
+  | [] -> ()
+  | x :: xs ->
+    bprint_datum b x;
+    List.iter (fun x -> Buffer.add_char b ' '; bprint_datum b x) xs
+
 let string_of_datum a =
-  let b = Buffer.create 17 in  
-  LogoWriter.(print_datum (writer_of_buffer b) a);
+  let b = Buffer.create 17 in
+  bprint_datum b a;
   Buffer.contents b
 
 let string_of_datum_list al =
   let b = Buffer.create 17 in
-  LogoWriter.(print_datum_list (writer_of_buffer b) al);
+  bprint_datum_list b al;
   Buffer.contents b
 
 let true_word =
@@ -132,3 +156,10 @@ module Lga = struct
   let turtle fn = Kturtle fn
 end
 
+let print_datum d = print (string_of_datum d)
+
+let print_datum_list d = print (string_of_datum_list d)
+
+let cprint_datum d = cprint (string_of_datum d)
+
+let cprint_datum_list d = cprint (string_of_datum_list d)

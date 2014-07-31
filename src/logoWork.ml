@@ -24,8 +24,8 @@
 open LogoTypes
 open LogoAtom
 open LogoGlobals
+open LogoPrint
 open LogoEnv
-open LogoWriter
   
 (** 7.2 Variable Definition *)
 
@@ -320,7 +320,6 @@ HELP name
   in
   let args = Lga.(opt word retvoid) in
   let f name =
-    let w = stderr () in
     match name with
     | None ->
       let rs = fold_routines (fun x l -> x :: l) [] in
@@ -336,17 +335,17 @@ HELP name
         for i = 0 to nc - 1 do
           for j = 0 to cols - 1 do
             let k = j * nc + i in
-            if k < l then printf w "%-*s" (String.length last + 3) a.(k)
+            if k < l then cprintf "%-*s" (String.length last + 3) a.(k)
           done;
-          print_newline w
+          cprint "\n"
         done
       end
     | Some name ->
       match get_help name with
       | Some doc ->
-        printl w doc
+        cprintl doc
       | None ->
-        printlf w "No help is available for %s" name
+        cprintlf "No help is available for %s" name
   in
   prim ~names ~doc ~args ~f
   

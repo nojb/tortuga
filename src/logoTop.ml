@@ -23,6 +23,7 @@ open LogoTypes
 open LogoEnv
 open LogoEval
 open LogoGlobals
+open LogoPrint
 open LogoAtom
   
 (* module TurtleGraphics = LogoTurtleGraphics *)
@@ -115,8 +116,8 @@ let main () =
   let env = create_env (module LogoTurtleVg) in
   let history = LTerm_history.create [] in
   let b = Buffer.create 17 in
-  set_stderr (`Buffer b);
-  set_stdout (`Buffer b);
+  cprint_function := Buffer.add_string b;
+  print_function := Buffer.add_string b;
   lwt term = Lazy.force LTerm.stdout in
   let rec execute_phrase env raw phr =
     try_lwt
@@ -135,13 +136,16 @@ let main () =
     | LogoControl.Toplevel ->
       return ()
     | LogoControl.Throw (tag, None) ->
-      LogoWriter.printlf (stderr ()) "Unhandled THROW with tag %s" tag;
+      cprintlf "Unhandled THROW with tag %s." tag;
       return ()
     | LogoControl.Throw (tag, Some a) ->
-      LogoWriter.printlf (stderr ()) "Unhandled THROW with tag %s, value %s" tag (string_of_datum a);
+      cprintlf "Unhandled THROW with tag %s, value %s." tag (string_of_datum a);
       return ()
     | Error err ->
-      LogoWriter.printlf (stderr ()) "Error: %s" err;
+      cprintlf "Error: %s." err;
+      return ()
+    | LogoLex.Error err ->
+      cprintlf "Lexer: %s." (LogoLex.report_error err);
       return ()
   and loop env =
     lwt resp =
@@ -152,7 +156,7 @@ let main () =
       | Sys.Break ->
         return None
       | LogoLex.Error err ->
-        LogoWriter.printlf (stderr ()) "Lexer: %s." (LogoLex.report_error err);
+        cprintlf "Lexer: %s." (LogoLex.report_error err);
         return None
     in
     match resp with
@@ -172,6 +176,5 @@ let main () =
   | LTerm_read_line.Interrupt ->
     return ()
   | exn ->
-    LogoWriter.printlf (stderr ()) "Internal: %s. Backtrace:\n%s"
-      (Printexc.to_string exn) (Printexc.get_backtrace ());
+    cprintlf "Internal: %s. Backtrace:\n%s" (Printexc.to_string exn) (Printexc.get_backtrace ());
     raise_lwt exn

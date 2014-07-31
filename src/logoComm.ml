@@ -24,8 +24,8 @@
 open LogoTypes
 open LogoAtom
 open LogoGlobals
+open LogoPrint
 open LogoEval
-open LogoWriter
   
 (** 3.1 Transmitters *)
 
@@ -48,14 +48,13 @@ PR thing
   in
   let args = Lga.(any @-> rest any retvoid) in
   let f thing1 things =
-    let pr w = function
-      | List l -> print_datum_list w l
-      | _ as d -> print_datum w d
+    let pr = function
+      | List l -> print_datum_list l
+      | _ as d -> print_datum d
     in
-    let w = stdout () in
-    pr w thing1;
-    List.iter (fun d -> print_space w; pr w d) things;
-    print_newline w
+    pr thing1;
+    List.iter (fun d -> print " "; pr d) things;
+    print "\n"
   in
   prim ~names ~doc ~args ~f
 
@@ -85,13 +84,12 @@ TYPE thing
   in
   let args = Lga.(any @-> rest any retvoid) in
   let f thing1 things =
-    let pr w = function
-      | List l -> print_datum_list w l
-      | _ as d -> print_datum w d
+    let pr = function
+      | List l -> print_datum_list l
+      | _ as d -> print_datum d
     in
-    let w = stdout () in
-    pr w thing1;
-    List.iter (pr w) things
+    pr thing1;
+    List.iter pr things
   in
   prim ~names ~doc ~args ~f
 
@@ -109,65 +107,64 @@ SHOW thing
   in
   let args = Lga.(any @-> rest any retvoid) in
   let f thing1 things =
-    let w = stdout () in
-    print_datum_list (stdout ()) (thing1 :: things);
-    print_newline w
+    print_datum_list (thing1 :: things);
+    LogoPrint.print "\n"
   in
   prim ~names ~doc ~args ~f
 
 (** 3.2 Receivers *)
 
-let readlist =
-  let names = ["readlist"; "rl"] in
-  let doc =
+(* let readlist = *)
+(*   let names = ["readlist"; "rl"] in *)
+(*   let doc = *)
 
-    "\
-READLIST
-RL
+(*     "\ *)
+(* READLIST *)
+(* RL *)
 
-    Reads a line from the read stream (initially the keyboard) and outputs that
-    line as a list. The line is separated into members as though it were typed
-    in square brackets in an instruction. If the read stream is a file, and the
-    end of file is reached, READLIST outputs the empty word (not the empty
-    list). READLIST processes backslash, vertical bar, and tilde characters in
-    the read stream; the output list will not contain these characters but they
-    will have had their usual effect. READLIST does not, however, treat
-    semicolon as a comment character."
+(*     Reads a line from the read stream (initially the keyboard) and outputs that *)
+(*     line as a list. The line is separated into members as though it were typed *)
+(*     in square brackets in an instruction. If the read stream is a file, and the *)
+(*     end of file is reached, READLIST outputs the empty word (not the empty *)
+(*     list). READLIST processes backslash, vertical bar, and tilde characters in *)
+(*     the read stream; the output list will not contain these characters but they *)
+(*     will have had their usual effect. READLIST does not, however, treat *)
+(*     semicolon as a comment character." *)
 
-  in
-  let args = Lga.(void @@ ret (value any)) in
-  let f () =
-    match LogoReader.read_line (stdin ()) with
-    | Some l ->
-      let lexbuf = Lexing.from_string l in
-      LogoLex.parse_list [] lexbuf
-    | None ->
-      Word ""
-  in
-  prim ~names ~doc ~args ~f
+(*   in *)
+(*   let args = Lga.(void @@ ret (value any)) in *)
+(*   let f () = *)
+(*     match LogoReader.read_line (stdin ()) with *)
+(*     | Some l -> *)
+(*       let lexbuf = Lexing.from_string l in *)
+(*       LogoLex.parse_list [] lexbuf *)
+(*     | None -> *)
+(*       Word "" *)
+(*   in *)
+(*   prim ~names ~doc ~args ~f *)
 
-let readrawline =
-  let names = ["readrawline"] in
-  let doc =
+(* let readrawline = *)
+(*   let names = ["readrawline"] in *)
+(*   let doc = *)
 
-    "\
-READRAWLINE
+(*     "\ *)
+(* READRAWLINE *)
 
-    Reads a line from the read stream and outputs that line as a word. The
-    output is a single word even if the line contains spaces, brackets, etc. If
-    the read stream is a file, and the end of file is reached, READRAWLINE
-    outputs the empty list (not the empty word). READRAWLINE outputs the exact
-    string of characters as they appear in the line, with no special meaning for
-    backslash, vertical bar, tilde, or any other formatting characters."
+(*     Reads a line from the read stream and outputs that line as a word. The *)
+(*     output is a single word even if the line contains spaces, brackets, etc. If *)
+(*     the read stream is a file, and the end of file is reached, READRAWLINE *)
+(*     outputs the empty list (not the empty word). READRAWLINE outputs the exact *)
+(*     string of characters as they appear in the line, with no special meaning for *)
+(*     backslash, vertical bar, tilde, or any other formatting characters." *)
 
-  in
-  let args = Lga.(void @@ ret (value word)) in
-  let f () =
-    match LogoReader.read_line (stdin ()) with
-    | Some l -> l
-    | None -> ""
-  in
-  prim ~names ~doc ~args ~f
+(*   in *)
+(*   let args = Lga.(void @@ ret (value word)) in *)
+(*   let f () = *)
+(*     match LogoReader.read_line (stdin ()) with *)
+(*     | Some l -> l *)
+(*     | None -> "" *)
+(*   in *)
+(*   prim ~names ~doc ~args ~f *)
     
 let () =
   List.iter add_prim
@@ -176,7 +173,7 @@ let () =
       type_;
       show;
 
-      readlist;
+      (* readlist; *)
       (* readword *)
-      readrawline
+      (* readrawline *)
     ]

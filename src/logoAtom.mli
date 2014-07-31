@@ -79,3 +79,8 @@ module Lga : sig
   val turtle : 'a fn -> (turtle -> 'a) fn
 end
 
+val print_datum : atom -> unit
+val print_datum_list : atom list -> unit
+
+val cprint_datum : atom -> unit
+val cprint_datum_list : atom list -> unit

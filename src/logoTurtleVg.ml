@@ -68,7 +68,7 @@ let render name =
   
   close_out out;
 
-  LogoWriter.printlf (LogoGlobals.stderr ()) "Output written to %s" name
+  LogoPrint.cprintlf "Output written to %s" name
 
 let get_heading () =
   !t.theta

@@ -19,51 +19,15 @@
    IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
    CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. *)
 
-type reader = {
-  read_line : unit -> string option;
-  read_char : unit -> char option;
-  read_chars : int -> string option;
-  eof : unit -> bool;
-  pos : unit -> int;
-  seek : int -> unit;
-  close : unit -> unit
-}
+val print_function : (string -> unit) ref
+val cprint_function : (string -> unit) ref
 
-let reader_of_in_channel ic =
-  let read_line () = try Some (input_line ic) with End_of_file -> None in
-  let read_char () = try Some (input_char ic) with End_of_file -> None in
-  let read_chars n =
-    let s = String.create n in
-    try
-      really_input ic s 0 n;
-      Some s
-    with
-    | _ -> None
-  in
-  let eof () = pos_in ic + 1 >= in_channel_length ic in
-  let pos () = pos_in ic in
-  let seek n = seek_in ic n in
-  let close () = close_in ic in
-  { read_line; read_char; read_chars;
-    eof; pos; seek; close }
-
-let pos_reader r =
-  r.pos ()
-
-let seek_reader r pos =
-  r.seek pos
-
-let close_reader r =
-  r.close ()
-
-let read_line r =
-  r.read_line ()
-
-let read_char r =
-  r.read_char ()
-
-let read_chars r n =
-  r.read_chars n
-
-let eof r =
-  r.eof ()
+val print : string -> unit
+val printl : string -> unit
+val printf : ('a, unit, string, unit) format4 -> 'a
+val printlf : ('a, unit, string, unit) format4 -> 'a
+  
+val cprint : string -> unit
+val cprintl : string -> unit
+val cprintf : ('a, unit, string, unit) format4 -> 'a
+val cprintlf : ('a, unit, string, unit) format4 -> 'a
