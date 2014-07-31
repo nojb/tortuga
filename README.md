@@ -22,7 +22,7 @@ by OCaml's Graphics module, but it is quite poor. A better option is to use
 [Vg](https://github.com/dbuenzli/vg) to produce beautiful PDF files. (A
 javascript-based backend to see the pictures in a web browser is in the works.)
 
-    opam install uutf otfm gg vg
+    opam install uutf otfm gg vg ounit pa_ounit
     cd ~/tmp
     git clone https://github.com/nojb/tortuga
     cd tortuga
