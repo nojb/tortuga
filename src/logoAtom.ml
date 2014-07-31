@@ -100,7 +100,7 @@ let parse str =
   LogoLex.parse_atoms [] false lexbuf
 
 let reparse list =
-  Stream.of_list (parse (string_of_datum_list list))
+  parse (string_of_datum_list list)
 
 module Lga = struct
   let int = Kint

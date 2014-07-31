@@ -435,10 +435,10 @@ DO.WHILE instructionlist tfexpression		(library procedure)
   in
   let args = Lga.(env @@ list any @-> list any @-> ret retvoid) in
   let f env list expr =
-    let list = parse (string_of_datum_list list) in
-    let expr = parse (string_of_datum_list expr) in
+    let list = reparse list in
+    let expr = reparse expr in
     let rec loop () =
-      instructionlist env (Stream.of_list list)
+      instructionlist env list
         (function
           | None ->
             expression env (Stream.of_list expr)
@@ -467,12 +467,12 @@ WHILE tfexpression instructionlist		(library procedure)
   in
   let args = Lga.(env @@ list any @-> list any @-> ret retvoid) in
   let f env expr list =
-    let expr = parse (string_of_datum_list expr) in
-    let list = parse (string_of_datum_list list) in
+    let expr = reparse expr in
+    let list = reparse list in
     let rec loop () =
       expression env (Stream.of_list expr) (fun a ->
           if is_true a then
-            instructionlist env (Stream.of_list list) (function
+            instructionlist env list (function
                 | None -> loop ()
                 | Some a ->
                   error "WHILE should not produce a value, got %s" (string_of_datum a))
@@ -500,10 +500,10 @@ DO.UNTIL instructionlist tfexpression		(library procedure)
   in
   let args = Lga.(env @@ list any @-> list any @-> ret retvoid) in
   let f env list expr =
-    let list = parse (string_of_datum_list list) in
-    let expr = parse (string_of_datum_list expr) in
+    let list = reparse list in
+    let expr = reparse expr in
     let rec loop () =
-      instructionlist env (Stream.of_list list)
+      instructionlist env list
         (function
           | None ->
             expression env (Stream.of_list expr)
@@ -532,12 +532,12 @@ UNTIL tfexpression instructionlist		(library procedure)
   in
   let args = Lga.(env @@ list any @-> list any @-> ret retvoid) in
   let f env expr list =
-    let expr = parse (string_of_datum_list expr) in
-    let list = parse (string_of_datum_list list) in
+    let expr = reparse expr in
+    let list = reparse list in
     let rec loop () =
       expression env (Stream.of_list expr) (fun a ->
           if is_false a then
-            instructionlist env (Stream.of_list list) (function
+            instructionlist env list (function
                 | None -> loop ()
                 | Some a ->
                   error "UNTIL should not produce a value, got %s" (string_of_datum a))

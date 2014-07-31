@@ -42,7 +42,7 @@ val equalaux : atom -> atom -> bool
 
 val parse : string -> atom list
 
-val reparse : atom list -> atom Stream.t
+val reparse : atom list -> atom list
 
 (** Very important: procedures that can potentially altern the natural control
     flow by calling some other coninuation than the standard one, MUST use the

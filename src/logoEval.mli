@@ -28,9 +28,9 @@ val value_of_atom : 'a ty -> atom -> 'a option
 val string_of_type : 'a ty -> string
 
 val expression : env -> atom Stream.t -> (atom -> unit) -> unit
-val expressionlist : env -> atom Stream.t -> (atom -> unit) -> unit
 val instruction : env -> atom Stream.t -> (atom option -> unit) -> unit
 val command : env -> atom Stream.t -> (unit -> unit) -> unit
-val instructionlist : env -> atom Stream.t -> (atom option -> unit) -> unit
-val commandlist : env -> atom Stream.t -> (unit -> unit) -> unit
+val instructionlist : env -> atom list -> (atom option -> unit) -> unit
+val expressionlist : env -> atom list -> (atom -> unit) -> unit
+val commandlist : env -> atom list -> (unit -> unit) -> unit
 val to_ : raw:string list -> name:string -> inputs:string list -> body:string list -> unit

@@ -357,7 +357,8 @@ let command env strm k =
 
 (* FIXME 'step' should only be called if 'k' it not invoked! *)
 
-let instructionlist env strm k =
+let instructionlist env list k =
+  let strm = Stream.of_list list in
   let rec step last =
     match Stream.peek strm, last with
     | Some _, Some a ->
@@ -369,15 +370,15 @@ let instructionlist env strm k =
   in
   step None
 
-let commandlist env strm k =
-  instructionlist env strm
+let commandlist env list k =
+  instructionlist env list
     (function
       | Some a ->
         error "You don't say what to do with %s" (string_of_datum a)
       | None -> k ())
 
-let expressionlist env strm k =
-  instructionlist env strm
+let expressionlist env list k =
+  instructionlist env list
     (function
       | Some a -> k a
       | None -> error "value expected")
@@ -417,13 +418,13 @@ let to_ ~raw ~name ~inputs ~body =
     let body = loop body in
     Buffer.contents b, body
   in
-  let rec dobody env lines k =
-    match lines with
+  let body1 =
+    List.map (fun l -> LogoLex.parse_atoms [] false (Lexing.from_string l)) body
+  in
+  let rec execbody env body k =
+    match body with
     | l :: lines ->
-      let lexbuf = Lexing.from_string l in
-      let atoms = LogoLex.parse_atoms [] false lexbuf in
-      let strm = Stream.of_list atoms in
-      commandlist env strm (fun () -> dobody env lines k)
+      commandlist env l (fun () -> execbody env lines k)
     | [] ->
       k ()
   in
@@ -434,7 +435,7 @@ let to_ ~raw ~name ~inputs ~body =
       loop inputs
         { k = fun fn f -> k.k Lga.(any @-> fn) (fun env a -> create_var env input (Some a); f env) }
     | [] ->
-      k.k Lga.(ret cont) (fun env k -> dobody (new_exit env k) body (fun () -> k None))
+      k.k Lga.(ret cont) (fun env k -> execbody (new_exit env k) body1 (fun () -> k None))
   in
   loop inputs
     { k = fun fn f -> add_proc ~name ~raw ~doc ~args:(Kenv fn) ~f:(fun env -> f (new_frame env)) }

@@ -123,8 +123,8 @@ let main () =
       begin match phr with
       | `GotLINE l ->
         let lexbuf = Lexing.from_string l in
-        let strm = Stream.of_list (LogoLex.parse_atoms [] false lexbuf) in
-        commandlist env strm (fun () -> ())
+        let list = LogoLex.parse_atoms [] false lexbuf in
+        commandlist env list (fun () -> ())
       | `GotTO (name, inputs, body) ->
         to_ ~raw ~name ~inputs ~body
       end;
