@@ -87,6 +87,7 @@ and env = {
   output : atom option -> unit;
   turtle : turtle;
   continue : atom option -> unit;
-  repcount : int list
+  repcount : int list;
+  mutable test : bool option
 }
 

@@ -1,5 +1,7 @@
 ## 0.3.0 (current)
 
+* New primitives: 'test', 'iftrue', 'iffalse'
+
 ## 0.2.0 (2014-07-31)
 
 * Report undefined variables (both global and unassigned locals)

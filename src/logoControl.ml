@@ -211,7 +211,60 @@ IFELSE tf instructionlist1 instructionlist2
           instructionlist env (reparse iffalse) k)
   in
   prim ~names ~doc ~args ~f
-      
+
+let test =
+  let names = ["test"] in
+  let doc =
+
+    "\
+TEST tf
+
+    Command. Remembers its input, which must be TRUE or FALSE, for use by later
+    IFTRUE or IFFALSE instructions. The effect of TEST is local to the procedure
+    in which it is used; any corresponding IFTRUE or IFFALSE must be in the same
+    procedure or a subprocedure."
+
+  in
+  let args = Lga.(env @@ alt bool (list any) @-> ret retvoid) in
+  let f env tf = eval_tf env tf (set_test env) in
+  prim ~names ~doc ~args ~f
+
+let iftrue =
+  let names = ["iftrue"; "ift"] in
+  let doc =
+
+    "\
+IFTRUE instructionlist
+IFT instructionlist
+
+    Command. Runs its input if the most recent TEST instruction had a TRUE
+    input. The TEST must have been in the same procedure or a superprocedure."
+
+  in
+  let args = Lga.(env @@ list any @-> ret cont) in
+  let f env list k =
+    if get_test env then commandlist env (reparse list) (fun () -> k None) else k None
+  in
+  prim ~names ~doc ~args ~f
+
+let iffalse =
+  let names = ["iffalse"; "iff"] in
+  let doc =
+
+    "\
+IFFALSE instructionlist
+IFF instructionlist
+
+    Command. Runs its input if the most recent TEST instruction had a FALSE
+    input. The TEST must have been in the same procedure or a superprocedure."
+
+  in
+  let args = Lga.(env @@ list any @-> ret cont) in
+  let f env list k =
+    if get_test env then k None else commandlist env (reparse list) (fun () -> k None)
+  in
+  prim ~names ~doc ~args ~f
+
 let stop =
   let names = ["stop"] in
   let doc =
@@ -528,6 +581,9 @@ let () =
       repcount;
       if_;
       ifelse;
+      test;
+      iftrue;
+      iffalse;
       stop;
       output;
       catch;

@@ -37,3 +37,6 @@ val has_var : env -> string -> bool
 val repcount : env -> int
 val start_repcount : env -> env
 val step_repcount : env -> env
+
+val set_test : env -> bool -> unit
+val get_test : env -> bool

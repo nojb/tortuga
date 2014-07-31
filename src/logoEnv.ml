@@ -27,7 +27,8 @@ let create_env turtle = {
   output = (fun _ -> raise (Error "output: not inside a function"));
   turtle;
   continue = (fun _ -> raise (Error "continue: no pause"));
-  repcount = []
+  repcount = [];
+  test = None
 }
 
 let new_frame env =
@@ -99,3 +100,11 @@ let step_repcount env =
   match env.repcount with
   | [] -> invalid_arg "next_repcount"
   | top :: rest -> { env with repcount = (top + 1) :: rest }
+
+let set_test env b =
+  env.test <- Some b
+
+let get_test env =
+  match env.test with
+  | Some b -> b
+  | None -> error "no TEST"
