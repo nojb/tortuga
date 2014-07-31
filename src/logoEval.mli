@@ -27,8 +27,6 @@ val default_value : 'a ty -> 'a
 val value_of_atom : 'a ty -> atom -> 'a option
 val string_of_type : 'a ty -> string
 
-val wrap : env -> string -> 'a fn -> 'a -> atom list -> (atom option -> unit) -> unit
-
 val expression : env -> atom Stream.t -> (atom -> unit) -> unit
 val expressionlist : env -> atom Stream.t -> (atom -> unit) -> unit
 val instruction : env -> atom Stream.t -> (atom option -> unit) -> unit

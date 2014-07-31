@@ -134,7 +134,7 @@ let return : type a. a ret -> a -> (atom option -> unit) -> unit = fun ret f k -
   | Kvalue ty ->
     k (Some (atom_of_value ty f))
       
-let wrap : type a. env -> string -> a fn -> a -> atom list -> (atom option -> unit) -> unit =
+let apply : type a. env -> string -> a fn -> a -> atom list -> (atom option -> unit) -> unit =
   fun env proc fn f args k ->
     let rec loop : type a. int -> a fn -> a -> atom list -> unit = fun i fn f args ->
       match fn, args with
@@ -281,6 +281,24 @@ and instruction env strm k =
   | Some (Array _ as atom) ->
     Stream.junk strm;
     k (Some atom)
+  | Some (Word "(") ->
+    Stream.junk strm;
+    begin match Stream.peek strm with
+    | Some (Word proc) when has_routine proc ->
+      Stream.junk strm;
+      eval_call env proc strm false k
+    | _ ->
+      expression env strm
+        (fun result ->
+          match Stream.peek strm with
+          | Some (Word ")") ->
+            Stream.junk strm;
+            k (Some result)
+          | Some a ->
+            error "expected ')', found %s" (string_of_datum a)
+          | None ->
+            error "expected ')'")
+    end
   | Some (Word w) ->
     Stream.junk strm;
     if isnumber w then
@@ -293,34 +311,12 @@ and instruction env strm k =
       let w = stringfrom 1 w in
       k (Some (get_var env w))
     else
-      apply env w strm k
-        (* (function *)
-        (*   | Some a -> k a *)
-        (*   | None -> error "%s did not produce a result" (String.uppercase w)) *)
+      eval_call env w strm true k
   | None ->
     assert false
 
-and apply env w strm k =
-  if w = "(" then
-    match Stream.peek strm with
-    | Some (Word proc) when has_routine proc ->
-      Stream.junk strm;
-      dispatch env proc strm false k
-    | _ ->
-      expression env strm (fun result ->
-          match Stream.peek strm with
-          | Some (Word ")") ->
-            Stream.junk strm;
-            k (Some result)
-          | Some a ->
-            error "expected ')', found %s" (string_of_datum a)
-          | None ->
-            error "expected ')'")
-  else
-    dispatch env w strm true k
-
-and dispatch env proc strm natural k =
-  let getargs len natural k =
+and eval_call env proc strm natural k =
+  let eval_args len natural k =
     if natural then
       let rec loop acc i =
         if i >= len then k (List.rev acc)
@@ -351,9 +347,7 @@ and dispatch env proc strm natural k =
     with
     | Not_found -> error "Don't know how to %s" (String.uppercase proc)
   in
-  getargs (default_num_args fn) natural begin fun args ->
-    wrap env proc fn f args k
-  end
+  eval_args (default_num_args fn) natural (fun args -> apply env proc fn f args k)
     
 let command env strm k =
   instruction env strm
