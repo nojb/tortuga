@@ -54,6 +54,15 @@ class read_line ~term ~history ~prompt ~procedures = object(self)
   inherit LTerm_read_line.read_line ~history ()
   inherit [Zed_utf8.t] LTerm_read_line.term term
 
+  method message =
+    let cws = self#completion_words in
+    let get_help w =
+      match LogoGlobals.get_help w with
+      | None -> None
+      | Some h -> Some (LTerm_text.of_string h)
+    in
+    S.map (function (w, _) :: [] -> get_help w | _ -> None) cws
+
   method completion =
     let prefix  = Zed_rope.to_string self#input_prev in
     try
