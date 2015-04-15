@@ -50,7 +50,7 @@ RUN instructionlist
     instructionlist env (reparse list) k
   in
   prim ~names ~doc ~args ~f
-    
+
 let runresult =
   let names = ["runresult"] in
   let doc =
@@ -62,7 +62,7 @@ RUNRESULT instructionlist
     instructions produce no output, or a list whose only member is the output
     from running the input instructionlist. Useful for inventing
     command-or-operation control structures:
- 	
+
       local \"result
       make \"result runresult [something]
       if emptyp :result [stop]
@@ -75,7 +75,7 @@ RUNRESULT instructionlist
       (function None -> k (Some (List [])) | Some a -> k (Some (List [a])))
   in
   prim ~names ~doc ~args ~f
-    
+
 let repeat =
   let names = ["repeat"] in
   let doc =
@@ -146,8 +146,8 @@ REPCOUNT
 let eval_tf env tf k =
   match tf with
   | `L w -> k w
-  | `R list ->
-    bool_expression env list k
+  | `R lst ->
+      bool_expression env lst k
 
 let if_ =
   let names = ["if"] in
@@ -174,17 +174,19 @@ IF tf instructionlist
   let f env tf iftrue iffalse k =
     match iffalse with
     | None ->
-      eval_tf env tf (function
-          | true ->
-            commandlist env (reparse iftrue) (fun () -> k None)
-          | false ->
-            k None)
+        eval_tf env tf
+          (function
+            | true ->
+                commandlist env (reparse iftrue) (fun () -> k None)
+            | false ->
+                k None)
     | Some iffalse ->
-      eval_tf env tf (function
-          | true ->
-            instructionlist env (reparse iftrue) k
-          | false ->
-            instructionlist env (reparse iffalse) k)
+        eval_tf env tf
+          (function
+            | true ->
+                instructionlist env (reparse iftrue) k
+            | false ->
+                instructionlist env (reparse iffalse) k)
   in
   prim ~names ~doc ~args ~f
 
@@ -280,7 +282,7 @@ STOP
   let args = Lga.(env @@ ret cont) in
   let f env _ = output env None in
   prim ~names ~doc ~args ~f
-             
+
 let output =
   let names = ["output"; "op"] in
   let doc =
@@ -570,7 +572,7 @@ UNTIL tfexpression instructionlist		(library procedure)
     loop ()
   in
   prim ~names ~doc ~args ~f
-      
+
 let () =
   List.iter add_prim
     [

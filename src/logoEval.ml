@@ -30,7 +30,7 @@ let rec default_num_args : type a. a fn -> int = function
   | Krest _         -> 0
   | Kret _          -> 0
   | Kvoid rest      -> default_num_args rest
-  | Kenv rest       -> default_num_args rest 
+  | Kenv rest       -> default_num_args rest
   | Kturtle rest    -> default_num_args rest
 
 let rec atom_of_value : type a. a ty -> a -> atom = fun ty a ->
@@ -60,7 +60,7 @@ let rec default_value : type a. a ty -> a = function
   | Kany -> List []
   | Kpred (ty, _, _) -> default_value ty
   | Kalt (ty1, _) -> `L (default_value ty1)
-  
+
 let rec value_of_atom : type a. a ty -> atom -> a option = fun ty a ->
   match ty, a with
   | Kbool, Word w ->
@@ -142,7 +142,7 @@ let return : type a. a ret -> a -> (atom option -> unit) -> unit = fun ret f k -
     k None
   | Kvalue ty ->
     k (Some (atom_of_value ty f))
-      
+
 let apply : type a. env -> string -> a fn -> a -> atom list -> (atom option -> unit) -> unit =
   fun env proc fn f args k ->
     let rec loop : type a. int -> a fn -> a -> atom list -> unit = fun i fn f args ->
@@ -209,146 +209,145 @@ let equalp lhs rhs =
 let notequalp lhs rhs =
   not (equalaux lhs rhs)
 
-let rec expression env strm =
-  relational_expression env strm
+let rec expression env lst k =
+  relational_expression env lst k
 
-and relational_expression env strm k =
-  additive_expression env strm (fun lhs ->
-      let rec app op lhs =
-        Stream.junk strm;
-        additive_expression env strm (fun rhs -> loop (op lhs rhs))
-      and loop lhs =
-        match Stream.peek strm with
-        | Some (Word "=") -> app (infix_pred equalp Kany) lhs
-        | Some (Word "<") -> app (infix_pred (<) Knum) lhs
-        | Some (Word ">") -> app (infix_pred (>) Knum) lhs
-        | Some (Word "<=") -> app (infix_pred (<=) Knum) lhs
-        | Some (Word ">=") -> app (infix_pred (>=) Knum) lhs
-        | Some (Word "<>") -> app (infix_pred notequalp Kany) lhs
-        | _ -> k lhs
-      in
-      loop lhs)
+and relational_expression env lst k =
+  let rec loop lhs = function
+    | Word "=" :: lst ->
+        additive_expression env lst
+          (fun rhs lst -> loop (infix_pred equalp Kany lhs rhs) lst)
+    | Word "<" :: lst ->
+        additive_expression env lst
+          (fun rhs lst -> loop (infix_pred (<) Knum lhs rhs) lst)
+    | Word ">" :: lst ->
+        additive_expression env lst
+          (fun rhs lst -> loop (infix_pred (>) Knum lhs rhs) lst)
+    | Word "<=" :: lst ->
+        additive_expression env lst
+          (fun rhs lst -> loop (infix_pred (<=) Knum lhs rhs) lst)
+    | Word ">=" :: lst ->
+        additive_expression env lst
+          (fun rhs lst -> loop (infix_pred (>=) Knum lhs rhs) lst)
+    | Word "<>" :: lst ->
+        additive_expression env lst
+          (fun rhs lst -> loop (infix_pred notequalp Kany lhs rhs) lst)
+    | lst ->
+        k lhs lst
+  in
+  additive_expression env lst loop
 
-and additive_expression env strm k =
-  multiplicative_expression env strm (fun lhs ->
-      let rec app op lhs =
-        Stream.junk strm;
-        multiplicative_expression env strm (fun rhs -> loop (op lhs rhs))
-      and loop lhs =
-        match Stream.peek strm with
-        | Some (Word "+") -> app (infix_float_bin (+.)) lhs
-        | Some (Word "-") -> app (infix_float_bin (-.)) lhs
-        | _ -> k lhs
-      in
-      loop lhs)
+and additive_expression env lst k =
+  let rec loop lhs = function
+    | Word "+" :: lst ->
+        multiplicative_expression env lst
+          (fun rhs lst -> loop (infix_float_bin (+.) lhs rhs) lst)
+    | Word "-" :: lst ->
+        multiplicative_expression env lst
+          (fun rhs lst -> loop (infix_float_bin (-.) lhs rhs) lst)
+    | lst ->
+        k lhs lst
+  in
+  multiplicative_expression env lst loop
 
-and multiplicative_expression env strm k =
-  power_expression env strm (fun lhs ->
-      let rec app op lhs =
-        Stream.junk strm;
-        power_expression env strm (fun rhs -> loop (op lhs rhs))
-      and loop lhs =
-        match Stream.peek strm with
-        | Some (Word "*") -> app (infix_float_bin ( *. )) lhs
-        | Some (Word "/") -> app (infix_float_bin ( /. )) lhs
-        | Some (Word "%") -> app (infix_float_bin mod_float) lhs
-        | _ -> k lhs
-      in
-      loop lhs)
+and multiplicative_expression env lst k =
+  let rec loop lhs = function
+    | Word "*" :: lst ->
+        power_expression env lst
+          (fun rhs lst -> loop (infix_float_bin ( *. ) lhs rhs) lst)
+    | Word "/" :: lst ->
+        power_expression env lst
+          (fun rhs lst -> loop (infix_float_bin ( /. ) lhs rhs) lst)
+    | Word "%" :: lst ->
+        power_expression env lst
+          (fun rhs lst -> loop (infix_float_bin mod_float lhs rhs) lst)
+    | lst ->
+        k lhs lst
+  in
+  power_expression env lst loop
 
-and power_expression env strm k =
-  unary_expression env strm (fun lhs ->
-      let rec loop lhs =
-        match Stream.peek strm with
-        | Some (Word "^") ->
-          Stream.junk strm;
-          unary_expression env strm
-            (fun rhs -> loop (infix_float_bin ( ** ) lhs rhs))
-        | _ -> k lhs
-      in
-      loop lhs)
+and power_expression env lst k =
+  let rec loop lhs = function
+    | Word "^" :: lst ->
+        unary_expression env lst
+          (fun rhs lst -> loop (infix_float_bin ( ** ) lhs rhs) lst)
+    | lst ->
+        k lhs lst
+  in
+  unary_expression env lst loop
 
-and unary_expression env strm k =
-  match Stream.peek strm with
-  | Some w when w == minus_word ->
-    Stream.junk strm;
-    unary_expression env strm
-      (fun rhs -> k (infix_float_una (fun n -> -. n) rhs))
-  | _ ->
-    final_expression env strm k
+and unary_expression env lst k =
+  match lst with
+  | w :: lst when w == minus_word ->
+      unary_expression env lst
+        (fun rhs lst -> k (infix_float_una (fun n -> -. n) rhs) lst)
+  | lst ->
+      final_expression env lst k
 
-and final_expression env strm k =
-  instruction env strm
-    (function
-      | Some a -> k a
-      | None -> error "did not produce a result")
-      
-and instruction env strm k =
-  match Stream.peek strm with
-    Some (Num _ as atom)
-  | Some (List _ as atom)
-  | Some (Array _ as atom) ->
-    Stream.junk strm;
-    k (Some atom)
-  | Some (Word "(") ->
-    Stream.junk strm;
-    begin match Stream.peek strm with
-    | Some (Word proc) when has_routine proc ->
-      Stream.junk strm;
-      eval_call env proc strm false k
-    | _ ->
-      expression env strm
-        (fun result ->
-          match Stream.peek strm with
-          | Some (Word ")") ->
-            Stream.junk strm;
-            k (Some result)
-          | Some a ->
-            error "expected ')', found %s" (string_of_datum a)
-          | None ->
-            error "expected ')'")
-    end
-  | Some (Word w) ->
-    Stream.junk strm;
-    if isnumber w then
-      let n = float_of_string w in
-      k (Some (Num n))
-    else if w.[0] = '\"' then
-      let w = stringfrom 1 w in
-      k (Some (Word w))
-    else if w.[0] = ':' then
-      let w = stringfrom 1 w in
-      k (Some (get_var env w))
-    else
-      eval_call env w strm true k
-  | None ->
-    assert false
+and final_expression env lst k =
+  instruction env lst
+    (fun res lst ->
+       match res with
+       | Some a -> k a lst
+       | None -> error "did not produce a result")
 
-and eval_call env proc strm natural k =
-  let eval_args len natural k =
+and instruction env lst k =
+  match lst with
+  | (Num _ as a) :: lst
+  | (List _ as a) :: lst
+  | (Array _ as a) :: lst ->
+      k (Some a) lst
+  | Word "(" :: Word proc :: lst when has_routine proc ->
+      eval_call env proc lst false k
+  | Word "(" :: lst ->
+      expression env lst
+        (fun res lst ->
+           match lst with
+           | Word ")" :: lst ->
+               k (Some res) lst
+           | a :: _ ->
+               error "expected ')', found %s" (string_of_datum a)
+           | [] ->
+               error "expected ')'")
+  | Word w :: lst ->
+      if isnumber w then
+        let n = float_of_string w in
+        k (Some (Num n)) lst
+      else if w.[0] = '\"' then
+        let w = stringfrom 1 w in
+        k (Some (Word w)) lst
+      else if w.[0] = ':' then
+        let w = stringfrom 1 w in
+        k (Some (get_var env w)) lst
+      else
+        eval_call env w lst true k
+  | [] ->
+      assert false
+
+and eval_call env proc lst natural k =
+  let eval_args len natural lst k =
     if natural then
-      let rec loop acc i =
-        if i >= len then k (List.rev acc)
+      let rec loop acc i lst =
+        if i >= len then
+          k (List.rev acc) lst
         else
-          match Stream.peek strm with
-          | Some _ ->
-            expression env strm (fun arg1 -> loop (arg1 :: acc) (i+1))
-          | None ->
-            error "not enough arguments for %s" (String.uppercase proc)
+          match lst with
+          | _ :: _ ->
+              expression env lst (fun arg1 lst -> loop (arg1 :: acc) (i+1) lst)
+          | [] ->
+              error "not enough arguments for %s" (String.uppercase proc)
       in
-      loop [] 0
+      loop [] 0 lst
     else
-      let rec loop acc =
-        match Stream.peek strm with
-        | Some (Word ")") ->
-          Stream.junk strm;
-          k (List.rev acc)
-        | Some _ ->
-          expression env strm (fun arg1 -> loop (arg1 :: acc))
-        | None ->
-          error "expected ')'"
+      let rec loop acc = function
+        | Word ")" :: lst ->
+            k (List.rev acc) lst
+        | _ :: _ as lst ->
+            expression env lst (fun arg1 lst -> loop (arg1 :: acc) lst)
+        | [] ->
+            error "expected ')'"
       in
-      loop []
+      loop [] lst
   in
   let Pf (fn, f) =
     try
@@ -356,46 +355,47 @@ and eval_call env proc strm natural k =
     with
     | Not_found -> error "Don't know how to %s" (String.uppercase proc)
   in
-  eval_args (default_num_args fn) natural (fun args -> apply env proc fn f args k)
+  eval_args (default_num_args fn) natural lst
+    (fun args lst -> apply env proc fn f args (fun res -> k res lst))
 
-let bool_expression env list k =
-  expression env (Stream.of_list list) (fun a ->
+let bool_expression env lst k =
+  expression env lst (fun a lst ->
       match value_of_atom Kbool a with
-      | Some b -> k b
+      | Some b -> k b (* ignore lst *)
       | None ->
-        error "boolen valued expected in [%s], got %s"
-          (string_of_datum_list list) (string_of_datum a))
-    
-let command env strm k =
-  instruction env strm
-    (function
-      | None -> k ()
-      | Some a -> error "don't know what to do with %s" (string_of_datum a))
+          error "boolen valued expected in [%s], got %s"
+            (string_of_datum_list lst) (string_of_datum a))
+
+let command env lst k =
+  instruction env lst
+    (fun res lst ->
+       match res with
+       | None -> k lst
+       | Some a -> error "don't know what to do with %s" (string_of_datum a))
 
 (* FIXME 'step' should only be called if 'k' it not invoked! *)
 
-let instructionlist env list k =
-  let strm = Stream.of_list list in
-  let rec step last =
-    match Stream.peek strm, last with
-    | Some _, Some a ->
-      error "You don't say what to do with %s" (string_of_datum a)
-    | Some _, None ->
-      instruction env strm step
-    | None, _ ->
-      k last
+let instructionlist env lst k =
+  let rec step last lst =
+    match lst, last with
+    | _ :: _, Some a ->
+        error "You don't say what to do with %s" (string_of_datum a)
+    | _ :: _ , None ->
+        instruction env lst step
+    | [], _ ->
+        k last
   in
-  step None
+  step None lst
 
-let commandlist env list k =
-  instructionlist env list
+let commandlist env lst k =
+  instructionlist env lst
     (function
       | Some a ->
-        error "You don't say what to do with %s" (string_of_datum a)
+          error "You don't say what to do with %s" (string_of_datum a)
       | None -> k ())
 
-let expressionlist env list k =
-  instructionlist env list
+let expressionlist env lst k =
+  instructionlist env lst
     (function
       | Some a -> k a
       | None -> error "value expected")
@@ -416,7 +416,7 @@ let get_comment_line str =
 
 type aux =
   { k : 'a. 'a fn -> (env -> 'a) -> unit }
-  
+
 let to_ ~raw ~name ~inputs ~body =
   let get_doc body =
     let b = Buffer.create 17 in
