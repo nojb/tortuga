@@ -210,38 +210,7 @@ let eval_list env lst k =
   in
   eval env lst loop
 
-let comment_re =
-  let open Re in
-  let re =
-    whole_string (seq [rep space; char ';'; greedy (rep space); group (rep any)])
-  in
-  compile re
-
-let get_comment_line str =
-  try
-    let subs = Re.exec comment_re str in
-    Some (Re.get subs 1)
-  with
-  | Not_found -> None
-
-(* let to_ ~raw ~name ~inputs ~body = *)
-(*   let get_doc body = *)
-(*     let b = Buffer.create 17 in *)
-(*     Buffer.add_string b (String.uppercase name); *)
-(*     List.iter (Printf.bprintf b " %s") inputs; *)
-(*     let rec loop = function *)
-(*       | (l :: lines) as rest -> *)
-(*         begin match get_comment_line l with *)
-(*         | None -> rest *)
-(*         | Some doc -> *)
-(*           Printf.bprintf b "\n%s" doc; *)
-(*           loop lines *)
-(*         end *)
-(*       | [] -> [] *)
-(*     in *)
-(*     let body = loop body in *)
-(*     Buffer.contents b, body *)
-(*   in *)
+(* let define ~name ~inputs ~body = *)
 (*   let body1 = *)
 (*     List.map (fun l -> LogoLex.parse_atoms [] false (Lexing.from_string l)) body *)
 (*   in *)
@@ -252,7 +221,6 @@ let get_comment_line str =
 (*     | [] -> *)
 (*       k () *)
 (*   in *)
-(*   let doc, body = get_doc body in *)
 (*   let rec loop : string list -> aux -> unit = fun inputs k -> *)
 (*     match inputs with *)
 (*     | input :: inputs -> *)

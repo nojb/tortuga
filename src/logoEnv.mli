@@ -24,8 +24,8 @@ open LogoTypes
 val create_env : unit -> env
 
 val new_frame : env -> env
-val new_exit : env -> (atom option -> unit) -> env
-val output : env -> atom option -> unit
+val new_exit : env -> (atom -> unit) -> env
+val output : env -> atom -> unit
 val new_continue : env -> (atom option -> unit) -> env
 val continue : env -> atom option -> unit
 

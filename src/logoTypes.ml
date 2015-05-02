@@ -1,6 +1,6 @@
 (* The MIT License (MIT)
 
-   Copyright (c) 2014 Nicolas Ojeda Bar <n.oje.bar@gmail.com>
+   Copyright (c) 2015 Nicolas Ojeda Bar <n.oje.bar@gmail.com>
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -27,23 +27,6 @@ type atom =
 
 exception Error of string
 
-module type TURTLE = sig
-  val get_heading : unit -> float
-  val set_heading : float -> unit
-  val get_pos : unit -> float * float
-  val set_pos : float -> float -> unit
-  val set_color : Gg.color -> unit
-  val move : float -> unit
-  val turn : float -> unit
-  val arc : float -> float -> unit
-  val set_size : float -> unit
-  val pen_down : unit -> unit
-  val pen_up : unit -> unit
-  val clean_screen : unit -> unit
-end
-
-type turtle = (module TURTLE)
-
 module NoCaseString = struct
   type t = string
   let equal s1 s2 =
@@ -64,7 +47,7 @@ type proc =
 
 and env =
   { locals : atom option H.t list;
-    output : atom option -> unit;
+    output : atom -> unit;
     continue : atom option -> unit;
     repcount : int list;
     mutable test : bool option }

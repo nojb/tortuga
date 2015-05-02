@@ -24,4 +24,4 @@ open LogoTypes
 val eval : env -> atom list -> (atom -> atom list -> unit) -> unit
 val eval_bool : env -> atom list -> (bool -> atom list -> unit) -> unit
 val eval_list : env -> atom list -> (atom -> unit) -> unit
-(* val to_ : raw:string list -> name:string -> inputs:string list -> body:string list -> unit *)
+(* val define : raw:string list -> name:string -> inputs:string list -> body:string list -> unit *)

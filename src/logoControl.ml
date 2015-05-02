@@ -57,208 +57,104 @@ let repeat env args k =
   | _ ->
       error "repeat: bad arg list"
 
+(* FIXME should be able to stop on STOP or THROW *)
+let forever env args k =
+  match args with
+  | List lst :: [] ->
+      let lst = reparse lst in
+      let rec loop env =
+        eval_list env lst (fun _ -> loop (step_repcount env))
+      in
+      loop (start_repcount env)
+  | _ ->
+      error "forever: bad arg list"
+
+let repcount env args k =
+  match args with
+  | [] ->
+      k (Num (float (LogoEnv.repcount env)))
+  | _ ->
+      error "repcount: bad arg list"
+
+(* let eval_tf env tf k = *)
+(*   match tf with *)
+(*   | `L w -> k w *)
+(*   | `R lst -> *)
+(*       bool_expression env lst k *)
+
+let is_true = function
+  | Word "FALSE" -> false
+  | _ -> true
+
+let if_ env args k =
+  match args with
+  | tf :: List yay :: [] ->
+      if is_true tf then
+        eval_list env (reparse yay) k
+      else
+        k (Word "NIL")
+  | tf :: List yay :: List nay :: [] ->
+      if is_true tf then
+        eval_list env (reparse yay) k
+      else
+        eval_list env (reparse nay) k
+  | _ ->
+      error "if: bad arg list"
+
+let ifelse env args k =
+  match args with
+  | tf :: List yay :: List nay :: [] ->
+      if is_true tf then
+        eval_list env (reparse yay) k
+      else
+        eval_list env (reparse nay) k
+  | _ ->
+      error "ifelse: bad arg list"
+
+let test env args k =
+  match args with
+  | arg :: [] ->
+      set_test env (is_true arg);
+      k (Word "NIL")
+  | _ ->
+      error "test: bad arg list"
+
+let iftrue env args k =
+  match args with
+  | List args :: [] ->
+      if get_test env then
+        eval_list env (reparse args) k
+      else
+        k (Word "NIL")
+  | _ ->
+      error "iftrue: bad arg list"
+
+let iffalse env args k =
+  match args with
+  | List args :: [] ->
+      if get_test env then
+        k (Word "NIL")
+      else
+        eval_list env (reparse args) k
+  | _ ->
+      error "iffalse: bad arg list"
+
+let stop env args _ =
+  match args with
+  | [] ->
+      output env (Word "NIL")
+  | _ ->
+      error "stop: bad arg list"
+
+let output env args _ =
+  match args with
+  | arg :: [] ->
+      output env arg
+  | _ ->
+      error "output: bad arg list"
+
 (*
-let forever =
-  let names = ["forever"] in
-  let doc =
-
-    "\
-FOREVER instructionlist
-
-    Command. Runs the \"instructionlist\" repeatedly, until something inside the
-    instructionlist (such as STOP or THROW) makes it stop."
-
-  in
-  let args = Lga.(env @@ list any @-> ret retvoid) in
-  let f env list =
-    let rec loop env =
-      instructionlist env (reparse list)
-        (function
-          | Some _ -> raise (Error "forever: instruction list should not produce a value")
-          | None -> loop (step_repcount env))
-    in
-    loop (start_repcount env)
-  in
-  prim ~names ~doc ~args ~f
-
-let repcount =
-  let names = ["repcount"; "#"] in
-  let doc =
-
-    "\
-REPCOUNT
-
-    Outputs the repetition count of the innermost current REPEAT or FOREVER,
-    starting from 1. If no REPEAT or FOREVER is active, outputs –1.
-
-    The abbreviation # can be used for REPCOUNT unless the REPEAT is inside the
-    template input to a higher order procedure such as FOREACH, in which case #
-    has a different meaning."
-
-  in
-  let args = Lga.(env @@ ret (value int)) in
-  let f env = LogoEnv.repcount env in
-  prim ~names ~doc ~args ~f
-
-let eval_tf env tf k =
-  match tf with
-  | `L w -> k w
-  | `R lst ->
-      bool_expression env lst k
-
-let if_ =
-  let names = ["if"] in
-  let doc =
-
-    "\
-IF tf instructionlist
-(IF tf instructionlist1 instructionlist2)
-
-    Command. If the first input has the value TRUE, then IF runs the second
-    input. If the first input has the value FALSE, then IF does nothing. (If
-    given a third input, IF acts like IFELSE, as described below.) It is an
-    error if the first input is not either TRUE or FALSE.
-
-    For compatibility with earlier versions of Logo, if an IF instruction is not
-    enclosed in parentheses, but the first thing on the instruction line after
-    the second input expression is a literal list (i.e., a list in square
-    brackets), the IF is treated as if it were IFELSE, but a warning message is
-    given. If this aberrant IF appears in a procedure body, the warning is given
-    only the first time the procedure is invoked in each Logo session."
-
-  in
-  let args = Lga.(env @@ alt bool (list any) @-> list any @-> opt (list any) cont) in
-  let f env tf iftrue iffalse k =
-    match iffalse with
-    | None ->
-        eval_tf env tf
-          (function
-            | true ->
-                commandlist env (reparse iftrue) (fun () -> k None)
-            | false ->
-                k None)
-    | Some iffalse ->
-        eval_tf env tf
-          (function
-            | true ->
-                instructionlist env (reparse iftrue) k
-            | false ->
-                instructionlist env (reparse iffalse) k)
-  in
-  prim ~names ~doc ~args ~f
-
-let ifelse =
-  let names = ["ifelse"] in
-  let doc =
-
-    "\
-IFELSE tf instructionlist1 instructionlist2
-
-    Command or operation. If the first input has the value TRUE, then IFELSE
-    runs the second input. If the first input has the value FALSE, then IFELSE
-    runs the third input. IFELSE outputs a value if the instructionlist contains
-    an expression that outputs a value."
-
-  in
-  let args = Lga.(env @@ alt bool (list any) @-> list any @-> list any @-> ret cont) in
-  let f env tf iftrue iffalse k =
-    eval_tf env tf
-      (function
-        | true ->
-          instructionlist env (reparse iftrue) k
-        | false ->
-          instructionlist env (reparse iffalse) k)
-  in
-  prim ~names ~doc ~args ~f
-
-let test =
-  let names = ["test"] in
-  let doc =
-
-    "\
-TEST tf
-
-    Command. Remembers its input, which must be TRUE or FALSE, for use by later
-    IFTRUE or IFFALSE instructions. The effect of TEST is local to the procedure
-    in which it is used; any corresponding IFTRUE or IFFALSE must be in the same
-    procedure or a subprocedure."
-
-  in
-  let args = Lga.(env @@ alt bool (list any) @-> ret retvoid) in
-  let f env tf = eval_tf env tf (set_test env) in
-  prim ~names ~doc ~args ~f
-
-let iftrue =
-  let names = ["iftrue"; "ift"] in
-  let doc =
-
-    "\
-IFTRUE instructionlist
-IFT instructionlist
-
-    Command. Runs its input if the most recent TEST instruction had a TRUE
-    input. The TEST must have been in the same procedure or a superprocedure."
-
-  in
-  let args = Lga.(env @@ list any @-> ret cont) in
-  let f env list k =
-    if get_test env then commandlist env (reparse list) (fun () -> k None) else k None
-  in
-  prim ~names ~doc ~args ~f
-
-let iffalse =
-  let names = ["iffalse"; "iff"] in
-  let doc =
-
-    "\
-IFFALSE instructionlist
-IFF instructionlist
-
-    Command. Runs its input if the most recent TEST instruction had a FALSE
-    input. The TEST must have been in the same procedure or a superprocedure."
-
-  in
-  let args = Lga.(env @@ list any @-> ret cont) in
-  let f env list k =
-    if get_test env then k None else commandlist env (reparse list) (fun () -> k None)
-  in
-  prim ~names ~doc ~args ~f
-
-let stop =
-  let names = ["stop"] in
-  let doc =
-
-    "\
-STOP
-
-    Command. Ends the running of the procedure in which it appears. Control is
-    returned to the context in which that procedure was invoked. The stopped
-    procedure does not output a value."
-
-  in
-  let args = Lga.(env @@ ret cont) in
-  let f env _ = output env None in
-  prim ~names ~doc ~args ~f
-
-let output =
-  let names = ["output"; "op"] in
-  let doc =
-
-    "\
-OUTPUT value
-OP value
-
-    Command. Ends the running of the procedure in which it appears. That
-    procedure outputs the value value to the context in which it was
-    invoked. Don't be confused: OUTPUT itself is a command, but the procedure
-    that invokes OUTPUT is an operation."
-
-  in
-  let args = Lga.(env @@ any @-> ret cont) in
-  let f env thing _ = output env (Some thing) in
-  prim ~names ~doc ~args ~f
-
-let catch =
+let catch env args k =
   let names = ["catch"] in
   let doc =
 
@@ -297,7 +193,9 @@ CATCH tag instructionlist
       k v
   in
   prim ~names ~doc ~args ~f
+*)
 
+(*
 let throw =
   let names = ["throw"] in
   let doc =
@@ -530,23 +428,22 @@ UNTIL tfexpression instructionlist		(library procedure)
   in
   prim ~names ~doc ~args ~f
 *)
+
 let () =
   add_pfcn "run" 1 run;
-  add_pfcn "repeat" 2 repeat
+  add_pfcn "repeat" 2 repeat;
+  add_pfcn "forever" 1 forever;
+  add_pfcn "repcount" 0 repcount;
+  add_pfcn "#" 0 repcount;
+  add_pfcn "if" 2 if_;
+  add_pfcn "ifelse" 3 ifelse;
+  add_pfcn "test" 1 test;
+  add_pfcn "iftrue" 1 iftrue;
+  add_pfcn "iffalse" 1 iffalse;
+  add_pfcn "stop" 0 stop;
+  add_pfcn "output" 1 output
   (* List.iter add_prim
     [
-      run;
-      runresult;
-      repeat;
-      forever;
-      repcount;
-      if_;
-      ifelse;
-      test;
-      iftrue;
-      iffalse;
-      stop;
-      output;
       catch;
       throw;
       pause;
