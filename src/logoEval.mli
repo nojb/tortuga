@@ -1,6 +1,6 @@
 (* The MIT License (MIT)
 
-   Copyright (c) 2014 Nicolas Ojeda Bar <n.oje.bar@gmail.com>
+   Copyright (c) 2015 Nicolas Ojeda Bar <n.oje.bar@gmail.com>
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -21,17 +21,7 @@
 
 open LogoTypes
 
-val default_num_args : 'a fn -> int
-val atom_of_value : 'a ty -> 'a -> atom
-val default_value : 'a ty -> 'a
-val value_of_atom : 'a ty -> atom -> 'a option
-val string_of_type : 'a ty -> string
-
-val expression : env -> atom list -> (atom -> atom list -> unit) -> unit
-val bool_expression : env -> atom list -> (bool -> unit) -> unit
-val instruction : env -> atom list -> (atom option -> atom list -> unit) -> unit
-val command : env -> atom list -> (atom list -> unit) -> unit
-val instructionlist : env -> atom list -> (atom option -> unit) -> unit
-val expressionlist : env -> atom list -> (atom -> unit) -> unit
-val commandlist : env -> atom list -> (unit -> unit) -> unit
-val to_ : raw:string list -> name:string -> inputs:string list -> body:string list -> unit
+val eval : env -> atom list -> (atom -> atom list -> unit) -> unit
+val eval_bool : env -> atom list -> (bool -> atom list -> unit) -> unit
+val eval_list : env -> atom list -> (atom -> unit) -> unit
+(* val to_ : raw:string list -> name:string -> inputs:string list -> body:string list -> unit *)

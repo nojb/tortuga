@@ -24,160 +24,78 @@
 open LogoTypes
 open LogoAtom
 open LogoGlobals
-  
+
 (** 4.1 Numeric Operations *)
 
-let sum =
-  let names = ["sum"] in
-  let doc =
-
-    "\
-SUM num1 num2
-(SUM num1 num2 num3 ...)
-num1 + num2
-
-    Outputs the sum of its inputs."
-
+let sum args =
+  let rec loop acc = function
+    | [ ] -> Num acc
+    | Num x :: xs ->
+        loop (x +. acc) xs
+    | _ ->
+        error "sum: expected number argument"
   in
-  let args = Lga.(num @-> num @-> rest num (value num)) in
-  let f num1 num2 nums =
-    List.fold_left (+.) (num1 +. num2) nums
+  loop 0.0 args
+
+let difference n1 n2 =
+  match n1, n2 with
+  | Num n1, Num n2 ->
+      Num (n1 -. n2)
+  | _ ->
+      error "difference: wrong no of arguments"
+
+let minus = function
+  | Num n ->
+      Num (-. n)
+  | _ ->
+      error "minus: wrong type of argument"
+
+let product args =
+  let rec loop acc = function
+    | [ ] -> Num acc
+    | Num x :: xs ->
+        loop (acc *. x) xs
+    | _ ->
+        error "product: wrong arg list"
   in
-  prim ~names ~doc ~args ~f
+  loop 1.0 args
 
-let difference =
-  let names = ["difference"] in
-  let doc =
-
-    "\
-DIFFERENCE num1 num2
-num1 - num2
-
-    Outputs the difference of its inputs. Minus sign means infix difference in
-    ambiguous contexts (when preceded by a complete expression), unless it is
-    preceded by a space and followed by a nonspace. (See also MINUS.)"
-
-  in
-  let args = Lga.(num @-> num @-> ret (value num)) in
-  let f num1 num2 = num1 -. num2 in
-  prim ~names ~doc ~args ~f
-
-let minus =
-  let names = ["minus"] in
-  let doc =
-
-    "\
-MINUS num
-- num
-
-    Outputs the negative of its input. Minus sign means unary minus if the
-    previous token is an infix operator or open parenthesis, or it is preceded
-    by a space and followed by a nonspace. There is a difference in binding
-    strength between the two forms:
- 	
-      MINUS 3 + 4     means   -(3+4)
-      - 3 + 4         means   (-3)+4."
-
-  in
-  let args = Lga.(num @-> ret (value num)) in
-  let f n = -. n in
-  prim ~names ~doc ~args ~f
-
-let product =
-  let names = ["product"] in
-  let doc =
-
-    "\
-PRODUCT num1 num2
-(PRODUCT num1 num2 num3 ...)
-num1 * num2
-outputs the product of its inputs."
-
-  in
-  let args = Lga.(num @-> num @-> rest num (value num)) in
-  let f num1 num2 nums =
-    List.fold_left ( *. ) (num1 *. num2) nums
-  in
-  prim ~names ~doc ~args ~f
-
-let remainder =
-  let names = ["remainder"] in
-  let doc =
-
-    "\
-REMAINDER num1 num2
-
-    Outputs the remainder on dividing num1 by num2; both must be integers and
-    the result is an integer with the same sign as num1."
-
-  in
-  let args = Lga.(num @-> num @-> ret (value num)) in
-  let f a b = mod_float a b in
-  prim ~names ~doc ~args ~f
+let remainder num1 num2 =
+  match num1, num2 with
+  | Num n1, Num n2 ->
+      Num (mod_float n1 n2)
+  | _ ->
+      error "remainder: wrong arg list"
 
 (* modulo: not implemented *)
 
-let int =
-  let names = ["int"] in
-  let doc =
+let int = function
+  | Num n ->
+      Num (float (truncate n))
+  | _ ->
+      error "int: wrong arg list"
 
-    "\
-INT num
+let round = function
+  | Num n ->
+      Num (floor (n +. 0.5))
+  | _ ->
+      error "round: bad arg list"
 
-    Outputs its input with fractional part removed, i.e., an integer with the
-    same sign as the input, whose absolute value is the largest integer less
-    than or equal to the absolute value of the input."
+let sqrt = function
+  | Num n ->
+      Num (sqrt n)
+  | _ ->
+      error "sqrt: bad arg list"
 
-  in
-  let args = Lga.(num @-> ret (value int)) in
-  let f num = truncate num in
-  prim ~names ~doc ~args ~f
-
-let round =
-  let names = ["round"] in
-  let doc =
-
-    "\
-ROUND num
-
-    Outputs the nearest integer to the input."
-
-  in
-  let args = Lga.(num @-> ret (value num)) in
-  let f num = floor (num +. 0.5) in
-  prim ~names ~doc ~args ~f
-
-let sqrt =
-  let names = ["sqrt"] in
-  let doc =
-
-    "\
-SQRT num
-
-    Outputs the square root of the input, which must be nonnegative."
-
-  in
-  let args = Lga.(nn_num @-> ret (value num)) in
-  let f num = sqrt num in
-  prim ~names ~doc ~args ~f
-  
-let power =
-  let names = ["power"] in
-  let doc =
-
-    "\
-POWER num1 num2
-
-    Outputs num1 to the num2 power. If num1 is negative, then num2 must be an
-    integer."
-
-  in
-  let args = Lga.(num @-> num @-> ret (value num)) in
-  let f a b = a ** b in
-  prim ~names ~doc ~args ~f
+let power n1 n2 =
+  match n1, n2 with
+  | Num n1, Num n2 ->
+      Num (n1 ** n2)
+  | _ ->
+      error "power: bad arg list"
 
 (** 4.2 Numeric Predicates *)
-
+(*
 let lessp =
   let names = ["lessp"; "less?"] in
   let doc =
@@ -319,7 +237,7 @@ FORM num width precision
 
     As a debugging feature, (FORM num -1 format) will print the floating point
     num according to the C printf format, to allow
-	
+
       to hex :num
         op form :num -1 \"|%08X %08X|
       end
@@ -396,19 +314,18 @@ BITNOT num
   let args = Lga.(int @-> ret (value int)) in
   let f num = lnot num in
   prim ~names ~doc ~args ~f
+*)
 
 let () =
-  List.iter add_prim
-    [
-      sum;
-      difference;
-      minus;
-      product;
-      remainder;
-      int;
-      round;
-      sqrt;
-      power;
+  add_pfn "sum" sum;
+  add_pf2 "difference" difference;
+  add_pf1 "minus" minus;
+  add_pfn "product" product;
+  add_pf2 "remainder" remainder;
+  add_pf1 "int" int;
+  add_pf1 "round" round;
+  add_pf1 "sqrt" sqrt;
+(*      power;
 
       lessp;
       greaterp;
@@ -425,3 +342,4 @@ let () =
       bitxor;
       bitnot
     ]
+*)

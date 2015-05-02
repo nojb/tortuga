@@ -54,40 +54,18 @@ end
 
 module H = Hashtbl.Make (NoCaseString)
 
-type _ ty =
-  | Kbool : bool ty
-  | Kint : int ty
-  | Knum : float ty
-  | Kword : string ty
-  | Klist : 'a ty -> 'a list ty
-  | Karray : 'a ty -> ('a array * int) ty
-  | Kany : atom ty
-  | Kpred : 'a ty * ('a -> bool) * string -> 'a ty
-  | Kalt : 'a ty * 'b ty -> [ `L of 'a | `R of 'b ] ty
+type proc =
+  | Pf0 of (unit -> atom)
+  | Pf1 of (atom -> atom)
+  | Pf2 of (atom -> atom -> atom)
+  | Pf3 of (atom -> atom -> atom -> atom)
+  | Pfn of (atom list -> atom)
+  | Pfcn of (env -> atom list -> (atom -> unit) -> unit)
 
-and _ ret =
-  | Kcont : ((atom option -> unit) -> unit) ret
-  | Kretvoid : unit ret
-  | Kvalue : 'a ty -> 'a ret
-  
-and _ fn =
-  | Kfix : 'a ty * 'b fn -> ('a -> 'b) fn
-  | Kopt : 'a ty * 'b ret -> ('a option -> 'b) fn
-  | Krest : 'a ty * 'b ret -> ('a list -> 'b) fn
-  | Kret : 'a ret -> 'a fn
-  | Kvoid : 'a fn -> (unit -> 'a) fn
-  | Kenv : 'a fn -> (env -> 'a) fn
-  | Kturtle : 'a fn -> (turtle -> 'a) fn
-
-and proc =
-    Pf : 'a fn * 'a -> proc
-
-and env = {
-  locals : atom option H.t list;
-  output : atom option -> unit;
-  turtle : turtle;
-  continue : atom option -> unit;
-  repcount : int list;
-  mutable test : bool option
-}
-
+and env =
+  { locals : atom option H.t list;
+    output : atom option -> unit;
+    turtle : turtle;
+    continue : atom option -> unit;
+    repcount : int list;
+    mutable test : bool option }

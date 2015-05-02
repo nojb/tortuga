@@ -34,48 +34,14 @@ exception Pause of env
 
 (** 8.1 Control *)
 
-let run =
-  let names = ["run"] in
-  let doc =
+let run env args k =
+  eval_list env (reparse args) k
 
-    "\
-RUN instructionlist
+(* let runresult env args k = *)
+(*   instructionlist env (reparse args) *)
+(*     (function None -> k (Some (List [])) | Some a -> k (Some (List [a]))) *)
 
-    Command or operation. Runs the Logo instructions in the input list; outputs
-    if the list contains an expression that outputs."
-
-  in
-  let args = Lga.(env @@ list any @-> ret cont) in
-  let f env list k =
-    instructionlist env (reparse list) k
-  in
-  prim ~names ~doc ~args ~f
-
-let runresult =
-  let names = ["runresult"] in
-  let doc =
-
-    "\
-RUNRESULT instructionlist
-
-    Runs the instructions in the input; outputs an empty list if those
-    instructions produce no output, or a list whose only member is the output
-    from running the input instructionlist. Useful for inventing
-    command-or-operation control structures:
-
-      local \"result
-      make \"result runresult [something]
-      if emptyp :result [stop]
-      output first :result"
-
-  in
-  let args = Lga.(env @@ list any @-> ret cont) in
-  let f env list k =
-    instructionlist env (reparse list)
-      (function None -> k (Some (List [])) | Some a -> k (Some (List [a])))
-  in
-  prim ~names ~doc ~args ~f
-
+(*
 let repeat =
   let names = ["repeat"] in
   let doc =
@@ -572,9 +538,11 @@ UNTIL tfexpression instructionlist		(library procedure)
     loop ()
   in
   prim ~names ~doc ~args ~f
-
+*)
 let () =
-  List.iter add_prim
+  add_pfcn "run" run;
+  (* add_pfcn "runresult" runresult *)
+  (* List.iter add_prim
     [
       run;
       runresult;
@@ -599,3 +567,4 @@ let () =
       do_until;
       until
     ]
+  *)

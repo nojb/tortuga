@@ -21,7 +21,7 @@
 
 open LogoTypes
 open LogoPrint
-  
+
 let error fmt =
   Printf.ksprintf (fun err -> raise (Error err)) fmt
 
@@ -33,14 +33,6 @@ let isnumber =
   let re = compile re in
   fun w -> execp re w
 
-TEST = isnumber "123"
-TEST = isnumber "123e-3"
-TEST = isnumber ".12e+12"
-TEST = not (isnumber "1e-")
-TEST = isnumber "3.4"
-TEST = not (isnumber "a")
-TEST = not (isnumber "3.e12")
-
 let isint s =
   let rec loop i =
     if i >= String.length s then i > 0
@@ -50,11 +42,6 @@ let isint s =
       | _ -> false
   in
   loop 0
-
-TEST = isint "1234"
-TEST = not (isint " 123")
-TEST = not (isint "a")
-TEST = not (isint "")
 
 let rec bprint_datum b = function
   | Num n ->
@@ -113,37 +100,6 @@ let parse str =
 
 let reparse list =
   parse (string_of_datum_list list)
-
-module Lga = struct
-  let bool = Kbool
-  let int = Kint
-  let word = Kword
-  let num = Knum
-  let list ty = Klist ty
-  let array ty = Karray ty
-  let any = Kany
-  let pos_int = Kpred (Kint, (fun x -> x > 0), "positive")
-  let pos_num = Kpred (Knum, (fun x -> x > 0.0), "positive")
-  let nn_int = Kpred (Kint, (fun x -> x >= 0), "non-negative")
-  let nn_num = Kpred (Knum, (fun x -> x >= 0.0), "non-negative")
-  let ne_list ty = Kpred (Klist ty, (function [] -> false | _ :: _ -> true), "non-empty")
-  let alt ty1 ty2 = Kalt (ty1, ty2)
-  let fix_list ty n =
-    Kpred (Klist ty, (function l -> List.length l = n), "list of length " ^ string_of_int n)
-  
-  let cont = Kcont
-  let retvoid = Kretvoid
-  let value ty = Kvalue ty
-
-  let (@->) ty fn = Kfix (ty, fn)
-      
-  let opt ty ret = Kopt (ty, ret)
-  let rest ty ret = Krest (ty, ret)
-  let ret ret = Kret ret
-  let void fn = Kvoid fn
-  let env fn = Kenv fn
-  let turtle fn = Kturtle fn
-end
 
 let print_datum d = print (string_of_datum d)
 

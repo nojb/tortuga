@@ -53,19 +53,19 @@ let render name =
   in
 
   (* 1. Define your image *)
-      
+
   let size = Size2.v 400. 400. (* mm *) in
   let view = Box2.v_mid P2.o (Size2.v 800. 800.) in
   let image = !t.image in
 
   (* 2. Render *)
-  
+
   let xmp = Vgr.xmp () in
   let warn w = Vgr.pp_warning Format.err_formatter w in
   let r = Vgr.create ~warn (Vgr_pdf.target ~xmp ()) (`Channel out) in
   ignore (Vgr.render r (`Image (size, view, image)));
   ignore (Vgr.render r `End);
-  
+
   close_out out;
 
   LogoPrint.cprintlf "Output written to %s" name
@@ -108,7 +108,7 @@ let arc angle r =
   let outl = I.cut ~area:(`O !t.outline) path paintcol in
   let image = !t.image >> I.blend outl in
   t := { !t with image }
-  
+
 let set_size size =
   let outline = { !t.outline with P.width = size } in
   t := { !t with outline }
@@ -122,5 +122,5 @@ let pen_down () =
 let clean_screen () =
   t := { !t with image = I.const !t.background }
 
-let _ =
-  set_pf "render" LogoAtom.Lga.(opt word retvoid) render
+(* let _ = *)
+  (* set_pf "render" LogoAtom.Lga.(opt word retvoid) render *)

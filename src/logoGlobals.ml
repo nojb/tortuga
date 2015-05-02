@@ -21,14 +21,14 @@
 
 open LogoTypes
 open LogoAtom
-  
-type proc_info = {
-  proc_doc : string option;
-  proc_fun : proc;
-  proc_raw : string list option
-}
 
-let routines : proc_info H.t = H.create 17
+(* type proc_info = { *)
+(*   proc_doc : string option; *)
+(*   proc_fun : proc; *)
+(*   proc_raw : string list option *)
+(* } *)
+
+let routines : proc H.t = H.create 17
 
 let globals : atom H.t = H.create 17
 
@@ -60,40 +60,36 @@ let palette =
       H.add pal name col) default_colors;
   pal
 
-type primitive =
-  string list * proc_info
+let add_pf name proc =
+  H.add routines name proc
 
-let prim ~names ?doc ~args ~f =
-  names, { proc_doc = doc; proc_fun = Pf (args, f); proc_raw = None }
+let add_pf0 name f = add_pf name (Pf0 f)
+let add_pf1 name f = add_pf name (Pf1 f)
+let add_pf2 name f = add_pf name (Pf2 f)
+let add_pfn name f = add_pf name (Pfn f)
+let add_pfcn name f = add_pf name (Pfcn f)
 
-let add_prim (names, p) =
-  List.iter (fun n -> H.add routines n p) names
-
-let set_pf : 'a. string -> 'a fn -> 'a -> unit =
-  fun name args f ->
-    H.add routines name { proc_doc = None; proc_fun = Pf (args, f); proc_raw = None }
-
-let add_proc: 'a. name:string -> raw:string list -> ?doc:string -> args:'a fn -> f:'a -> unit =
-  fun ~name ~raw ?doc ~args ~f ->
-    H.add routines name { proc_doc = doc; proc_fun = Pf (args, f); proc_raw = Some raw }
+(* let add_proc: 'a. name:string -> raw:string list -> ?doc:string -> args:'a fn -> f:'a -> unit = *)
+(*   fun ~name ~raw ?doc ~args ~f -> *)
+(*     H.add routines name { proc_doc = doc; proc_fun = Pf (args, f); proc_raw = Some raw } *)
 
 let has_routine name =
   H.mem routines name
 
-let get_routine name =
-  let p = H.find routines name in
-  p.proc_fun
+(* let get_routine name = *)
+(*   let p = H.find routines name in *)
+(*   p.proc_fun *)
 
 let fold_routines f b =
   H.fold (fun name _ b -> f name b) routines b
 
-let get_help name =
-  try
-    let p = H.find routines name in
-    p.proc_doc
-  with
-  | Not_found -> None
-  
+(* let get_help name = *)
+(*   try *)
+(*     let p = H.find routines name in *)
+(*     p.proc_doc *)
+(*   with *)
+(*   | Not_found -> None *)
+
 let set_global name data =
   H.replace globals name data
 
@@ -126,7 +122,7 @@ let put_prop plist name value =
       h
   in
   H.replace p name value
-  
+
 let get_prop plist name =
   try
     let p = H.find plists plist in
