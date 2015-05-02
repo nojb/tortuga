@@ -1,6 +1,6 @@
 (* The MIT License (MIT)
 
-   Copyright (c) 2014 Nicolas Ojeda Bar <n.oje.bar@gmail.com>
+   Copyright (c) 2015 Nicolas Ojeda Bar <n.oje.bar@gmail.com>
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,7 @@ module G = Graphics
 
 let round d =
   int_of_float (floor (d +. 0.5))
-    
+
 let _ =
   G.open_graph "";
   G.moveto (G.size_x () / 2) (G.size_y () / 2)
@@ -62,7 +62,7 @@ let move d =
   let dy = d *. sin (rad_of_deg !theta) in
   let dy = round dy in
   if !pendown then G.rlineto dx dy else G.rmoveto dx dy
-  
+
 let turn r =
   theta := !theta -. r
 
@@ -80,6 +80,6 @@ let pen_down () =
 
 let pen_up () =
   pendown := false
-  
+
 let clean_screen () =
   G.clear_graph ()

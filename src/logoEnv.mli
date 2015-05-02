@@ -21,7 +21,7 @@
 
 open LogoTypes
 
-val create_env : turtle -> env
+val create_env : unit -> env
 
 val new_frame : env -> env
 val new_exit : env -> (atom option -> unit) -> env

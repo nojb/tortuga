@@ -32,7 +32,7 @@ open LogoAtom
 (* module L3 = LogoComm *)
 module L4 = LogoArithmetic
 (* module L5 = LogoLogic *)
-(* module L6 = LogoGraphics *)
+module L6 = LogoGraphics.Make (LogoTurtleGraphics)
 (* module L7 = LogoWork *)
 (* module L8 = LogoControl *)
 
@@ -122,7 +122,7 @@ let print_terminated term s =
     return ()
 
 let main () =
-  let env = create_env (module LogoTurtleVg) in
+  let env = create_env () in
   let history = LTerm_history.create [] in
   let b = Buffer.create 17 in
   cprint_function := Buffer.add_string b;

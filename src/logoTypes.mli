@@ -27,23 +27,6 @@ type atom =
 
 exception Error of string
 
-module type TURTLE = sig
-  val get_heading : unit -> float
-  val set_heading : float -> unit
-  val get_pos : unit -> float * float
-  val set_pos : float -> float -> unit
-  val set_color : Gg.color -> unit
-  val move : float -> unit
-  val turn : float -> unit
-  val arc : float -> float -> unit
-  val set_size : float -> unit
-  val pen_down : unit -> unit
-  val pen_up : unit -> unit
-  val clean_screen : unit -> unit
-end
-
-type turtle = (module TURTLE)
-
 module H : Hashtbl.S with type key = string
 
 type proc =
@@ -57,7 +40,6 @@ type proc =
 and env =
   { locals : atom option H.t list;
     output : atom option -> unit;
-    turtle : turtle;
     continue : atom option -> unit;
     repcount : int list;
     mutable test : bool option }

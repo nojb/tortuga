@@ -1,6 +1,6 @@
 (* The MIT License (MIT)
 
-   Copyright (c) 2014 Nicolas Ojeda Bar <n.oje.bar@gmail.com>
+   Copyright (c) 2015 Nicolas Ojeda Bar <n.oje.bar@gmail.com>
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -25,154 +25,210 @@ open Gg
 open LogoTypes
 open LogoAtom
 open LogoGlobals
-  
-(** 6.1 Turtle Motion *)
 
-let forward (module T : TURTLE) dist =
-  T.move dist
+module type TURTLE = sig
+  val get_heading : unit -> float
+  val set_heading : float -> unit
+  val get_pos : unit -> float * float
+  val set_pos : float -> float -> unit
+  val set_color : Gg.color -> unit
+  val move : float -> unit
+  val turn : float -> unit
+  val arc : float -> float -> unit
+  val set_size : float -> unit
+  val pen_down : unit -> unit
+  val pen_up : unit -> unit
+  val clean_screen : unit -> unit
+end
 
-let back (module T : TURTLE) dist =
-  T.move (-. dist)
+module Make (T : TURTLE) = struct
 
-let left (module T : TURTLE) deg =
-  T.turn (-. deg)
+  (** 6.1 Turtle Motion *)
 
-let right (module T : TURTLE) deg =
-  T.turn deg
+  let forward = function
+    | Num dist ->
+        T.move dist;
+        Word "NIL"
+    | _ ->
+        error "forward: bad arg list"
 
-let setpos (module T : TURTLE) l =
-  T.set_pos (List.nth l 0) (List.nth l 1)
-  
-let setxy (module T : TURTLE) x y =
-  T.set_pos x y
+  let back = function
+    | Num dist ->
+        T.move (-. dist);
+        Word "NIL"
+    | _ ->
+        error "back: bad arg list"
 
-let setx (module T : TURTLE) x =
-  let _, y = T.get_pos () in
-  T.set_pos x y
+  let left = function
+    | Num deg ->
+        T.turn (-. deg);
+        Word "deg"
+    | _ ->
+        error "left: bad arg list"
 
-let sety (module T : TURTLE) y =
-  let x, _ = T.get_pos () in
-  T.set_pos x y
+  let right = function
+    | Num deg ->
+        T.turn deg;
+        Word "NIL"
+    | _ ->
+        error "right: bad arg list"
 
-let setheading (module T : TURTLE) h =
-  T.set_heading h
+  let setxy x y =
+    match x, y with
+    | Num x, Num y ->
+        T.set_pos x y;
+        Word "NIL"
+    | _ ->
+        error "setxy: bad arg list"
 
-let home (module T : TURTLE) =
-  T.set_pos 0.0 0.0;
-  T.set_heading 0.0
+  let setx = function
+    | Num x ->
+        let _, y = T.get_pos () in
+        T.set_pos x y;
+        Word "NIL"
+    | _ ->
+        error "setx: bad arg list"
 
-let arc (module T : TURTLE) angle radius =
-  T.arc angle radius
+  let sety = function
+    | Num y ->
+        let x, _ = T.get_pos () in
+        T.set_pos x y;
+        Word "NIL"
+    | _ ->
+        error "sety: bad arg list"
 
-(** 6.2 Turtle Motion Queries *)
+  let setheading = function
+    | Num h ->
+        T.set_heading h;
+        Word "NIL"
+    | _ ->
+        error "setheading: bad arg list"
 
-let pos (module T : TURTLE) =
-  let x, y = T.get_pos () in
-  [x; y]
+  let home () =
+    T.set_pos 0.0 0.0;
+    T.set_heading 0.0;
+    Word "NIL"
 
-let xcor (module T : TURTLE) =
-  let x, _ = T.get_pos () in
-  x
+  let arc angle radius =
+    match angle, radius with
+    | Num angle, Num radius ->
+        T.arc angle radius;
+        Word "NIL"
+    | _ ->
+        error "arc: bad arg list"
 
-let ycor (module T : TURTLE) =
-  let _, y = T.get_pos () in
-  y
+  (** 6.2 Turtle Motion Queries *)
 
-let heading (module T : TURTLE) =
-  T.get_heading ()
+  let pos () =
+    let x, y = T.get_pos () in
+    List [Num x; Num y]
 
-(** 6.3 Turtle and Window Control *)
+  let xcor () =
+    let x, _ = T.get_pos () in
+    Num x
 
-let clean (module T : TURTLE) =
-  T.clean_screen ()
+  let ycor () =
+    let _, y = T.get_pos () in
+    Num y
 
-let clearscreen (module T : TURTLE) =
-  T.set_pos 0.0 0.0;
-  T.set_heading 0.0;
-  T.clean_screen ()
+  let heading () =
+    Num (T.get_heading ())
 
-(** 6.5 Pen and Background Control *)
+  (** 6.3 Turtle and Window Control *)
 
-let pendown (module T : TURTLE) =
-  T.pen_down ()
+  let clean () =
+    T.clean_screen ();
+    Word "NIL"
 
-let penup (module T : TURTLE) =
-  T.pen_up ()
+  let clearscreen () =
+    T.set_pos 0.0 0.0;
+    T.set_heading 0.0;
+    T.clean_screen ();
+    Word "NIL"
 
-let setpencolor (module T : TURTLE) = function
-  | `L color ->
-    begin match get_palette color with
-      | Some c ->
-        T.set_color c
-      | None ->
-        error "setpencolor: unknown color %s" color
-    end
-  | `R [r; g; b] ->
-    let r = float r /. 100.0 in
-    let g = float g /. 100.0 in
-    let b = float b /. 100.0 in
-    T.set_color (Gg.Color.v_srgb r g b)
-  | `R _ -> assert false
+  (** 6.5 Pen and Background Control *)
 
-(* TODO check that 0 <= r, g, b <= 100 *)
-let setpalette name = function
-  | [r; g; b] ->
-    let r = float r /. 100.0 in
-    let g = float g /. 100.0 in
-    let b = float b /. 100.0 in
-    set_palette name (Gg.Color.v_srgb r g b)
-  | _ ->
-    assert false
+  let pendown () =
+    T.pen_down ();
+    Word "NIL"
 
-let setpensize (module T : TURTLE) size =
-  T.set_size size
+  let penup () =
+    T.pen_up ();
+    Word "NIL"
 
-(** 6.6 Pen Queries *)
+  let setpencolor = function
+    | `L color ->
+        begin match get_palette color with
+        | Some c ->
+            T.set_color c
+        | None ->
+            error "setpencolor: unknown color %s" color
+        end
+    | `R [r; g; b] ->
+        let r = float r /. 100.0 in
+        let g = float g /. 100.0 in
+        let b = float b /. 100.0 in
+        T.set_color (Gg.Color.v_srgb r g b)
+    | `R _ -> assert false
 
-let palette col =
-  match get_palette col with
-  | Some c ->
-    let r = truncate (Gg.Color.r c *. 100.0) in
-    let g = truncate (Gg.Color.g c *. 100.0) in
-    let b = truncate (Gg.Color.b c *. 100.0) in
-    [r; g; b]
-  | None ->
-    error "palette: color %s not found" col
+  (* TODO check that 0 <= r, g, b <= 100 *)
+  let setpalette name = function
+    | [r; g; b] ->
+        let r = float r /. 100.0 in
+        let g = float g /. 100.0 in
+        let b = float b /. 100.0 in
+        set_palette name (Gg.Color.v_srgb r g b)
+    | _ ->
+        assert false
 
-let () =
-  set_pf "forward" Lga.(turtle @@ num @-> ret retvoid) forward;
-  set_pf "fd" Lga.(turtle @@ num @-> ret retvoid) forward;
-  set_pf "back" Lga.(turtle @@ num @-> ret retvoid) back;
-  set_pf "bk" Lga.(turtle @@ num @-> ret retvoid) back;
-  set_pf "left" Lga.(turtle @@ num @-> ret retvoid) left;
-  set_pf "lt" Lga.(turtle @@ num @-> ret retvoid) left;
-  set_pf "right" Lga.(turtle @@ num @-> ret retvoid) right;
-  set_pf "rt" Lga.(turtle @@ num @-> ret retvoid) right;
-  set_pf "setpos" Lga.(turtle @@ fix_list num 2 @-> ret retvoid) setpos;
-  set_pf "setxy" Lga.(turtle @@ num @-> num @-> ret retvoid) setxy;
-  set_pf "setx" Lga.(turtle @@ num @-> ret retvoid) setx;
-  set_pf "sety" Lga.(turtle @@ num @-> ret retvoid) sety;
-  set_pf "setheading" Lga.(turtle @@ num @-> ret retvoid) setheading;
-  set_pf "home" Lga.(turtle @@ ret retvoid) home;
-  set_pf "arc" Lga.(turtle @@ num @-> num @-> ret retvoid) arc;
+  let setpensize size =
+    T.set_size size
 
-  set_pf "pos" Lga.(turtle @@ ret (value (list num))) pos;
-  set_pf "xcor" Lga.(turtle @@ ret (value num)) xcor;
-  set_pf "ycor" Lga.(turtle @@ ret (value num)) ycor;
-  set_pf "heading" Lga.(turtle @@ ret (value num)) heading;
-  
-  set_pf "clean" Lga.(turtle @@ ret retvoid) clean;
-  set_pf "clearscreen" Lga.(turtle @@ ret retvoid) clearscreen;
+  (** 6.6 Pen Queries *)
 
-  set_pf "pendown" Lga.(turtle @@ ret retvoid) pendown;
-  set_pf "pd" Lga.(turtle @@ ret retvoid) pendown;
-  set_pf "penup" Lga.(turtle @@ ret retvoid) penup;
-  set_pf "pu" Lga.(turtle @@ ret retvoid) penup;
-  set_pf "setpencolor" Lga.(turtle @@ alt word (fix_list int 3) @-> ret retvoid)
-    setpencolor;
-  set_pf "setpc" Lga.(turtle @@ alt word (fix_list int 3) @-> ret retvoid)
-    setpencolor;
-  set_pf "setpalette" Lga.(word @-> fix_list int 3 @-> ret retvoid) setpalette;
-  set_pf "setpensize" Lga.(turtle @@ num @-> ret retvoid) setpensize;
+  let palette col =
+    match get_palette col with
+    | Some c ->
+        let r = truncate (Gg.Color.r c *. 100.0) in
+        let g = truncate (Gg.Color.g c *. 100.0) in
+        let b = truncate (Gg.Color.b c *. 100.0) in
+        [r; g; b]
+    | None ->
+        error "palette: color %s not found" col
 
-  set_pf "palette" Lga.(word @-> ret (value (list int))) palette
+  let () =
+    add_pf1 "forward" forward;
+    add_pf1 "fd" forward;
+    add_pf1 "back" back;
+    add_pf1 "bk" back;
+    add_pf1 "left" left;
+    add_pf1 "lt" left;
+    add_pf1 "right" right;
+    add_pf1 "rt" right;
+    add_pf2 "setxy" setxy;
+    add_pf1 "setx" setx;
+    add_pf1 "sety" sety;
+    add_pf1 "setheading" setheading;
+    add_pf0 "home" home;
+    add_pf2 "arc" arc;
+
+    add_pf0 "pos" pos;
+    add_pf0 "xcor" xcor;
+    add_pf0 "ycor" ycor;
+    add_pf0 "heading" heading;
+
+    add_pf0 "clean" clean;
+    add_pf0 "clearscreen" clearscreen;
+
+    add_pf0 "pendown" pendown;
+    add_pf0 "pd" pendown;
+    add_pf0 "penup" penup;
+    add_pf0 "pu" penup;
+    (* add_pfn "setpencolor" setpencolor; *)
+    (* add_pfn "setpc" setpencolor; *)
+    (* add_pf4 "setpalette" setpalette; *)
+    (* add_pf1 "setpensize" setpensize; *)
+
+    (* add_pf1 "palette" palette *)
+
+end

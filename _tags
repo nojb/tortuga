@@ -3,4 +3,6 @@ true: package(str), package(re), package(re.str)
 true: package(lwt), package(react), package(lambda-term)
 true: package(ounit), package(pa_ounit), syntax(camlp4o), package(pa_ounit.syntax)
 <src/tortu.ml> or <src/logoTop.ml>: syntax(camlp4o), package(lwt.syntax)
+true: package(graphics)
+
 true: debug

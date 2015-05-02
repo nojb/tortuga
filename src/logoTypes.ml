@@ -65,7 +65,6 @@ type proc =
 and env =
   { locals : atom option H.t list;
     output : atom option -> unit;
-    turtle : turtle;
     continue : atom option -> unit;
     repcount : int list;
     mutable test : bool option }

@@ -1,6 +1,6 @@
 (* The MIT License (MIT)
 
-   Copyright (c) 2014 Nicolas Ojeda Bar <n.oje.bar@gmail.com>
+   Copyright (c) 2015 Nicolas Ojeda Bar <n.oje.bar@gmail.com>
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -21,15 +21,13 @@
 
 open LogoTypes
 open LogoAtom
-  
-let create_env turtle = {
-  locals = [];
-  output = (fun _ -> raise (Error "output: not inside a function"));
-  turtle;
-  continue = (fun _ -> raise (Error "continue: no pause"));
-  repcount = [];
-  test = None
-}
+
+let create_env turtle =
+  { locals = [];
+    output = (fun _ -> raise (Error "output: not inside a function"));
+    continue = (fun _ -> raise (Error "continue: no pause"));
+    repcount = [];
+    test = None }
 
 let new_frame env =
   { env with locals = H.create 17 :: env.locals }
