@@ -317,10 +317,10 @@ BITNOT num
 *)
 
 let () =
-  add_pfn "sum" sum;
+  add_pfn "sum" 2 sum;
   add_pf2 "difference" difference;
   add_pf1 "minus" minus;
-  add_pfn "product" product;
+  add_pfn "product" 2 product;
   add_pf2 "remainder" remainder;
   add_pf1 "int" int;
   add_pf1 "round" round;

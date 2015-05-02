@@ -37,10 +37,6 @@ exception Pause of env
 let run env args k =
   eval_list env (reparse args) k
 
-(* let runresult env args k = *)
-(*   instructionlist env (reparse args) *)
-(*     (function None -> k (Some (List [])) | Some a -> k (Some (List [a]))) *)
-
 (*
 let repeat =
   let names = ["repeat"] in
@@ -540,8 +536,7 @@ UNTIL tfexpression instructionlist		(library procedure)
   prim ~names ~doc ~args ~f
 *)
 let () =
-  add_pfcn "run" run;
-  (* add_pfcn "runresult" runresult *)
+  add_pfcn "run" 1 run
   (* List.iter add_prim
     [
       run;

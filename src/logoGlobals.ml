@@ -66,8 +66,8 @@ let add_pf name proc =
 let add_pf0 name f = add_pf name (Pf0 f)
 let add_pf1 name f = add_pf name (Pf1 f)
 let add_pf2 name f = add_pf name (Pf2 f)
-let add_pfn name f = add_pf name (Pfn f)
-let add_pfcn name f = add_pf name (Pfcn f)
+let add_pfn name len f = add_pf name (Pfn (len, f))
+let add_pfcn name len f = add_pf name (Pfcn (len, f))
 
 (* let add_proc: 'a. name:string -> raw:string list -> ?doc:string -> args:'a fn -> f:'a -> unit = *)
 (*   fun ~name ~raw ?doc ~args ~f -> *)
@@ -76,9 +76,8 @@ let add_pfcn name f = add_pf name (Pfcn f)
 let has_routine name =
   H.mem routines name
 
-(* let get_routine name = *)
-(*   let p = H.find routines name in *)
-(*   p.proc_fun *)
+let get_routine name =
+  H.find routines name
 
 let fold_routines f b =
   H.fold (fun name _ b -> f name b) routines b

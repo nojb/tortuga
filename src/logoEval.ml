@@ -24,71 +24,18 @@ open LogoAtom
 open LogoEnv
 open LogoGlobals
 
-(* let apply : type a. env -> string -> a fn -> a -> atom list -> (atom option -> unit) -> unit = *)
-(*   fun env proc fn f args k -> *)
-(*     let rec loop : type a. int -> a fn -> a -> atom list -> unit = fun i fn f args -> *)
-(*       match fn, args with *)
-(*       | Kvoid fn, _ -> *)
-(*         loop i fn (f ()) args *)
-(*       | Kenv fn, _ -> *)
-(*         loop i fn (f env) args *)
-(*       | Kturtle fn, _ -> *)
-(*         loop i fn (f env.turtle) args *)
-(*       | Kfix _, [] -> *)
-(*         error "%s requires at least %d more arguments" (String.uppercase proc) (default_num_args fn) *)
-(*       | Kfix (typ, fn), a :: args -> *)
-(*         begin match value_of_atom typ a with *)
-(*           | Some a -> loop (i+1) fn (f a) args *)
-(*           | None -> *)
-(*             error "argument %i of %s should be a %s, found %s" i (String.uppercase proc) *)
-(*               (string_of_type typ) (string_of_datum a) *)
-(*         end *)
-(*       | Kopt (_, ret), [] -> *)
-(*         return ret (f None) k *)
-(*       | Kopt (ty, ret), a :: [] -> *)
-(*         begin match value_of_atom ty a with *)
-(*           | Some _ as a -> return ret (f a) k *)
-(*           | None -> *)
-(*             error "optional argument %i of %s should be a %s, found %s" i (String.uppercase proc) *)
-(*               (string_of_type ty) (string_of_datum a) *)
-(*         end *)
-(*       | Kopt _, _ :: _ :: _ -> *)
-(*         error "too many arguments for %s" (String.uppercase proc) *)
-(*       | Krest (ty, ret), args -> *)
-(*         let args = List.map (fun a -> *)
-(*             match value_of_atom ty a with *)
-(*             | Some a -> a | None -> assert false) args in *)
-(*         return ret (f args) k *)
-(*       | Kret ret, [] -> *)
-(*         return ret f k *)
-(*       | Kret _, _ :: _ -> *)
-(*         error "too many arguments for %s" (String.uppercase proc) *)
-(*     in *)
-(*     loop 1 fn f args *)
+let apply env proc args k =
+  match proc, args with
+  | Pf0 f, [] -> k (f ())
+  | Pf1 f, [x] -> k (f x)
+  | Pf2 f, [x; y] -> k (f x y)
+  | Pf3 f, [x; y; z] -> k (f x y z)
+  | Pfn (_, f), _ -> k (f args)
+  | Pfcn (_, f), _ -> f env args k
+  | _ -> assert false
 
 let stringfrom pos str =
   String.sub str pos (String.length str - pos)
-
-(* let infix_float_bin op lhs rhs = *)
-(*   match value_of_atom Knum lhs, value_of_atom Knum rhs with *)
-(*   | Some n1, Some n2 -> Num (op n1 n2) *)
-(*   | _ -> error "bad types" *)
-
-(* let infix_pred : 'a. ('a -> 'a -> bool) -> 'a ty -> atom -> atom -> atom = fun op ty lhs rhs -> *)
-(*   match value_of_atom ty lhs, value_of_atom ty rhs with *)
-(*   | Some a1, Some a2 -> if op a1 a2 then true_word else false_word *)
-(*   | _ -> error "bad types" *)
-
-(* let infix_float_una op lhs = *)
-(*   match value_of_atom Knum lhs with *)
-(*   | Some n -> Num (op n) *)
-(*   | None -> error "bad type" *)
-
-(* let equalp lhs rhs = *)
-(*   equalaux lhs rhs *)
-
-(* let notequalp lhs rhs = *)
-(*   not (equalaux lhs rhs) *)
 
 open LogoArithmetic
 
@@ -225,7 +172,19 @@ and eval_call env proc lst natural k =
       in
       loop [] lst
   in
-  assert false
+  try
+    let proc = get_routine proc in
+    let len =
+      match proc with
+      | Pf0 _ -> 0 | Pf1 _ -> 1
+      | Pf2 _ -> 2 | Pf3 _ -> 3
+      | Pfn (len, _) | Pfcn (len, _) -> len
+    in
+    eval_args len natural lst (fun args lst -> apply env proc args (fun x -> k x lst))
+  with
+  | Not_found ->
+      error "Don't know how to %s" (String.uppercase proc)
+
   (* let Pf (fn, f) = *)
   (*   try *)
   (*     get_routine proc *)

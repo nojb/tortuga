@@ -27,12 +27,12 @@ val add_pf : string -> proc -> unit
 val add_pf0 : string -> (unit -> atom) -> unit
 val add_pf1 : string -> (atom -> atom) -> unit
 val add_pf2 : string -> (atom -> atom -> atom) -> unit
-val add_pfn : string -> (atom list -> atom) -> unit
-val add_pfcn : string -> (env -> atom list -> (atom -> unit) -> unit) -> unit
+val add_pfn : string -> int -> (atom list -> atom) -> unit
+val add_pfcn : string -> int -> (env -> atom list -> (atom -> unit) -> unit) -> unit
 (* val add_proc : name:string -> raw:string list -> ?doc:string -> args:'a fn -> f:'a -> unit *)
 
 val has_routine : string -> bool
-(* val get_routine : string -> proc *)
+val get_routine : string -> proc
 val fold_routines : (string -> 'a -> 'a) -> 'a -> 'a
 (* val get_help : string -> string option *)
 

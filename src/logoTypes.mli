@@ -51,8 +51,8 @@ type proc =
   | Pf1 of (atom -> atom)
   | Pf2 of (atom -> atom -> atom)
   | Pf3 of (atom -> atom -> atom -> atom)
-  | Pfn of (atom list -> atom)
-  | Pfcn of (env -> atom list -> (atom -> unit) -> unit)
+  | Pfn of int * (atom list -> atom)
+  | Pfcn of int * (env -> atom list -> (atom -> unit) -> unit)
 
 and env =
   { locals : atom option H.t list;
