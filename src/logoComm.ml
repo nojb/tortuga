@@ -26,38 +26,23 @@ open LogoAtom
 open LogoGlobals
 open LogoPrint
 open LogoEval
-  
+
 (** 3.1 Transmitters *)
 
-let print =
-  let names = ["print"; "pr"] in
-  let doc =
-    
-    "\
-PRINT thing
-PR thing
-(PRINT thing1 thing2 ...)
-(PR thing1 thing2 ...)
+let print = function
+  | [] ->
+      Word "NIL"
+  | thing :: things ->
+      let pr = function
+        | List l -> print_datum_list l
+        | _ as d -> print_datum d
+      in
+      pr thing;
+      List.iter (fun d -> print " "; pr d) things;
+      print "\n";
+      Word "NIL"
 
-    Command. Prints the input or inputs to the current write stream (initially
-    the screen). All the inputs are printed on a single line, separated by
-    spaces, ending with a newline. If an input is a list, square brackets are
-    not printed around it, but brackets are printed around sublists. Braces are
-    always printed around arrays."
-      
-  in
-  let args = Lga.(any @-> rest any retvoid) in
-  let f thing1 things =
-    let pr = function
-      | List l -> print_datum_list l
-      | _ as d -> print_datum d
-    in
-    pr thing1;
-    List.iter (fun d -> print " "; pr d) things;
-    print "\n"
-  in
-  prim ~names ~doc ~args ~f
-
+(*
 let type_ =
   let names = ["type"] in
   let doc =
@@ -80,7 +65,7 @@ TYPE thing
     on occasion you may find it necessary to force the buffered characters to be
     printed explicitly; this can be done using the WAIT command. WAIT 0 will
     force printing without actually waiting."
-      
+
   in
   let args = Lga.(any @-> rest any retvoid) in
   let f thing1 things =
@@ -165,15 +150,17 @@ SHOW thing
 (*     | None -> "" *)
 (*   in *)
 (*   prim ~names ~doc ~args ~f *)
-    
+*)
 let () =
-  List.iter add_prim
-    [
-      print;
-      type_;
-      show;
+  add_pfn "print" 1 print;
+  add_pfn "pr" 1 print
+  (* List.iter add_prim *)
+  (*   [ *)
+  (*     print; *)
+  (*     type_; *)
+  (*     show; *)
 
-      (* readlist; *)
-      (* readword *)
-      (* readrawline *)
-    ]
+  (*     (\* readlist; *\) *)
+  (*     (\* readword *\) *)
+  (*     (\* readrawline *\) *)
+  (*   ] *)

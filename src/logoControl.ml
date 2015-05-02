@@ -41,32 +41,23 @@ let run env args k =
   | _ ->
       error "run: bad arg list"
 
+let is_int x = floor x = x
+
+let repeat env args k =
+  match args with
+  | Num num :: List lst :: [] when is_int num ->
+      let n = truncate num in
+      let lst = reparse lst in
+      let rec loop env i x =
+        if i > n then k x
+        else
+          eval_list env lst (loop (step_repcount env) (i + 1))
+      in
+      loop (start_repcount env) 1 (Word "NIL")
+  | _ ->
+      error "repeat: bad arg list"
+
 (*
-let repeat =
-  let names = ["repeat"] in
-  let doc =
-
-    "\
-REPEAT num instructionlist
-
-    Command. Runs the instructionlist repeatedly, num times."
-
-  in
-  let args = Lga.(env @@ int @-> list any @-> ret cont) in
-  let f env num list k =
-    let rec loop env i =
-      if i > num then k None
-      else
-        instructionlist env (reparse list)
-          (function
-            | Some _ ->
-              raise (Error "repeat: instruction list should not produce a value")
-            | None -> loop (step_repcount env) (i+1))
-    in
-    loop (start_repcount env) 1
-  in
-  prim ~names ~doc ~args ~f
-
 let forever =
   let names = ["forever"] in
   let doc =
@@ -540,7 +531,8 @@ UNTIL tfexpression instructionlist		(library procedure)
   prim ~names ~doc ~args ~f
 *)
 let () =
-  add_pfcn "run" 1 run
+  add_pfcn "run" 1 run;
+  add_pfcn "repeat" 2 repeat
   (* List.iter add_prim
     [
       run;

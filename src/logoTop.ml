@@ -29,7 +29,7 @@ open LogoAtom
 (* module TurtleGraphics = LogoTurtleGraphics *)
 
 (* module L2 = LogoPrim *)
-(* module L3 = LogoComm *)
+module L3 = LogoComm
 module L4 = LogoArithmetic
 (* module L5 = LogoLogic *)
 module L6 = LogoGraphics.Make (LogoTurtleGraphics)
