@@ -35,7 +35,11 @@ exception Pause of env
 (** 8.1 Control *)
 
 let run env args k =
-  eval_list env (reparse args) k
+  match args with
+  | List args :: [] ->
+      eval_list env (reparse args) k
+  | _ ->
+      error "run: bad arg list"
 
 (*
 let repeat =
