@@ -90,32 +90,32 @@ let read_phrase ~term ~history =
   let rec loop prompt acc raw state =
     let procedures = get_procedures () in
     let rl = new read_line ~term ~history:(LTerm_history.contents history) ~prompt ~procedures in
-    lwt l = rl#run in
-    LTerm_history.add history l;
-    match classify_line state l, state with
-    | `GotEMPTY, _ ->
-        loop prompt acc (l :: raw) state
-    | `GotEND, `Ready ->
-        assert false
-    | `GotEND, `ReadingTO (name, inputs, lines) ->
-        return (List.rev (l :: raw), `GotTO (name, inputs, List.rev lines))
-    | `GotTO (name, inputs), `Ready ->
-        loop prompt_to [] (l :: raw) (`ReadingTO (name, inputs, []))
-    | `GotLINE, `ReadingTO (name, inputs, lines) ->
-        let line = String.concat "" (List.rev (l :: acc)) in
-        loop prompt_to [] (l :: raw) (`ReadingTO (name, inputs, line :: lines))
-    | `GotCONT s, _ ->
-        loop prompt_cont (s :: acc) (l :: raw) state
-    | `GotTO _, `ReadingTO _ ->
-        assert false
-    | `GotLINE, `Ready ->
-        let line = String.concat "" (List.rev (l :: acc)) in
-        return (List.rev (l :: raw), `GotLINE line)
+    rl#run >>= function l ->
+      LTerm_history.add history l;
+      match classify_line state l, state with
+      | `GotEMPTY, _ ->
+          loop prompt acc (l :: raw) state
+      | `GotEND, `Ready ->
+          assert false
+      | `GotEND, `ReadingTO (name, inputs, lines) ->
+          return (List.rev (l :: raw), `GotTO (name, inputs, List.rev lines))
+      | `GotTO (name, inputs), `Ready ->
+          loop prompt_to [] (l :: raw) (`ReadingTO (name, inputs, []))
+      | `GotLINE, `ReadingTO (name, inputs, lines) ->
+          let line = String.concat "" (List.rev (l :: acc)) in
+          loop prompt_to [] (l :: raw) (`ReadingTO (name, inputs, line :: lines))
+      | `GotCONT s, _ ->
+          loop prompt_cont (s :: acc) (l :: raw) state
+      | `GotTO _, `ReadingTO _ ->
+          assert false
+      | `GotLINE, `Ready ->
+          let line = String.concat "" (List.rev (l :: acc)) in
+          return (List.rev (l :: raw), `GotLINE line)
   in
   loop prompt_normal [] [] `Ready
 
 let print_terminated term s =
-  lwt () = LTerm.fprint term s in
+  LTerm.fprint term s >>= fun () ->
   if String.length s > 0 && s.[String.length s - 1] <> '\n' then
     LTerm.fprint term "~\n"
   else
@@ -127,9 +127,9 @@ let main () =
   let b = Buffer.create 17 in
   cprint_function := Buffer.add_string b;
   print_function := Buffer.add_string b;
-  lwt term = Lazy.force LTerm.stdout in
+  Lazy.force LTerm.stdout >>= fun term ->
   let rec execute_phrase env raw phr =
-    try_lwt
+    Lwt.catch begin fun () ->
       begin match phr with
       | `GotLINE l ->
           let lexbuf = Lexing.from_string l in
@@ -140,51 +140,48 @@ let main () =
           (* to_ ~raw ~name ~inputs ~body *)
       end;
       return ()
-    with
-    | LogoControl.Pause env ->
-        loop env
-    | LogoControl.Toplevel ->
-        return ()
-    | LogoControl.Throw (tag, None) ->
-        cprintlf "Unhandled THROW with tag %s." tag;
-        return ()
-    | LogoControl.Throw (tag, Some a) ->
-        cprintlf "Unhandled THROW with tag %s, value %s." tag (string_of_datum a);
-        return ()
-    | Error err ->
-        cprintlf "Error: %s." err;
-        return ()
-    | LogoLex.Error err ->
-        cprintlf "Lexer: %s." (LogoLex.report_error err);
-        return ()
+    end (function
+        | LogoControl.Pause env ->
+            loop env
+        | LogoControl.Toplevel ->
+            return ()
+        | LogoControl.Throw (tag, None) ->
+            cprintlf "Unhandled THROW with tag %s." tag;
+            return ()
+        | LogoControl.Throw (tag, Some a) ->
+            cprintlf "Unhandled THROW with tag %s, value %s." tag (string_of_datum a);
+            return ()
+        | Error err ->
+            cprintlf "Error: %s." err;
+            return ()
+        | LogoLex.Error err ->
+            cprintlf "Lexer: %s." (LogoLex.report_error err);
+            return ()
+        | e -> Lwt.fail e)
   and loop env =
-    lwt resp =
-      try_lwt
-        lwt x = read_phrase term history in
-        return (Some x)
-      with
-      | Sys.Break ->
-          return None
-      | LogoLex.Error err ->
-          cprintlf "Lexer: %s." (LogoLex.report_error err);
-          return None
-    in
-    match resp with
+    Lwt.catch (fun () ->
+        read_phrase term history >>= fun x -> return (Some x))
+      (function
+        | Sys.Break ->
+            return None
+        | LogoLex.Error err ->
+            cprintlf "Lexer: %s." (LogoLex.report_error err);
+            return None
+        | e -> Lwt.fail e) >>= function
     | Some (raw, phr) ->
         Buffer.clear b;
-        lwt () = execute_phrase env raw phr in
-        lwt () = print_terminated term (Buffer.contents b) in
-        lwt () = LTerm.flush term in
+        execute_phrase env raw phr >>= fun () ->
+        print_terminated term (Buffer.contents b) >>= fun () ->
+        LTerm.flush term >>= fun () ->
         loop env
     | None ->
         loop env
   in
-  try_lwt
-    loop env
-  with
-  | LogoControl.Bye
-  | LTerm_read_line.Interrupt ->
-      return ()
-  | exn ->
-      cprintlf "Internal: %s. Backtrace:\n%s" (Printexc.to_string exn) (Printexc.get_backtrace ());
-      raise_lwt exn
+  Lwt.catch (fun () -> loop env)
+    (function
+      | LogoControl.Bye
+      | LTerm_read_line.Interrupt ->
+          return ()
+      | exn ->
+          cprintlf "Internal: %s. Backtrace:\n%s" (Printexc.to_string exn) (Printexc.get_backtrace ());
+          Lwt.fail exn)
