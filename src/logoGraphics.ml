@@ -157,44 +157,56 @@ module Make (T : TURTLE) = struct
     Word "NIL"
 
   let setpencolor = function
-    | `L color ->
+    | Word color :: [] ->
         begin match get_palette color with
         | Some c ->
-            T.set_color c
+            T.set_color c;
+            Word "NIL"
         | None ->
             error "setpencolor: unknown color %s" color
         end
-    | `R [r; g; b] ->
-        let r = float r /. 100.0 in
-        let g = float g /. 100.0 in
-        let b = float b /. 100.0 in
-        T.set_color (Gg.Color.v_srgb r g b)
-    | `R _ -> assert false
+    | Num r :: Num g :: Num b :: [] ->
+        let r = r /. 100.0 in
+        let g = g /. 100.0 in
+        let b = b /. 100.0 in
+        T.set_color (Gg.Color.v_srgb r g b);
+        Word "NIL"
+    | _ ->
+        error "setpencolor: bad arg list"
 
   (* TODO check that 0 <= r, g, b <= 100 *)
-  let setpalette name = function
-    | [r; g; b] ->
-        let r = float r /. 100.0 in
-        let g = float g /. 100.0 in
-        let b = float b /. 100.0 in
+  let setpalette name r g b =
+    match name, r, g, b with
+    | Word name, Num r, Num g, Num b ->
+        let r = r /. 100.0 in
+        let g = g /. 100.0 in
+        let b = b /. 100.0 in
         set_palette name (Gg.Color.v_srgb r g b)
     | _ ->
-        assert false
+        error "setpalette: bad arg list"
 
-  let setpensize size =
-    T.set_size size
+  let setpensize = function
+    | Num size ->
+        T.set_size size;
+        Word "NIL"
+    | _ ->
+        error "setpensize: bad arg list"
 
   (** 6.6 Pen Queries *)
 
-  let palette col =
-    match get_palette col with
-    | Some c ->
-        let r = truncate (Gg.Color.r c *. 100.0) in
-        let g = truncate (Gg.Color.g c *. 100.0) in
-        let b = truncate (Gg.Color.b c *. 100.0) in
-        [r; g; b]
-    | None ->
-        error "palette: color %s not found" col
+  let palette = function
+    | Word col ->
+        begin match get_palette col with
+        | Some c ->
+            let r = Gg.Color.r c *. 100.0 in
+            let g = Gg.Color.g c *. 100.0 in
+            let b = Gg.Color.b c *. 100.0 in
+            List [Num r; Num g; Num b]
+        | None ->
+            error "palette: color %s not found" col
+        end
+    | _ ->
+        error "palette: bad arg list"
 
   let () =
     add_pf1 "forward" forward;
@@ -224,11 +236,11 @@ module Make (T : TURTLE) = struct
     add_pf0 "pd" pendown;
     add_pf0 "penup" penup;
     add_pf0 "pu" penup;
-    (* add_pfn "setpencolor" setpencolor; *)
+    add_pfn "setpencolor" 1 setpencolor;
     (* add_pfn "setpc" setpencolor; *)
     (* add_pf4 "setpalette" setpalette; *)
-    (* add_pf1 "setpensize" setpensize; *)
+    add_pf1 "setpensize" setpensize;
 
-    (* add_pf1 "palette" palette *)
+    add_pf1 "palette" palette
 
 end
