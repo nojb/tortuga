@@ -95,71 +95,36 @@ let power n1 n2 =
       error "power: bad arg list"
 
 (** 4.2 Numeric Predicates *)
+
+let lessp n1 n2 =
+  match n1, n2 with
+  | Num n1, Num n2 ->
+      if n1 < n2 then true_word else false_word
+  | _ ->
+      error "lessp: bad arg list"
+
+let greaterp n1 n2 =
+  match n1, n2 with
+  | Num n1, Num n2 ->
+      if n1 > n2 then true_word else false_word
+  | _ ->
+      error "greaterp: bad arg list"
+
+let lessequalp n1 n2 =
+  match n1, n2 with
+  | Num n1, Num n2 ->
+      if n1 <= n2 then true_word else false_word
+  | _ ->
+      error "lessequalp: bad arg list"
+
+let greaterequalp n1 n2 =
+  match n1, n2 with
+  | Num n1, Num n2 ->
+      if n1 >= n2 then true_word else false_word
+  | _ ->
+      error "greaterp: bad arg list"
+
 (*
-let lessp =
-  let names = ["lessp"; "less?"] in
-  let doc =
-
-    "\
-LESSP num1 num2
-LESS? num1 num2
-num1 < num2
-
-    Outputs TRUE if its first input is strictly less than its second."
-
-  in
-  let args = Lga.(num @-> num @-> ret (value any)) in
-  let f a b = if a < b then true_word else false_word in
-  prim ~names ~doc ~args ~f
-
-let greaterp =
-  let names = ["greaterp"; "greater?"] in
-  let doc =
-
-    "\
-GREATERP num1 num2
-GREATER? num1 num2
-num1 > num2
-
-    Outputs TRUE if its first input is strictly greater than its second."
-
-  in
-  let args = Lga.(num @-> num @-> ret (value any)) in
-  let f a b = if a > b then true_word else false_word in
-  prim ~names ~doc ~args ~f
-
-let lessequalp =
-  let names = ["lessequalp"; "lessequal?"] in
-  let doc =
-
-    "\
-LESSEQUALP num1 num2
-LESSEQUAL? num1 num2
-num1 <= num2
-
-    Outputs TRUE if its first input is less than or equal to its second."
-
-  in
-  let args = Lga.(num @-> num @-> ret (value any)) in
-  let f a b = if a <= b then true_word else false_word in
-  prim ~names ~doc ~args ~f
-
-let greaterequalp =
-  let names = ["greaterequalp"; "greaterequal?"] in
-  let doc =
-
-    "\
-GREATEREQUALP num1 num2
-GREATEREQUAL? num1 num2
-num1 >= num2
-
-    Outputs TRUE if its first input is greater than or equal to its second."
-
-  in
-  let args = Lga.(num @-> num @-> ret (value any)) in
-  let f a b = if a >= b then true_word else false_word in
-  prim ~names ~doc ~args ~f
-
 (** 4.3 Random Numbers *)
 
 let initial_seed = 1728
@@ -325,13 +290,17 @@ let () =
   add_pf1 "int" int;
   add_pf1 "round" round;
   add_pf1 "sqrt" sqrt;
-(*      power;
+  add_pf2 "power" power;
+  add_pf2 "lessp" lessp;
+  add_pf2 "less?" lessp;
+  add_pf2 "greaterp" greaterp;
+  add_pf2 "greater?" greaterp;
+  add_pf2 "lessequalp" lessequalp;
+  add_pf2 "lessequal?" lessequalp;
+  add_pf2 "greaterequalp" greaterequalp;
+  add_pf2 "greaterequal?" greaterequalp
 
-      lessp;
-      greaterp;
-      lessequalp;
-      greaterequalp;
-
+(*
       random;
       rerandom;
 

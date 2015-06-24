@@ -47,18 +47,18 @@ and relational_expression env lst k =
     (* | Word "=" :: lst -> *)
     (*     additive_expression env lst *)
     (*       (fun rhs lst -> loop (infix_pred equalp Kany lhs rhs) lst) *)
-    (* | Word "<" :: lst -> *)
-    (*     additive_expression env lst *)
-    (*       (fun rhs lst -> loop (infix_pred (<) Knum lhs rhs) lst) *)
-    (* | Word ">" :: lst -> *)
-    (*     additive_expression env lst *)
-    (*       (fun rhs lst -> loop (infix_pred (>) Knum lhs rhs) lst) *)
-    (* | Word "<=" :: lst -> *)
-    (*     additive_expression env lst *)
-    (*       (fun rhs lst -> loop (infix_pred (<=) Knum lhs rhs) lst) *)
-    (* | Word ">=" :: lst -> *)
-    (*     additive_expression env lst *)
-    (*       (fun rhs lst -> loop (infix_pred (>=) Knum lhs rhs) lst) *)
+    | Word "<" :: lst ->
+        additive_expression env lst
+          (fun rhs lst -> loop (lessp lhs rhs) lst)
+    | Word ">" :: lst ->
+        additive_expression env lst
+          (fun rhs lst -> loop (greaterp lhs rhs) lst)
+    | Word "<=" :: lst ->
+        additive_expression env lst
+          (fun rhs lst -> loop (lessequalp lhs rhs) lst)
+    | Word ">=" :: lst ->
+        additive_expression env lst
+          (fun rhs lst -> loop (greaterequalp lhs rhs) lst)
     (* | Word "<>" :: lst -> *)
     (*     additive_expression env lst *)
     (*       (fun rhs lst -> loop (infix_pred notequalp Kany lhs rhs) lst) *)
@@ -98,9 +98,9 @@ and multiplicative_expression env lst k =
 
 and power_expression env lst k =
   let rec loop lhs = function
-    (* | Word "^" :: lst -> *)
-    (*     unary_expression env lst *)
-    (*       (fun rhs lst -> loop (infix_float_bin ( ** ) lhs rhs) lst) *)
+    | Word "^" :: lst ->
+        unary_expression env lst
+          (fun rhs lst -> loop (power lhs rhs) lst)
     | lst ->
         k lhs lst
   in
