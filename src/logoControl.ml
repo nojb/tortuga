@@ -86,20 +86,21 @@ let is_true = function
   | Word "FALSE" -> false
   | _ -> true
 
-(* let if_ env args k = *)
-(*   match args with *)
-(*   | tf :: List yay :: [] -> *)
-(*       if is_true tf then *)
-(*         eval_list env (reparse yay) k *)
-(*       else *)
-(*         k (Word "NIL") *)
-(*   | tf :: List yay :: List nay :: [] -> *)
-(*       if is_true tf then *)
-(*         eval_list env (reparse yay) k *)
-(*       else *)
-(*         eval_list env (reparse nay) k *)
-(*   | _ -> *)
-(*       error "if: bad arg list" *)
+let if_ env = function
+  | tf :: Atom (List yay) :: [] ->
+      If (tf, parse_list env yay, Atom (Word "NIL"))
+      (* if is_true tf then *)
+      (*   eval_list env (reparse yay) k *)
+      (* else *)
+      (*   k (Word "NIL") *)
+  | tf :: Atom (List yay) :: Atom (List nay) :: [] ->
+      If (tf, parse_list env yay, parse_list env nay)
+      (* if is_true tf then *)
+      (*   eval_list env (reparse yay) k *)
+      (* else *)
+      (*   eval_list env (reparse nay) k *)
+  | _ ->
+      error "if: bad arg list"
 
 (* let ifelse env args k = *)
 (*   match args with *)
@@ -429,13 +430,13 @@ UNTIL tfexpression instructionlist		(library procedure)
   prim ~names ~doc ~args ~f
 *)
 
-(* let () = *)
+let () =
 (*   add_pfcn "run" 1 run; *)
 (*   add_pfcn "repeat" 2 repeat; *)
 (*   add_pfcn "forever" 1 forever; *)
 (*   add_pfcn "repcount" 0 repcount; *)
 (*   add_pfcn "#" 0 repcount; *)
-(*   add_pfcn "if" 2 if_; *)
+  add_pr2 "if" if_
 (*   add_pfcn "ifelse" 3 ifelse; *)
 (*   add_pfcn "test" 1 test; *)
 (*   add_pfcn "iftrue" 1 iftrue; *)

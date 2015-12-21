@@ -69,6 +69,8 @@ let add_pf2 name f = add_pf name (Pf2 f)
 let add_pfn name len f = add_pf name (Pfn (len, f))
 let add_pfcn name len f = add_pf name (Pfcn (len, f))
 
+let add_pr2 name f = H.add routines name (Pr (2, f))
+
 (* let add_proc: 'a. name:string -> raw:string list -> ?doc:string -> args:'a fn -> f:'a -> unit = *)
 (*   fun ~name ~raw ?doc ~args ~f -> *)
 (*     H.add routines name { proc_doc = doc; proc_fun = Pf (args, f); proc_raw = Some raw } *)

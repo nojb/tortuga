@@ -29,6 +29,8 @@ val add_pf1 : string -> (atom -> atom) -> unit
 val add_pf2 : string -> (atom -> atom -> atom) -> unit
 val add_pfn : string -> int -> (atom list -> atom) -> unit
 val add_pfcn : string -> int -> (env -> atom list -> (atom -> unit) -> unit) -> unit
+
+val add_pr2 : string -> (env -> exp list -> exp) -> unit
 (* val add_proc : name:string -> raw:string list -> ?doc:string -> args:'a fn -> f:'a -> unit *)
 
 val has_routine : string -> bool

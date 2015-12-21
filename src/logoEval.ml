@@ -249,6 +249,23 @@ let parse_list env lst =
 (*   loop inputs *)
 (*     { k = fun fn f -> add_proc ~name ~raw ~doc ~args:(Kenv fn) ~f:(fun env -> f (new_frame env)) } *)
 
+let is_true = function
+  | Word "TRUE" | Word "true" -> true
+  | _ -> false
+
 let rec eval env e k =
   match e with
-  | Atom a -> k a
+  | App (Pf0 pf, []) ->
+      k (pf ())
+  | App (Pf1 pf, [e]) ->
+      eval env e (fun x -> k (pf x))
+  | App (Pf2 pf, [e1; e2]) ->
+      eval env e1 (fun x1 -> eval env e2 (fun x2 -> k (pf x1 x2)))
+  | Var id ->
+      k (get_var env id)
+  | Atom a ->
+      k a
+  | If (e1, e2, e3) ->
+      eval env e1 (fun x1 -> if is_true x1 then eval env e2 k else eval env e3 k)
+  | Seq (e1, e2) ->
+      eval env e1 (fun _ -> eval env e2 k)
