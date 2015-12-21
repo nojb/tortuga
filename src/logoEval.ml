@@ -261,6 +261,13 @@ let rec eval env e k =
       eval env e (fun x -> k (pf x))
   | App (Pf2 pf, [e1; e2]) ->
       eval env e1 (fun x1 -> eval env e2 (fun x2 -> k (pf x1 x2)))
+  | App (Pfn (_, pf), el) ->
+      let rec loop args = function
+        | [] -> k (pf (List.rev args))
+        | e :: el ->
+            eval env e (fun x -> loop (x :: args) el)
+      in
+      loop [] el
   | Var id ->
       k (get_var env id)
   | Atom a ->
