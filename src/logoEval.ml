@@ -269,3 +269,16 @@ let rec eval env e k =
       eval env e1 (fun x1 -> if is_true x1 then eval env e2 k else eval env e3 k)
   | Seq (e1, e2) ->
       eval env e1 (fun _ -> eval env e2 k)
+  | Repeat (e1, e2) ->
+      let rec loop env i n x =
+        if i > n then
+          k x
+        else
+          eval env e2 (fun x -> loop (step_repcount env) (i+1) n x)
+      in
+      eval env e1 (function
+          | Num n ->
+              loop (start_repcount env) 1 (truncate n) (Word "NIL")
+          | _ ->
+              failwith "number expected"
+        )

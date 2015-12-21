@@ -55,5 +55,6 @@ and exp =
   | If of exp * exp * exp
   | Output of exp
   | Seq of exp * exp
+  | Repeat of exp * exp
 
 val arity : proc -> int

@@ -43,19 +43,19 @@ exception Pause of env
 
 let is_int x = floor x = x
 
-(* let repeat env args k = *)
-(*   match args with *)
-(*   | Num num :: List lst :: [] when is_int num -> *)
-(*       let n = truncate num in *)
-(*       let lst = reparse lst in *)
-(*       let rec loop env i x = *)
-(*         if i > n then k x *)
-(*         else *)
-(*           eval_list env lst (loop (step_repcount env) (i + 1)) *)
-(*       in *)
-(*       loop (start_repcount env) 1 (Word "NIL") *)
-(*   | _ -> *)
-(*       error "repeat: bad arg list" *)
+let repeat env = function
+  | num :: Atom (List lst) :: [] ->
+      Repeat (num, parse_list env lst)
+      (* let n = truncate num in *)
+      (* let lst = reparse lst in *)
+      (* let rec loop env i x = *)
+      (*   if i > n then k x *)
+      (*   else *)
+      (*     eval_list env lst (loop (step_repcount env) (i + 1)) *)
+      (* in *)
+      (* loop (start_repcount env) 1 (Word "NIL") *)
+  | _ ->
+      error "repeat: bad arg list"
 
 (* FIXME should be able to stop on STOP or THROW *)
 (* let forever env args k = *)

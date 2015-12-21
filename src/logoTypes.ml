@@ -63,6 +63,7 @@ and exp =
   | If of exp * exp * exp
   | Output of exp
   | Seq of exp * exp
+  | Repeat of exp * exp
 
 let arity = function
   | Pf (Pf0 _) -> 0
