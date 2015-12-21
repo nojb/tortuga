@@ -61,7 +61,7 @@ let palette =
   pal
 
 let add_pf name proc =
-  H.add routines name proc
+  H.add routines name (Pf proc)
 
 let add_pf0 name f = add_pf name (Pf0 f)
 let add_pf1 name f = add_pf name (Pf1 f)

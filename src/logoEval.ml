@@ -37,54 +37,66 @@ let apply env proc args k =
 let stringfrom pos str =
   String.sub str pos (String.length str - pos)
 
-open LogoArithmetic
+(* open LogoArithmetic *)
 
-let rec eval env lst k =
-  relational_expression env lst k
+(* let lessp lhs rhs = App ("<", [lhs; rhs]) *)
+(* let greaterp lhs rhs = App (">", [lhs; rhs]) *)
+(* let lessequalp lhs rhs = App ("<=", [lhs; rhs]) *)
+(* let greaterequalp lhs rhs = App (">=", [lhs; rhs]) *)
+(* let sum lhs rhs = App ("+", [lhs; rhs]) *)
+(* let difference lhs rhs = App ("-", [lhs; rhs]) *)
+(* let product lhs rhs = App ("*", [lhs; rhs]) *)
+(* let power lhs rhs = App ("**", [lhs; rhs]) *)
+(* let minus lhs = App ("-", [lhs]) *)
 
-and relational_expression env lst k =
+let rec parse env lst =
+  relational_expression env lst
+
+and relational_expression env lst =
   let rec loop lhs = function
     (* | Word "=" :: lst -> *)
     (*     additive_expression env lst *)
     (*       (fun rhs lst -> loop (infix_pred equalp Kany lhs rhs) lst) *)
-    | Word "<" :: lst ->
-        additive_expression env lst
-          (fun rhs lst -> loop (lessp lhs rhs) lst)
-    | Word ">" :: lst ->
-        additive_expression env lst
-          (fun rhs lst -> loop (greaterp lhs rhs) lst)
-    | Word "<=" :: lst ->
-        additive_expression env lst
-          (fun rhs lst -> loop (lessequalp lhs rhs) lst)
-    | Word ">=" :: lst ->
-        additive_expression env lst
-          (fun rhs lst -> loop (greaterequalp lhs rhs) lst)
+    (* | Word "<" :: lst -> *)
+    (*     let rhs, lst = additive_expression env lst in *)
+    (*     loop (lessp lhs rhs) lst *)
+    (* | Word ">" :: lst -> *)
+    (*     let rhs, lst = additive_expression env lst in *)
+    (*     loop (greaterp lhs rhs) lst *)
+    (* | Word "<=" :: lst -> *)
+    (*     let rhs, lst = additive_expression env lst in *)
+    (*     loop (lessequalp lhs rhs) lst *)
+    (* | Word ">=" :: lst -> *)
+    (*     let rhs, lst = additive_expression env lst in *)
+    (*     loop (greaterequalp lhs rhs) lst *)
     (* | Word "<>" :: lst -> *)
     (*     additive_expression env lst *)
     (*       (fun rhs lst -> loop (infix_pred notequalp Kany lhs rhs) lst) *)
     | lst ->
-        k lhs lst
+        lhs, lst
   in
-  additive_expression env lst loop
+  let lhs, lst = additive_expression env lst in
+  loop lhs lst
 
-and additive_expression env lst k =
+and additive_expression env lst =
   let rec loop lhs = function
-    | Word "+" :: lst ->
-        multiplicative_expression env lst
-          (fun rhs lst -> loop (sum [lhs; rhs]) lst)
-    | Word "-" :: lst ->
-        multiplicative_expression env lst
-          (fun rhs lst -> loop (difference lhs rhs) lst)
+    (* | Word "+" :: lst -> *)
+    (*     let rhs, lst = multiplicative_expression env lst in *)
+    (*     loop (sum lhs rhs) lst *)
+    (* | Word "-" :: lst -> *)
+    (*     let rhs, lst = multiplicative_expression env lst in *)
+    (*     loop (difference lhs rhs) lst *)
     | lst ->
-        k lhs lst
+        lhs, lst
   in
-  multiplicative_expression env lst loop
+  let lhs, lst = multiplicative_expression env lst in
+  loop lhs lst
 
-and multiplicative_expression env lst k =
+and multiplicative_expression env lst =
   let rec loop lhs = function
-    | Word "*" :: lst ->
-        power_expression env lst
-          (fun rhs lst -> loop (product [lhs; rhs]) lst)
+    (* | Word "*" :: lst -> *)
+    (*     let rhs, lst = power_expression env lst in *)
+    (*     loop (product lhs rhs) lst *)
     (* | Word "/" :: lst -> *)
     (*     power_expression env lst *)
     (*       (fun rhs lst -> loop (infix_float_bin ( /. ) lhs rhs) lst) *)
@@ -92,98 +104,100 @@ and multiplicative_expression env lst k =
     (*     power_expression env lst *)
     (*       (fun rhs lst -> loop (infix_float_bin mod_float lhs rhs) lst) *)
     | lst ->
-        k lhs lst
+        lhs, lst
   in
-  power_expression env lst loop
+  let lhs, lst = power_expression env lst in
+  loop lhs lst
 
-and power_expression env lst k =
+and power_expression env lst =
   let rec loop lhs = function
-    | Word "^" :: lst ->
-        unary_expression env lst
-          (fun rhs lst -> loop (power lhs rhs) lst)
+    (* | Word "^" :: lst -> *)
+    (*     let rhs, lst = unary_expression env lst in *)
+    (*     loop (power lhs rhs) lst *)
     | lst ->
-        k lhs lst
+        lhs, lst
   in
-  unary_expression env lst loop
+  let lhs, lst = unary_expression env lst in
+  loop lhs lst
 
-and unary_expression env lst k =
+and unary_expression env lst =
   match lst with
-  | w :: lst when w == minus_word ->
-      unary_expression env lst
-        (fun rhs lst -> k (minus rhs) lst)
+  (* | w :: lst when w == minus_word -> *)
+  (*     let rhs, lst = unary_expression env lst in *)
+  (*     minus rhs, lst *)
   | lst ->
-      instruction env lst k
+      instruction env lst
 
-and instruction env lst k =
+and instruction env lst : exp * _ list =
   match lst with
   | (Num _ as a) :: lst
   | (List _ as a) :: lst
   | (Array _ as a) :: lst ->
-      k a lst
+      Atom a, lst
   | Word "(" :: Word proc :: lst when has_routine proc ->
-      eval_call env proc lst false k
+      parse_call env proc lst false
   | Word "(" :: lst ->
-      eval env lst
-        (fun res lst ->
-           match lst with
-           | Word ")" :: lst ->
-               k res lst
-           | a :: _ ->
-               error "expected ')', found %s" (string_of_datum a)
-           | [] ->
-               error "expected ')'")
+      let res, lst = parse env lst in
+      begin match lst with
+      | Word ")" :: lst ->
+          res, lst
+      | a :: _ ->
+          error "expected ')', found %s" (string_of_datum a)
+      | [] ->
+          error "expected ')'"
+      end
   | Word w :: lst ->
       if isnumber w then
         let n = float_of_string w in
-        k (Num n) lst
+        Atom (Num n), lst
       else if w.[0] = '\"' then
         let w = stringfrom 1 w in
-        k (Word w) lst
+        Atom (Word w), lst
       else if w.[0] = ':' then
         let w = stringfrom 1 w in
-        k (get_var env w) lst
+        Var w, lst
       else
-        eval_call env w lst true k
+        parse_call env w lst true
   | [] ->
       assert false
 
-and eval_call env proc lst natural k =
-  let eval_args len natural lst k =
-    if natural then
-      let rec loop acc i lst =
-        if i >= len then
-          k (List.rev acc) lst
-        else
-          match lst with
-          | _ :: _ ->
-              eval env lst (fun arg1 lst -> loop (arg1 :: acc) (i+1) lst)
-          | [] ->
-              error "not enough arguments for %s" (String.uppercase proc)
-      in
-      loop [] 0 lst
-    else
-      let rec loop acc = function
-        | Word ")" :: lst ->
-            k (List.rev acc) lst
-        | _ :: _ as lst ->
-            eval env lst (fun arg1 lst -> loop (arg1 :: acc) lst)
+and parse_args proc env len natural lst =
+  if natural then
+    let rec loop acc lst =
+      if List.length acc >= len then
+        List.rev acc, lst
+      else begin
+        match lst with
+        | _ :: _ ->
+            let arg1, lst = parse env lst in
+            loop (arg1 :: acc) lst
         | [] ->
-            error "expected ')'"
-      in
-      loop [] lst
-  in
-  try
-    let proc = get_routine proc in
-    let len =
-      match proc with
-      | Pf0 _ -> 0 | Pf1 _ -> 1
-      | Pf2 _ -> 2 | Pf3 _ -> 3
-      | Pfn (len, _) | Pfcn (len, _) -> len
+            error "not enough arguments for %s" (String.uppercase proc)
+      end
     in
-    eval_args len natural lst (fun args lst -> apply env proc args (fun x -> k x lst))
-  with
-  | Not_found ->
-      error "Don't know how to %s" (String.uppercase proc)
+    loop [] lst
+  else
+    let rec loop acc = function
+      | Word ")" :: lst ->
+          List.rev acc, lst
+      | _ :: _ as lst ->
+          let arg1, lst = parse env lst in
+          loop (arg1 :: acc) lst
+      | [] ->
+          error "expected ')'"
+    in
+    loop [] lst
+
+and parse_call env name lst natural =
+  match get_routine name with
+  | Pf proc as pf ->
+      let args, lst = parse_args name env (arity pf) natural lst in
+      App (proc, args), lst
+  | Pr (_, prim) as pr ->
+      let args, lst = parse_args name env (arity pr) natural lst in
+      prim env args, lst
+  | exception Not_found ->
+      error "Don't know how to %s" (String.uppercase name)
 
   (* let Pf (fn, f) = *)
   (*   try *)
@@ -194,21 +208,24 @@ and eval_call env proc lst natural k =
   (* eval_args (default_num_args fn) natural lst *)
   (*   (fun args lst -> apply env proc fn f args (fun res -> k res lst)) *)
 
-let eval_bool env lst k =
-  eval env lst (fun a lst ->
-      match a with
-      | Word "TRUE" -> k true lst
-      | Word "FALSE" -> k false lst
-      | _ ->
-          error "boolen valued expected")
+(* let eval_bool env lst k = *)
+(*   eval env lst (fun a lst -> *)
+(*       match a with *)
+(*       | Word "TRUE" -> k true lst *)
+(*       | Word "FALSE" -> k false lst *)
+(*       | _ -> *)
+(*           error "boolen valued expected") *)
 
-let eval_list env lst k =
+let parse_list env lst =
   let rec loop last = function
-    | [] -> k last
+    | [] ->
+        last
     | _ :: _ as lst ->
-        eval env lst loop
+        let e', lst = parse env lst in
+        loop (Seq (last, e')) lst
   in
-  eval env lst loop
+  let e, lst = parse env lst in
+  loop e lst
 
 (* let define ~name ~inputs ~body = *)
 (*   let body1 = *)
@@ -231,3 +248,7 @@ let eval_list env lst k =
 (*   in *)
 (*   loop inputs *)
 (*     { k = fun fn f -> add_proc ~name ~raw ~doc ~args:(Kenv fn) ~f:(fun env -> f (new_frame env)) } *)
+
+let rec eval env e k =
+  match e with
+  | Atom a -> k a

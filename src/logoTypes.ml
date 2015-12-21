@@ -37,7 +37,7 @@ end
 
 module H = Hashtbl.Make (NoCaseString)
 
-type proc =
+type pf =
   | Pf0 of (unit -> atom)
   | Pf1 of (atom -> atom)
   | Pf2 of (atom -> atom -> atom)
@@ -45,9 +45,29 @@ type proc =
   | Pfn of int * (atom list -> atom)
   | Pfcn of int * (env -> atom list -> (atom -> unit) -> unit)
 
+and proc =
+  | Pf of pf
+  | Pr of int * (env -> exp list -> exp)
+
 and env =
   { locals : atom option H.t list;
     output : atom -> unit;
     continue : atom option -> unit;
     repcount : int list;
     mutable test : bool option }
+
+and exp =
+  | App of pf * exp list
+  | Var of string
+  | Atom of atom
+  | If of exp * exp * exp
+  | Output of exp
+  | Seq of exp * exp
+
+let arity = function
+  | Pf (Pf0 _) -> 0
+  | Pf (Pf1 _) -> 1
+  | Pf (Pf2 _) -> 2
+  | Pf (Pf3 _) -> 3
+  | Pf (Pfn (len, _)) | Pf (Pfcn (len, _)) -> len
+  | Pr (n, _) -> n

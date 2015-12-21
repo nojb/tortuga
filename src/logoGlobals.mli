@@ -23,7 +23,7 @@ open LogoTypes
 
 (* type primitive *)
 
-val add_pf : string -> proc -> unit
+val add_pf : string -> pf -> unit
 val add_pf0 : string -> (unit -> atom) -> unit
 val add_pf1 : string -> (atom -> atom) -> unit
 val add_pf2 : string -> (atom -> atom -> atom) -> unit

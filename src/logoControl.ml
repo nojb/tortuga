@@ -34,47 +34,47 @@ exception Pause of env
 
 (** 8.1 Control *)
 
-let run env args k =
-  match args with
-  | List args :: [] ->
-      eval_list env (reparse args) k
-  | _ ->
-      error "run: bad arg list"
+(* let run env args k = *)
+(*   match args with *)
+(*   | List args :: [] -> *)
+(*       eval_list env (reparse args) k *)
+(*   | _ -> *)
+(*       error "run: bad arg list" *)
 
 let is_int x = floor x = x
 
-let repeat env args k =
-  match args with
-  | Num num :: List lst :: [] when is_int num ->
-      let n = truncate num in
-      let lst = reparse lst in
-      let rec loop env i x =
-        if i > n then k x
-        else
-          eval_list env lst (loop (step_repcount env) (i + 1))
-      in
-      loop (start_repcount env) 1 (Word "NIL")
-  | _ ->
-      error "repeat: bad arg list"
+(* let repeat env args k = *)
+(*   match args with *)
+(*   | Num num :: List lst :: [] when is_int num -> *)
+(*       let n = truncate num in *)
+(*       let lst = reparse lst in *)
+(*       let rec loop env i x = *)
+(*         if i > n then k x *)
+(*         else *)
+(*           eval_list env lst (loop (step_repcount env) (i + 1)) *)
+(*       in *)
+(*       loop (start_repcount env) 1 (Word "NIL") *)
+(*   | _ -> *)
+(*       error "repeat: bad arg list" *)
 
 (* FIXME should be able to stop on STOP or THROW *)
-let forever env args k =
-  match args with
-  | List lst :: [] ->
-      let lst = reparse lst in
-      let rec loop env =
-        eval_list env lst (fun _ -> loop (step_repcount env))
-      in
-      loop (start_repcount env)
-  | _ ->
-      error "forever: bad arg list"
+(* let forever env args k = *)
+(*   match args with *)
+(*   | List lst :: [] -> *)
+(*       let lst = reparse lst in *)
+(*       let rec loop env = *)
+(*         eval_list env lst (fun _ -> loop (step_repcount env)) *)
+(*       in *)
+(*       loop (start_repcount env) *)
+(*   | _ -> *)
+(*       error "forever: bad arg list" *)
 
-let repcount env args k =
-  match args with
-  | [] ->
-      k (Num (float (LogoEnv.repcount env)))
-  | _ ->
-      error "repcount: bad arg list"
+(* let repcount env args k = *)
+(*   match args with *)
+(*   | [] -> *)
+(*       k (Num (float (LogoEnv.repcount env))) *)
+(*   | _ -> *)
+(*       error "repcount: bad arg list" *)
 
 (* let eval_tf env tf k = *)
 (*   match tf with *)
@@ -86,72 +86,72 @@ let is_true = function
   | Word "FALSE" -> false
   | _ -> true
 
-let if_ env args k =
-  match args with
-  | tf :: List yay :: [] ->
-      if is_true tf then
-        eval_list env (reparse yay) k
-      else
-        k (Word "NIL")
-  | tf :: List yay :: List nay :: [] ->
-      if is_true tf then
-        eval_list env (reparse yay) k
-      else
-        eval_list env (reparse nay) k
-  | _ ->
-      error "if: bad arg list"
+(* let if_ env args k = *)
+(*   match args with *)
+(*   | tf :: List yay :: [] -> *)
+(*       if is_true tf then *)
+(*         eval_list env (reparse yay) k *)
+(*       else *)
+(*         k (Word "NIL") *)
+(*   | tf :: List yay :: List nay :: [] -> *)
+(*       if is_true tf then *)
+(*         eval_list env (reparse yay) k *)
+(*       else *)
+(*         eval_list env (reparse nay) k *)
+(*   | _ -> *)
+(*       error "if: bad arg list" *)
 
-let ifelse env args k =
-  match args with
-  | tf :: List yay :: List nay :: [] ->
-      if is_true tf then
-        eval_list env (reparse yay) k
-      else
-        eval_list env (reparse nay) k
-  | _ ->
-      error "ifelse: bad arg list"
+(* let ifelse env args k = *)
+(*   match args with *)
+(*   | tf :: List yay :: List nay :: [] -> *)
+(*       if is_true tf then *)
+(*         eval_list env (reparse yay) k *)
+(*       else *)
+(*         eval_list env (reparse nay) k *)
+(*   | _ -> *)
+(*       error "ifelse: bad arg list" *)
 
-let test env args k =
-  match args with
-  | arg :: [] ->
-      set_test env (is_true arg);
-      k (Word "NIL")
-  | _ ->
-      error "test: bad arg list"
+(* let test env args k = *)
+(*   match args with *)
+(*   | arg :: [] -> *)
+(*       set_test env (is_true arg); *)
+(*       k (Word "NIL") *)
+(*   | _ -> *)
+(*       error "test: bad arg list" *)
 
-let iftrue env args k =
-  match args with
-  | List args :: [] ->
-      if get_test env then
-        eval_list env (reparse args) k
-      else
-        k (Word "NIL")
-  | _ ->
-      error "iftrue: bad arg list"
+(* let iftrue env args k = *)
+(*   match args with *)
+(*   | List args :: [] -> *)
+(*       if get_test env then *)
+(*         eval_list env (reparse args) k *)
+(*       else *)
+(*         k (Word "NIL") *)
+(*   | _ -> *)
+(*       error "iftrue: bad arg list" *)
 
-let iffalse env args k =
-  match args with
-  | List args :: [] ->
-      if get_test env then
-        k (Word "NIL")
-      else
-        eval_list env (reparse args) k
-  | _ ->
-      error "iffalse: bad arg list"
+(* let iffalse env args k = *)
+(*   match args with *)
+(*   | List args :: [] -> *)
+(*       if get_test env then *)
+(*         k (Word "NIL") *)
+(*       else *)
+(*         eval_list env (reparse args) k *)
+(*   | _ -> *)
+(*       error "iffalse: bad arg list" *)
 
-let stop env args _ =
-  match args with
-  | [] ->
-      output env (Word "NIL")
-  | _ ->
-      error "stop: bad arg list"
+(* let stop env args _ = *)
+(*   match args with *)
+(*   | [] -> *)
+(*       output env (Word "NIL") *)
+(*   | _ -> *)
+(*       error "stop: bad arg list" *)
 
-let output env args _ =
-  match args with
-  | arg :: [] ->
-      output env arg
-  | _ ->
-      error "output: bad arg list"
+(* let output env args _ = *)
+(*   match args with *)
+(*   | arg :: [] -> *)
+(*       output env arg *)
+(*   | _ -> *)
+(*       error "output: bad arg list" *)
 
 (*
 let catch env args k =
@@ -429,30 +429,30 @@ UNTIL tfexpression instructionlist		(library procedure)
   prim ~names ~doc ~args ~f
 *)
 
-let () =
-  add_pfcn "run" 1 run;
-  add_pfcn "repeat" 2 repeat;
-  add_pfcn "forever" 1 forever;
-  add_pfcn "repcount" 0 repcount;
-  add_pfcn "#" 0 repcount;
-  add_pfcn "if" 2 if_;
-  add_pfcn "ifelse" 3 ifelse;
-  add_pfcn "test" 1 test;
-  add_pfcn "iftrue" 1 iftrue;
-  add_pfcn "iffalse" 1 iffalse;
-  add_pfcn "stop" 0 stop;
-  add_pfcn "output" 1 output
-  (* List.iter add_prim
-    [
-      catch;
-      throw;
-      pause;
-      continue;
-      bye;
-      ignore;
-      do_while;
-      while_;
-      do_until;
-      until
-    ]
-  *)
+(* let () = *)
+(*   add_pfcn "run" 1 run; *)
+(*   add_pfcn "repeat" 2 repeat; *)
+(*   add_pfcn "forever" 1 forever; *)
+(*   add_pfcn "repcount" 0 repcount; *)
+(*   add_pfcn "#" 0 repcount; *)
+(*   add_pfcn "if" 2 if_; *)
+(*   add_pfcn "ifelse" 3 ifelse; *)
+(*   add_pfcn "test" 1 test; *)
+(*   add_pfcn "iftrue" 1 iftrue; *)
+(*   add_pfcn "iffalse" 1 iffalse; *)
+(*   add_pfcn "stop" 0 stop; *)
+(*   add_pfcn "output" 1 output *)
+(*   (\* List.iter add_prim *)
+(*     [ *)
+(*       catch; *)
+(*       throw; *)
+(*       pause; *)
+(*       continue; *)
+(*       bye; *)
+(*       ignore; *)
+(*       do_while; *)
+(*       while_; *)
+(*       do_until; *)
+(*       until *)
+(*     ] *)
+(*   *\) *)
