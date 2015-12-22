@@ -54,26 +54,12 @@ let create_env turtle =
     palette;
     plists = H.create 3;
     locals = [];
-    output = (fun _ -> raise (Error "output: not inside a function"));
-    continue = (fun _ -> raise (Error "continue: no pause"));
     repcount = [];
     test = None;
   }
 
 let new_frame env =
   { env with locals = H.create 17 :: env.locals }
-
-let new_exit env output =
-  { env with output }
-
-let output env a =
-  env.output a
-
-let new_continue env k =
-  { env with continue = k }
-
-let continue env a =
-  env.continue a
 
 let create_var env name data =
   match env.locals with

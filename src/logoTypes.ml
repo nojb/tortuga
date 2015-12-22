@@ -55,8 +55,6 @@ and env =
     palette : Gg.color H.t;
     plists : atom H.t H.t;
     locals : atom option H.t list;
-    output : atom -> unit;
-    continue : atom option -> unit;
     repcount : int list;
     mutable test : bool option;
   }
