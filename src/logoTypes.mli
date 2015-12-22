@@ -39,7 +39,7 @@ type pf =
 
 and proc =
   | Pf of pf
-  | Pr of int * (env -> exp list -> exp)
+  | Pr of int * (exp list -> exp)
 
 and env =
   { locals : atom option H.t list;

@@ -45,7 +45,7 @@ let is_int x = floor x = x
 
 let repeat env = function
   | num :: Atom (List lst) :: [] ->
-      Repeat (num, parse_list env lst)
+      Repeat (num, parse_list lst)
       (* let n = truncate num in *)
       (* let lst = reparse lst in *)
       (* let rec loop env i x = *)
@@ -86,15 +86,15 @@ let is_true = function
   | Word "FALSE" -> false
   | _ -> true
 
-let if_ env = function
+let if_ = function
   | tf :: Atom (List yay) :: [] ->
-      If (tf, parse_list env yay, Atom (Word "NIL"))
+      If (tf, parse_list yay, Atom (Word "NIL"))
       (* if is_true tf then *)
       (*   eval_list env (reparse yay) k *)
       (* else *)
       (*   k (Word "NIL") *)
   | tf :: Atom (List yay) :: Atom (List nay) :: [] ->
-      If (tf, parse_list env yay, parse_list env nay)
+      If (tf, parse_list yay, parse_list nay)
       (* if is_true tf then *)
       (*   eval_list env (reparse yay) k *)
       (* else *)
@@ -327,9 +327,9 @@ IGNORE value					(library procedure)
   prim ~names ~doc ~args ~f
 *)
 
-let do_while env = function
+let do_while = function
   | Atom (List body) :: Atom (List tf) :: [] ->
-      Do (parse_list env body, parse_list env tf)
+      Do (parse_list body, parse_list tf)
   | _ ->
       failwith "DO.WHILE: bad args"
         (*
@@ -360,9 +360,9 @@ DO.WHILE instructionlist tfexpression		(library procedure)
   prim ~names ~doc ~args ~f
 *)
 
-let while_ env = function
+let while_ = function
   | Atom (List tf) :: Atom (List body) :: [] ->
-      While (parse_list env tf, parse_list env body)
+      While (parse_list tf, parse_list body)
   | _ ->
       failwith "WHILE: bad args"
 

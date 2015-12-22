@@ -21,9 +21,9 @@
 
 open LogoTypes
 
-val parse : env -> atom list -> exp * atom list
+val parse : atom list -> exp * atom list
 (* val eval_bool : env -> atom list -> (bool -> atom list -> unit) -> unit *)
-val parse_list : env -> atom list -> exp
+val parse_list : atom list -> exp
 (* val define : raw:string list -> name:string -> inputs:string list -> body:string list -> unit *)
 
 val eval : env -> exp -> (atom -> unit) -> unit

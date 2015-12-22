@@ -49,10 +49,10 @@ let stringfrom pos str =
 (* let power lhs rhs = App ("**", [lhs; rhs]) *)
 (* let minus lhs = App ("-", [lhs]) *)
 
-let rec parse env lst =
-  relational_expression env lst
+let rec parse lst =
+  relational_expression lst
 
-and relational_expression env lst =
+and relational_expression lst =
   let rec loop lhs = function
     (* | Word "=" :: lst -> *)
     (*     additive_expression env lst *)
@@ -75,10 +75,10 @@ and relational_expression env lst =
     | lst ->
         lhs, lst
   in
-  let lhs, lst = additive_expression env lst in
+  let lhs, lst = additive_expression lst in
   loop lhs lst
 
-and additive_expression env lst =
+and additive_expression lst =
   let rec loop lhs = function
     (* | Word "+" :: lst -> *)
     (*     let rhs, lst = multiplicative_expression env lst in *)
@@ -89,10 +89,10 @@ and additive_expression env lst =
     | lst ->
         lhs, lst
   in
-  let lhs, lst = multiplicative_expression env lst in
+  let lhs, lst = multiplicative_expression lst in
   loop lhs lst
 
-and multiplicative_expression env lst =
+and multiplicative_expression lst =
   let rec loop lhs = function
     (* | Word "*" :: lst -> *)
     (*     let rhs, lst = power_expression env lst in *)
@@ -106,10 +106,10 @@ and multiplicative_expression env lst =
     | lst ->
         lhs, lst
   in
-  let lhs, lst = power_expression env lst in
+  let lhs, lst = power_expression lst in
   loop lhs lst
 
-and power_expression env lst =
+and power_expression lst =
   let rec loop lhs = function
     (* | Word "^" :: lst -> *)
     (*     let rhs, lst = unary_expression env lst in *)
@@ -117,27 +117,27 @@ and power_expression env lst =
     | lst ->
         lhs, lst
   in
-  let lhs, lst = unary_expression env lst in
+  let lhs, lst = unary_expression lst in
   loop lhs lst
 
-and unary_expression env lst =
+and unary_expression lst =
   match lst with
   (* | w :: lst when w == minus_word -> *)
   (*     let rhs, lst = unary_expression env lst in *)
   (*     minus rhs, lst *)
   | lst ->
-      instruction env lst
+      instruction lst
 
-and instruction env lst : exp * _ list =
+and instruction lst : exp * _ list =
   match lst with
   | (Num _ as a) :: lst
   | (List _ as a) :: lst
   | (Array _ as a) :: lst ->
       Atom a, lst
   | Word "(" :: Word proc :: lst when has_routine proc ->
-      parse_call env proc lst false
+      parse_call proc lst false
   | Word "(" :: lst ->
-      let res, lst = parse env lst in
+      let res, lst = parse lst in
       begin match lst with
       | Word ")" :: lst ->
           res, lst
@@ -157,11 +157,11 @@ and instruction env lst : exp * _ list =
         let w = stringfrom 1 w in
         Var w, lst
       else
-        parse_call env w lst true
+        parse_call w lst true
   | [] ->
       assert false
 
-and parse_args proc env len natural lst =
+and parse_args proc len natural lst =
   if natural then
     let rec loop acc lst =
       if List.length acc >= len then
@@ -169,7 +169,7 @@ and parse_args proc env len natural lst =
       else begin
         match lst with
         | _ :: _ ->
-            let arg1, lst = parse env lst in
+            let arg1, lst = parse lst in
             loop (arg1 :: acc) lst
         | [] ->
             error "not enough arguments for %s" (String.uppercase proc)
@@ -181,21 +181,21 @@ and parse_args proc env len natural lst =
       | Word ")" :: lst ->
           List.rev acc, lst
       | _ :: _ as lst ->
-          let arg1, lst = parse env lst in
+          let arg1, lst = parse lst in
           loop (arg1 :: acc) lst
       | [] ->
           error "expected ')'"
     in
     loop [] lst
 
-and parse_call env name lst natural =
+and parse_call name lst natural =
   match get_routine name with
   | Pf proc as pf ->
-      let args, lst = parse_args name env (arity pf) natural lst in
+      let args, lst = parse_args name (arity pf) natural lst in
       App (proc, args), lst
   | Pr (_, prim) as pr ->
-      let args, lst = parse_args name env (arity pr) natural lst in
-      prim env args, lst
+      let args, lst = parse_args name (arity pr) natural lst in
+      prim args, lst
   | exception Not_found ->
       error "Don't know how to %s" (String.uppercase name)
 
@@ -216,15 +216,15 @@ and parse_call env name lst natural =
 (*       | _ -> *)
 (*           error "boolen valued expected") *)
 
-let parse_list env lst =
+let parse_list lst =
   let rec loop last = function
     | [] ->
         last
     | _ :: _ as lst ->
-        let e', lst = parse env lst in
+        let e', lst = parse lst in
         loop (Seq (last, e')) lst
   in
-  let e, lst = parse env lst in
+  let e, lst = parse lst in
   loop e lst
 
 (* let define ~name ~inputs ~body = *)

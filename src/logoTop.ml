@@ -132,7 +132,7 @@ let main () =
     try
       let lexbuf = Lexing.from_string l in
       let list = LogoLex.parse_atoms [] false lexbuf in
-      let e = parse_list env list in
+      let e = parse_list list in
 
       Format.printf "%a@." LogoTypes.pp e;
 
