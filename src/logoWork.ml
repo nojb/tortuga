@@ -26,10 +26,16 @@ open LogoAtom
 open LogoGlobals
 open LogoPrint
 open LogoEnv
-  
+
 (** 7.2 Variable Definition *)
 
-let make =
+let make = function
+  | Atom (Word id) :: e :: [] ->
+      Make (id, e)
+  | _ ->
+      failwith "MAKE: bad args"
+
+(*
   let names = ["make"] in
   let doc =
 
@@ -45,7 +51,7 @@ MAKE varname value
   let args = Lga.(env @@ word @-> any @-> ret retvoid) in
   let f env varname value = set_var env varname value in
   prim ~names ~doc ~args ~f
-  
+
 let name =
   let names = ["name"] in
   let doc =
@@ -136,9 +142,9 @@ THING varname
     than one such variable, the innermost local variable of that name is
     chosen. The colon notation is an abbreviation not for THING but for the
     combination
- 	
+
       thing \"
-    
+
     so that :FOO means THING \"FOO."
 
   in
@@ -271,29 +277,6 @@ PLIST? name
 
 (** 7.7 Workspace Control *)
 
-(* From Homebrew:
-def puts_columns items, star_items=[]
-  return if items.empty?
-
-  if star_items && star_items.any?
-    items = items.map{|item| star_items.include?(item) ? "#{item}*" : item}
-  end
-
-  if $stdout.tty?
-    # determine the best width to display for different console sizes
-    console_width = `/bin/stty size`.chomp.split(" ").last.to_i
-    console_width = 80 if console_width <= 0
-    longest = items.sort_by { |item| item.length }.last
-    optimal_col_width = (console_width.to_f / (longest.length + 2).to_f).floor
-    cols = optimal_col_width > 1 ? optimal_col_width : 1
-
-    IO.popen("/usr/bin/pr -#{cols} -t -w#{console_width}", "w"){|io| io.puts(items) }
-  else
-    puts items
-  end
-end
-*)
-
 let help =
   let names = ["help"] in
   let doc =
@@ -348,7 +331,7 @@ HELP name
         cprintlf "No help is available for %s" name
   in
   prim ~names ~doc ~args ~f
-  
+
 let () =
   List.iter add_prim
     [
@@ -357,7 +340,7 @@ let () =
       local;
       localmake;
       thing;
-      
+
       pprop;
       gprop;
       remprop;
@@ -366,6 +349,10 @@ let () =
       definedp;
       namep;
       plistp;
-      
+
       help
     ]
+*)
+
+let () =
+  add_pr2 "make" make

@@ -33,7 +33,7 @@ module L3 = LogoComm
 module L4 = LogoArithmetic
 (* module L5 = LogoLogic *)
 (* module L6 = LogoGraphics.Make (LogoTurtleGraphics) *)
-(* module L7 = LogoWork *)
+module L7 = LogoWork
 (* module L8 = LogoControl *)
 
 (* open React *)

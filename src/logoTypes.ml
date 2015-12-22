@@ -61,6 +61,7 @@ and env =
 
 and exp =
   | App of pf * exp list
+  | Make of string * exp
   | Var of string
   | Atom of atom
   | If of exp * exp * exp

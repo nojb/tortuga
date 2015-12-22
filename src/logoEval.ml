@@ -268,6 +268,8 @@ let rec eval env e k =
             eval env e (fun x -> loop (x :: args) el)
       in
       loop [] el
+  | Make (id, e) ->
+      eval env e (fun x -> set_var env id x; k (Word "NIL"))
   | Var id ->
       k (get_var env id)
   | Atom a ->
