@@ -133,6 +133,9 @@ let main () =
       let lexbuf = Lexing.from_string l in
       let list = LogoLex.parse_atoms [] false lexbuf in
       let e = parse_list env list in
+
+      Format.printf "%a@." LogoTypes.pp e;
+
       eval env e print_datum
       (* | `GotTO (name, inputs, body) -> *)
       (*     assert false *)

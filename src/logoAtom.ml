@@ -71,6 +71,9 @@ let string_of_datum a =
   bprint_datum b a;
   Buffer.contents b
 
+let pp_atom fmt a =
+  Format.pp_print_string fmt (string_of_datum a)
+
 let string_of_datum_list al =
   let b = Buffer.create 17 in
   bprint_datum_list b al;

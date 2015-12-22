@@ -40,6 +40,8 @@ val parse : string -> atom list
 
 val reparse : atom list -> atom list
 
+val pp_atom : Format.formatter -> atom -> unit
+
 val print_datum : atom -> unit
 val print_datum_list : atom list -> unit
 

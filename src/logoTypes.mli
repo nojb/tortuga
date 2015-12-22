@@ -59,4 +59,6 @@ and exp =
   | While of exp * exp
   | Do of exp * exp
 
+val pp : Format.formatter -> exp -> unit
+
 val arity : proc -> int
