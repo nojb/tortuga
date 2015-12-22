@@ -40,3 +40,16 @@ val step_repcount : env -> env
 
 val set_test : env -> bool -> unit
 val get_test : env -> bool
+
+val set_global : env -> string -> atom -> unit
+val get_global : env -> string -> atom
+val has_global : env -> string -> bool
+
+val set_palette : env -> string -> Gg.color -> unit
+val get_palette : env -> string -> Gg.color option
+
+val put_prop : env -> string -> string -> atom -> unit
+val get_prop : env -> string -> string -> atom option
+val remove_prop : env -> string -> string -> unit
+val prop_list : env -> string -> (string * atom) list
+val has_plist : env -> string -> bool

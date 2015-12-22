@@ -42,11 +42,16 @@ and proc =
   | Pr of int * (exp list -> exp)
 
 and env =
-  { locals : atom option H.t list;
+  {
+    globals : atom H.t;
+    palette : Gg.color H.t;
+    plists : atom H.t H.t;
+    locals : atom option H.t list;
     output : atom -> unit;
     continue : atom option -> unit;
     repcount : int list;
-    mutable test : bool option }
+    mutable test : bool option;
+  }
 
 and exp =
   | App of pf * exp list

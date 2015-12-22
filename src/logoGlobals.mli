@@ -37,16 +37,3 @@ val has_routine : string -> bool
 val get_routine : string -> proc
 val fold_routines : (string -> 'a -> 'a) -> 'a -> 'a
 (* val get_help : string -> string option *)
-
-val set_global : string -> atom -> unit
-val get_global : string -> atom
-val has_global : string -> bool
-
-val set_palette : string -> Gg.color -> unit
-val get_palette : string -> Gg.color option
-
-val put_prop : string -> string -> atom -> unit
-val get_prop : string -> string -> atom option
-val remove_prop : string -> string -> unit
-val prop_list : string -> (string * atom) list
-val has_plist : string -> bool

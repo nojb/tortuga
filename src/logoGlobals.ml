@@ -30,35 +30,7 @@ open LogoAtom
 
 let routines : proc H.t = H.create 17
 
-let globals : atom H.t = H.create 17
-
-let default_colors =
-  let open Gg.Color in
-  [
-    0 , "black"     , black;
-    1 , "blue"      , blue;
-    2 , "lime"      , v_srgbi 191 255 0;
-    3 , "cyan"      , v_srgbi 0 255 255;
-    4 , "red"       , red;
-    5 , "magenta"   , v_srgbi 255 0 255;
-    6 , "yellow"    , v_srgbi 255 255 0;
-    7 , "white"     , white;
-    8 , "brown"     , v_srgbi 150 75 0;
-    9 , "tan"       , v_srgbi 210 180 140;
-    10, "green"     , green;
-    11, "aquamarine", v_srgbi 127 255 212;
-    12, "salmon"    , v_srgbi 250 128 114;
-    13, "purple"    , v_srgbi 128 0 128;
-    14, "orange"    , v_srgbi 255 127 0;
-    15, "grey"      , v_srgbi 128 128 128
-  ]
-
-let palette =
-  let pal = H.create 17 in
-  List.iter (fun (id, name, col) ->
-      H.add pal (string_of_int id) col;
-      H.add pal name col) default_colors;
-  pal
+(* let globals : atom H.t = H.create 17 *)
 
 let add_pf name proc =
   H.add routines name (Pf proc)
@@ -90,64 +62,3 @@ let fold_routines f b =
 (*     p.proc_doc *)
 (*   with *)
 (*   | Not_found -> None *)
-
-let set_global name data =
-  H.replace globals name data
-
-let get_global name =
-  try
-    H.find globals name
-  with
-  | Not_found ->
-    error "Don't know about variable %s" name
-
-let has_global name =
-  H.mem globals name
-
-let set_palette name c =
-  H.replace palette name c
-
-let get_palette name =
-  try Some (H.find palette name) with Not_found -> None
-
-let plists = H.create 17
-
-let put_prop plist name value =
-  let p =
-    try
-      H.find plists plist
-    with
-    | Not_found ->
-      let h = H.create 5 in
-      H.add plists plist h;
-      h
-  in
-  H.replace p name value
-
-let get_prop plist name =
-  try
-    let p = H.find plists plist in
-    Some (H.find p name)
-  with
-  | Not_found -> None
-
-let remove_prop plist name =
-  try
-    let p = H.find plists plist in
-    H.remove p name;
-    if H.length p = 0 then H.remove plists plist
-  with
-  | Not_found -> ()
-
-let prop_list plist =
-  try
-    H.fold (fun k v l -> (k, v) :: l) (H.find plists plist) []
-  with
-  | Not_found -> []
-
-let has_plist plistname =
-  try
-    let p = H.find plists plistname in
-    H.length p > 0
-  with
-  | Not_found -> false
