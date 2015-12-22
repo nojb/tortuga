@@ -51,8 +51,15 @@ MAKE varname value
   let args = Lga.(env @@ word @-> any @-> ret retvoid) in
   let f env varname value = set_var env varname value in
   prim ~names ~doc ~args ~f
+*)
 
-let name =
+let name = function
+  | e :: Atom (Word id) :: [] ->
+      Make (id, e)
+  | _ ->
+      failwith "NAME: bad args"
+
+(*
   let names = ["name"] in
   let doc =
 
@@ -355,4 +362,5 @@ let () =
 *)
 
 let () =
-  add_pr2 "make" make
+  add_pr2 "make" make;
+  add_pr2 "name" name
