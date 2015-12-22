@@ -325,8 +325,14 @@ IGNORE value					(library procedure)
   let args = Lga.(any @-> ret retvoid) in
   let f _ = () in
   prim ~names ~doc ~args ~f
+*)
 
-let do_while =
+let do_while env = function
+  | Atom (List body) :: Atom (List tf) :: [] ->
+      Do (parse_list env body, parse_list env tf)
+  | _ ->
+      failwith "DO.WHILE: bad args"
+        (*
   let names = ["do.while"] in
   let doc =
 
@@ -352,9 +358,15 @@ DO.WHILE instructionlist tfexpression		(library procedure)
     loop ()
   in
   prim ~names ~doc ~args ~f
+*)
 
-let while_ =
-  let names = ["while"] in
+let while_ env = function
+  | Atom (List tf) :: Atom (List body) :: [] ->
+      While (parse_list env tf, parse_list env body)
+  | _ ->
+      failwith "WHILE: bad args"
+
+(*  let names = ["while"] in
   let doc =
 
     "\
@@ -376,36 +388,46 @@ WHILE tfexpression instructionlist		(library procedure)
     in
     loop ()
   in
-  prim ~names ~doc ~args ~f
+    prim ~names ~doc ~args ~f *)
 
-let do_until =
-  let names = ["do.until"] in
-  let doc =
+(* let do_until env = function *)
+(*   | Atom (List body) :: Atom (List tf) :: [] -> *)
+(*       Do (parse_list env body, Not (parse_list env tf)) *)
+(*   | _ -> *)
+(*       failwith "DO.UNTIL: bad args" *)
 
-    "\
-DO.UNTIL instructionlist tfexpression		(library procedure)
+(*   let names = ["do.until"] in *)
+(*   let doc = *)
 
-    Command. Repeatedly evaluates the instructionlist as long as the evaluated
-    remains FALSE. Evaluates the first input first, so the instructionlist is
-    always run at least once. The tfexpression must be an expressionlist whose
-    value when evaluated is TRUE or FALSE."
+(*     "\ *)
+(* DO.UNTIL instructionlist tfexpression		(library procedure) *)
 
-  in
-  let args = Lga.(env @@ list any @-> list any @-> ret retvoid) in
-  let f env list expr =
-    let list = reparse list in
-    let expr = reparse expr in
-    let rec loop () =
-      commandlist env list
-        (fun () ->
-           bool_expression env expr (function true -> () | false -> loop ()))
-    in
-    loop ()
-  in
-  prim ~names ~doc ~args ~f
+(*     Command. Repeatedly evaluates the instructionlist as long as the evaluated *)
+(*     remains FALSE. Evaluates the first input first, so the instructionlist is *)
+(*     always run at least once. The tfexpression must be an expressionlist whose *)
+(*     value when evaluated is TRUE or FALSE." *)
 
-let until =
-  let names = ["until"] in
+(*   in *)
+(*   let args = Lga.(env @@ list any @-> list any @-> ret retvoid) in *)
+(*   let f env list expr = *)
+(*     let list = reparse list in *)
+(*     let expr = reparse expr in *)
+(*     let rec loop () = *)
+(*       commandlist env list *)
+(*         (fun () -> *)
+(*            bool_expression env expr (function true -> () | false -> loop ())) *)
+(*     in *)
+(*     loop () *)
+(*   in *)
+(*   prim ~names ~doc ~args ~f *)
+
+(* let until env = function *)
+(*   | Atom (List tf) :: Atom (List body) :: [] -> *)
+(*       While (Not (parse_list env tf), parse_list env body) *)
+(*   | _ -> *)
+(*       failwith "UNTIL: bad args" *)
+
+(*  let names = ["until"] in
   let doc =
 
     "\
@@ -427,8 +449,7 @@ UNTIL tfexpression instructionlist		(library procedure)
     in
     loop ()
   in
-  prim ~names ~doc ~args ~f
-*)
+    prim ~names ~doc ~args ~f *)
 
 let () =
 (*   add_pfcn "run" 1 run; *)
@@ -436,7 +457,12 @@ let () =
 (*   add_pfcn "forever" 1 forever; *)
 (*   add_pfcn "repcount" 0 repcount; *)
 (*   add_pfcn "#" 0 repcount; *)
-  add_pr2 "if" if_
+  add_pr2 "if" if_;
+  add_pr2 "while" while_;
+  add_pr2 "do.while" do_while
+  (* add_pr2 "until" until; *)
+  (* add_pr2 "do.until" do_until *)
+
 (*   add_pfcn "ifelse" 3 ifelse; *)
 (*   add_pfcn "test" 1 test; *)
 (*   add_pfcn "iftrue" 1 iftrue; *)

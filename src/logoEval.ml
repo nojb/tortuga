@@ -289,3 +289,19 @@ let rec eval env e k =
           | _ ->
               failwith "number expected"
         )
+  | While (e1, e2) ->
+      let rec loop x =
+        if is_true x then
+          eval env e2 loop
+        else
+          k (Word "NIL")
+      in
+      eval env e1 loop
+  | Do (e1, e2) ->
+      let rec loop x =
+        if is_true x then
+          k (Word "NIL")
+        else
+          eval env e1 (fun _ -> eval env e2 loop)
+      in
+      eval env e1 (fun _ -> eval env e2 loop)
