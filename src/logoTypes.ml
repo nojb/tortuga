@@ -101,6 +101,8 @@ let rec pp fmt = function
   | App (_, el) ->
       let rec aux fmt args = List.iter (fun e -> Format.fprintf fmt "@ %a" pp e) args in
       Format.fprintf fmt "@[<2>(%s%a)@]" "<fun>" aux el
+  | Make (id, e) ->
+      Format.fprintf fmt "@[<2>(make@ %s@ %a)@]" id pp e
   | Var id ->
       Format.pp_print_string fmt id
   | Atom a ->
