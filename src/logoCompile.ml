@@ -28,13 +28,13 @@ let stringfrom pos str =
 
 open LogoArithmetic
 
-(* let lessp lhs rhs = App ("<", [lhs; rhs]) *)
-(* let greaterp lhs rhs = App (">", [lhs; rhs]) *)
-(* let lessequalp lhs rhs = App ("<=", [lhs; rhs]) *)
-(* let greaterequalp lhs rhs = App (">=", [lhs; rhs]) *)
-let sum lhs rhs = App (Pf2 (fun a b -> sum [a; b]), [lhs; rhs])
+let lessp lhs rhs = App (Pf2 lessp, [lhs; rhs])
+let greaterp lhs rhs = App (Pf2 greaterp, [lhs; rhs])
+let lessequalp lhs rhs = App (Pf2 lessequalp, [lhs; rhs])
+let greaterequalp lhs rhs = App (Pf2 greaterequalp, [lhs; rhs])
+let sum lhs rhs = App (Pfn (2, sum), [lhs; rhs])
 let difference lhs rhs = App (Pf2 difference, [lhs; rhs])
-(* let product lhs rhs = App ("*", [lhs; rhs]) *)
+let product lhs rhs = App (Pfn (2, product), [lhs; rhs])
 let power lhs rhs = App (Pf2 power, [lhs; rhs])
 let minus lhs = App (Pf1 minus, [lhs])
 
@@ -46,18 +46,18 @@ and relational_expression lst =
     (* | Word "=" :: lst -> *)
     (*     additive_expression env lst *)
     (*       (fun rhs lst -> loop (infix_pred equalp Kany lhs rhs) lst) *)
-    (* | Word "<" :: lst -> *)
-    (*     let rhs, lst = additive_expression env lst in *)
-    (*     loop (lessp lhs rhs) lst *)
-    (* | Word ">" :: lst -> *)
-    (*     let rhs, lst = additive_expression env lst in *)
-    (*     loop (greaterp lhs rhs) lst *)
-    (* | Word "<=" :: lst -> *)
-    (*     let rhs, lst = additive_expression env lst in *)
-    (*     loop (lessequalp lhs rhs) lst *)
-    (* | Word ">=" :: lst -> *)
-    (*     let rhs, lst = additive_expression env lst in *)
-    (*     loop (greaterequalp lhs rhs) lst *)
+    | Word "<" :: lst ->
+        let rhs, lst = additive_expression lst in
+        loop (lessp lhs rhs) lst
+    | Word ">" :: lst ->
+        let rhs, lst = additive_expression lst in
+        loop (greaterp lhs rhs) lst
+    | Word "<=" :: lst ->
+        let rhs, lst = additive_expression lst in
+        loop (lessequalp lhs rhs) lst
+    | Word ">=" :: lst ->
+        let rhs, lst = additive_expression lst in
+        loop (greaterequalp lhs rhs) lst
     (* | Word "<>" :: lst -> *)
     (*     additive_expression env lst *)
     (*       (fun rhs lst -> loop (infix_pred notequalp Kany lhs rhs) lst) *)
@@ -83,9 +83,9 @@ and additive_expression lst =
 
 and multiplicative_expression lst =
   let rec loop lhs = function
-    (* | Word "*" :: lst -> *)
-    (*     let rhs, lst = power_expression env lst in *)
-    (*     loop (product lhs rhs) lst *)
+    | Word "*" :: lst ->
+        let rhs, lst = power_expression lst in
+        loop (product lhs rhs) lst
     (* | Word "/" :: lst -> *)
     (*     power_expression env lst *)
     (*       (fun rhs lst -> loop (infix_float_bin ( /. ) lhs rhs) lst) *)
