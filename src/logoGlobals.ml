@@ -20,7 +20,6 @@
    CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. *)
 
 open LogoTypes
-open LogoAtom
 
 (* type proc_info = { *)
 (*   proc_doc : string option; *)

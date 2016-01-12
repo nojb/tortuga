@@ -22,7 +22,6 @@
 open LogoTypes
 open LogoCompile
 open LogoEval
-open LogoGlobals
 open LogoPrint
 open LogoAtom
 

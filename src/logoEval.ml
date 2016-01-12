@@ -21,7 +21,6 @@
 
 open LogoTypes
 open LogoAtom
-open LogoGlobals
 
 let default_colors =
   let open Gg.Color in
@@ -193,9 +192,6 @@ let apply env proc args k =
   | Pfn (_, f), _ -> k (f args)
   | Pfcn (_, f), _ -> f env args k
   | _ -> assert false
-
-let stringfrom pos str =
-  String.sub str pos (String.length str - pos)
 
 let is_true = function
   | Word "TRUE" | Word "true" -> true
