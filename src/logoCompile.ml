@@ -26,14 +26,14 @@ open LogoGlobals
 let stringfrom pos str =
   String.sub str pos (String.length str - pos)
 
-(* open LogoArithmetic *)
+open LogoArithmetic
 
 (* let lessp lhs rhs = App ("<", [lhs; rhs]) *)
 (* let greaterp lhs rhs = App (">", [lhs; rhs]) *)
 (* let lessequalp lhs rhs = App ("<=", [lhs; rhs]) *)
 (* let greaterequalp lhs rhs = App (">=", [lhs; rhs]) *)
-(* let sum lhs rhs = App ("+", [lhs; rhs]) *)
-(* let difference lhs rhs = App ("-", [lhs; rhs]) *)
+let sum lhs rhs = App (Pf2 (fun a b -> sum [a; b]), [lhs; rhs])
+let difference lhs rhs = App (Pf2 difference, [lhs; rhs])
 (* let product lhs rhs = App ("*", [lhs; rhs]) *)
 (* let power lhs rhs = App ("**", [lhs; rhs]) *)
 (* let minus lhs = App ("-", [lhs]) *)
@@ -69,12 +69,12 @@ and relational_expression lst =
 
 and additive_expression lst =
   let rec loop lhs = function
-    (* | Word "+" :: lst -> *)
-    (*     let rhs, lst = multiplicative_expression env lst in *)
-    (*     loop (sum lhs rhs) lst *)
-    (* | Word "-" :: lst -> *)
-    (*     let rhs, lst = multiplicative_expression env lst in *)
-    (*     loop (difference lhs rhs) lst *)
+    | Word "+" :: lst ->
+        let rhs, lst = multiplicative_expression lst in
+        loop (sum lhs rhs) lst
+    | Word "-" :: lst ->
+        let rhs, lst = multiplicative_expression lst in
+        loop (difference lhs rhs) lst
     | lst ->
         lhs, lst
   in
