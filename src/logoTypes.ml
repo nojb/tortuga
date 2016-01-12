@@ -54,19 +54,7 @@ end
 
 module H = Hashtbl.Make (NoCaseString)
 
-type pf =
-  | Pf0 of (unit -> atom)
-  | Pf1 of (atom -> atom)
-  | Pf2 of (atom -> atom -> atom)
-  | Pf3 of (atom -> atom -> atom -> atom)
-  | Pfn of int * (atom list -> atom)
-  | Pfcn of int * (env -> atom list -> (atom -> unit) -> unit)
-
-and proc =
-  | Pf of pf
-  | Pr of int * (exp list -> exp)
-
-and env =
+type env =
   {
     globals : atom H.t;
     palette : Gg.color H.t;
@@ -76,7 +64,15 @@ and env =
     mutable test : bool option;
   }
 
-and exp =
+type pf =
+  | Pf0 of (unit -> atom)
+  | Pf1 of (atom -> atom)
+  | Pf2 of (atom -> atom -> atom)
+  | Pf3 of (atom -> atom -> atom -> atom)
+  | Pfn of int * (atom list -> atom)
+  | Pfcn of int * (env -> atom list -> (atom -> unit) -> unit)
+
+type exp =
   | App of pf * exp list
   | Make of string * exp
   | Var of string
@@ -87,6 +83,11 @@ and exp =
   | Repeat of exp * exp
   | While of exp * exp
   | Do of exp * exp
+
+
+type proc =
+  | Pf of pf
+  | Pr of int * (exp list -> exp)
 
 let rec pp_atom fmt = function
   | Num n ->
