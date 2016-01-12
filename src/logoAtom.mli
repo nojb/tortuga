@@ -21,6 +21,15 @@
 
 open LogoTypes
 
+module Word : sig
+  type t
+  val intern : string -> t
+  val name : t -> string
+  val compare : t -> t -> int
+  val equal : t -> t -> bool
+  val hash : t -> int
+end
+
 val error : ('a, unit, string, 'b) format4 -> 'a
 
 val isnumber : string -> bool

@@ -22,6 +22,41 @@
 open LogoTypes
 open LogoPrint
 
+module Word : sig
+  type t
+  val intern : string -> t
+  val name : t -> string
+  val compare : t -> t -> int
+  val equal : t -> t -> bool
+  val hash : t -> int
+end = struct
+  module HashString = struct
+    type t = string
+    let equal s1 s2 = s1 = s2
+    let hash = Hashtbl.hash
+  end
+  module W = Weak.Make (HashString)
+
+  let tbl = W.create 101
+
+  type t =
+    {
+      name : string;
+      unique : string;
+    }
+
+  let intern s =
+    {
+      name = s;
+      unique = W.merge tbl (String.uppercase s);
+    }
+
+  let name w = w.name
+  let compare w1 w2 = compare w1.unique w2.unique
+  let equal w1 w2 = w1.unique == w2.unique
+  let hash w = Hashtbl.hash w.unique
+end
+
 let error fmt =
   Printf.ksprintf (fun err -> raise (Error err)) fmt
 
