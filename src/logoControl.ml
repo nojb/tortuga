@@ -23,7 +23,6 @@
 
 open LogoTypes
 open LogoAtom
-open LogoEnv
 open LogoGlobals
 open LogoCompile
 open LogoEval

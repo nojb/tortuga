@@ -25,7 +25,7 @@ open LogoTypes
 open LogoAtom
 open LogoGlobals
 open LogoPrint
-open LogoEnv
+open LogoEval
 
 (** 7.2 Variable Definition *)
 

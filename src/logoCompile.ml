@@ -21,7 +21,6 @@
 
 open LogoTypes
 open LogoAtom
-open LogoEnv
 open LogoGlobals
 
 let apply env proc args k =

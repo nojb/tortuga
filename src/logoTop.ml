@@ -20,7 +20,6 @@
    CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. *)
 
 open LogoTypes
-open LogoEnv
 open LogoCompile
 open LogoEval
 open LogoGlobals
