@@ -35,7 +35,7 @@ open LogoArithmetic
 let sum lhs rhs = App (Pf2 (fun a b -> sum [a; b]), [lhs; rhs])
 let difference lhs rhs = App (Pf2 difference, [lhs; rhs])
 (* let product lhs rhs = App ("*", [lhs; rhs]) *)
-(* let power lhs rhs = App ("**", [lhs; rhs]) *)
+let power lhs rhs = App (Pf2 power, [lhs; rhs])
 (* let minus lhs = App ("-", [lhs]) *)
 
 let rec parse lst =
@@ -100,9 +100,9 @@ and multiplicative_expression lst =
 
 and power_expression lst =
   let rec loop lhs = function
-    (* | Word "^" :: lst -> *)
-    (*     let rhs, lst = unary_expression env lst in *)
-    (*     loop (power lhs rhs) lst *)
+    | Word "^" :: lst ->
+        let rhs, lst = unary_expression lst in
+        loop (power lhs rhs) lst
     | lst ->
         lhs, lst
   in
