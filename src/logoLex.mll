@@ -18,7 +18,7 @@
    COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
    IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
    CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. *)
-        
+
 {
 open LogoTypes
 open Lexing
@@ -45,7 +45,7 @@ let is_infix = function
   | "<=" | ">=" | "<>" | "+" | "-" | "*"
   | "/" | "%" | "^" | "=" | "<" | ">" -> true
   | _ -> false
-  
+
 let is_minus acc leading_space trailing_space =
   match acc with
   | [] -> true
@@ -130,42 +130,46 @@ and parse_array acc = parse
   | _ as c
     { unexpected c }
 
-and line_or_to = parse
-  | space+
-    { line_or_to lexbuf }
-  | ['t' 'T'] ['o' 'O'] space+ (identifier as name)
-    { to_arg name [] lexbuf }
-  | eof
-    { `GotEMPTY }
-  | _ as c
-    { line_or_cont (String.make 1 c) lexbuf }
+and number = parse
+  | number_literal
+      { true }
 
-and line_or_end = parse
-  | space+
-    { line_or_end lexbuf }
-  | ['e''E']['n''N']['d''D'] space* eof
-    { `GotEND }
-  | eof
-    { `GotEMPTY }
-  | _ as c
-    { line_or_cont (String.make 1 c) lexbuf }
+(* and line_or_to = parse *)
+(*   | space+ *)
+(*     { line_or_to lexbuf } *)
+(*   | ['t' 'T'] ['o' 'O'] space+ (identifier as name) *)
+(*     { to_arg name [] lexbuf } *)
+(*   | eof *)
+(*     { `GotEMPTY } *)
+(*   | _ as c *)
+(*     { line_or_cont (String.make 1 c) lexbuf } *)
 
-and line_or_cont buf = parse
-  | '~' space* eof
-    { `GotCONT buf }
-  | '~'
-    { line_or_cont (buf ^ "~") lexbuf }
-  | eof
-    { `GotLINE }
-  | [^ '~']+
-    { line_or_cont (buf ^ Lexing.lexeme lexbuf) lexbuf }
+(* and line_or_end = parse *)
+(*   | space+ *)
+(*     { line_or_end lexbuf } *)
+(*   | ['e''E']['n''N']['d''D'] space* eof *)
+(*     { `GotEND } *)
+(*   | eof *)
+(*     { `GotEMPTY } *)
+(*   | _ as c *)
+(*     { line_or_cont (String.make 1 c) lexbuf } *)
 
-and to_arg name acc = parse
-  | space+
-    { to_arg name acc lexbuf }
-  | variable as input
-    { to_arg name ((Re_str.string_after input 1) :: acc) lexbuf }
-  | eof
-    { `GotTO (name, List.rev acc) }
-  | _ as c
-    { unexpected c }
+(* and line_or_cont buf = parse *)
+(*   | '~' space* eof *)
+(*     { `GotCONT buf } *)
+(*   | '~' *)
+(*     { line_or_cont (buf ^ "~") lexbuf } *)
+(*   | eof *)
+(*     { `GotLINE } *)
+(*   | [^ '~']+ *)
+(*     { line_or_cont (buf ^ Lexing.lexeme lexbuf) lexbuf } *)
+
+(* and to_arg name acc = parse *)
+(*   | space+ *)
+(*     { to_arg name acc lexbuf } *)
+(*   | variable as input *)
+(*     { to_arg name ((Re_str.string_after input 1) :: acc) lexbuf } *)
+(*   | eof *)
+(*     { `GotTO (name, List.rev acc) } *)
+(*   | _ as c *)
+(*     { unexpected c } *)

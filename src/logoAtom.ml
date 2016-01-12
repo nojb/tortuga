@@ -25,13 +25,14 @@ open LogoPrint
 let error fmt =
   Printf.ksprintf (fun err -> raise (Error err)) fmt
 
-let isnumber =
-  (* keep in sync with [number_literal] in LogoLex.mll *)
-  let open Re in
-  let re = whole_string (seq [rep digit; opt (char '.'); rep1 digit;
-                              opt (seq [set "eE"; opt (set "-+"); rep1 digit])]) in
-  let re = compile re in
-  fun w -> execp re w
+let isnumber s =
+  (* (\* keep in sync with [number_literal] in LogoLex.mll *\) *)
+  (* let open Re in *)
+  (* let re = whole_string (seq [rep digit; opt (char '.'); rep1 digit; *)
+  (*                             opt (seq [set "eE"; opt (set "-+"); rep1 digit])]) in *)
+  (* let re = compile re in *)
+  (* fun w -> execp re w *)
+  try ignore (LogoLex.number (Lexing.from_string s)); true with _ -> false
 
 let isint s =
   let rec loop i =

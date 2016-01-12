@@ -1,3 +1,2 @@
 strict_with=auto
-syntax=lwt
 match_clause=4
