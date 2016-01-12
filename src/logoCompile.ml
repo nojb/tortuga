@@ -197,14 +197,6 @@ and parse_call name lst natural =
   (* eval_args (default_num_args fn) natural lst *)
   (*   (fun args lst -> apply env proc fn f args (fun res -> k res lst)) *)
 
-(* let eval_bool env lst k = *)
-(*   eval env lst (fun a lst -> *)
-(*       match a with *)
-(*       | Word "TRUE" -> k true lst *)
-(*       | Word "FALSE" -> k false lst *)
-(*       | _ -> *)
-(*           error "boolen valued expected") *)
-
 let parse_list lst =
   let rec loop last = function
     | [] ->
