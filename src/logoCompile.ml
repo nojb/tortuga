@@ -36,7 +36,7 @@ let sum lhs rhs = App (Pf2 (fun a b -> sum [a; b]), [lhs; rhs])
 let difference lhs rhs = App (Pf2 difference, [lhs; rhs])
 (* let product lhs rhs = App ("*", [lhs; rhs]) *)
 let power lhs rhs = App (Pf2 power, [lhs; rhs])
-(* let minus lhs = App ("-", [lhs]) *)
+let minus lhs = App (Pf1 minus, [lhs])
 
 let rec parse lst =
   relational_expression lst
@@ -111,9 +111,9 @@ and power_expression lst =
 
 and unary_expression lst =
   match lst with
-  (* | w :: lst when w == minus_word -> *)
-  (*     let rhs, lst = unary_expression env lst in *)
-  (*     minus rhs, lst *)
+  | w :: lst when w == minus_word ->
+      let rhs, lst = unary_expression lst in
+      minus rhs, lst
   | lst ->
       instruction lst
 
