@@ -21,6 +21,7 @@
 
 open LogoTypes
 open LogoEnv
+open LogoCompile
 open LogoEval
 open LogoGlobals
 open LogoPrint
@@ -136,7 +137,7 @@ let main () =
 
       Format.printf "%a@." LogoTypes.pp e;
 
-      eval env e print_datum
+      LogoEval.eval env e print_datum
       (* | `GotTO (name, inputs, body) -> *)
       (*     assert false *)
     (* to_ ~raw ~name ~inputs ~body *)
