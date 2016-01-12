@@ -23,16 +23,6 @@ open LogoTypes
 open LogoAtom
 open LogoGlobals
 
-let apply env proc args k =
-  match proc, args with
-  | Pf0 f, [] -> k (f ())
-  | Pf1 f, [x] -> k (f x)
-  | Pf2 f, [x; y] -> k (f x y)
-  | Pf3 f, [x; y; z] -> k (f x y z)
-  | Pfn (_, f), _ -> k (f args)
-  | Pfcn (_, f), _ -> f env args k
-  | _ -> assert false
-
 let stringfrom pos str =
   String.sub str pos (String.length str - pos)
 
