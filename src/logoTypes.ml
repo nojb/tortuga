@@ -27,6 +27,23 @@ type atom =
 
 exception Error of string
 
+module HashWord =
+struct
+  type t = atom
+  let equal a b =
+    match a, b with
+    | Word s1, Word s2 -> s1 = s2
+    | _ -> false
+  let hash = Hashtbl.hash
+end
+
+module WordTable = Weak.Make (HashWord)
+
+let word_tbl = WordTable.create 101
+
+let get_word s =
+  WordTable.merge word_tbl (Word s)
+
 module NoCaseString = struct
   type t = string
   let equal s1 s2 =
