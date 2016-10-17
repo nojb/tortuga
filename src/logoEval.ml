@@ -44,29 +44,29 @@ let default_colors =
   ]
 
 let create_env turtle =
-  let palette = H.create 17 in
+  let palette = Hashtbl.create 17 in
   List.iter (fun (id, name, col) ->
-      H.add palette (string_of_int id) col;
-      H.add palette name col
+      Hashtbl.add palette (string_of_int id) col;
+      Hashtbl.add palette name col
     ) default_colors;
   {
-    globals = H.create 17;
+    globals = Hashtbl.create 17;
     palette;
-    plists = H.create 3;
+    plists = Hashtbl.create 3;
     locals = [];
     repcount = [];
     test = None;
   }
 
 let new_frame env =
-  { env with locals = H.create 17 :: env.locals }
+  { env with locals = Hashtbl.create 17 :: env.locals }
 
 let create_var env name data =
   match env.locals with
   | [] ->
     failwith "create_var"
   | top :: _ ->
-    H.add top name data
+    Hashtbl.add top name data
 
 let repcount env =
   match env.repcount with
@@ -90,61 +90,61 @@ let get_test env =
   | None -> error "no TEST"
 
 let set_global env name data =
-  H.replace env.globals name data
+  Hashtbl.replace env.globals name data
 
 let get_global env name =
   try
-    H.find env.globals name
+    Hashtbl.find env.globals name
   with
   | Not_found ->
     error "Don't know about variable %s" name
 
 let has_global env name =
-  H.mem env.globals name
+  Hashtbl.mem env.globals name
 
 let set_palette env name c =
-  H.replace env.palette name c
+  Hashtbl.replace env.palette name c
 
 let get_palette env name =
-  try Some (H.find env.palette name) with Not_found -> None
+  try Some (Hashtbl.find env.palette name) with Not_found -> None
 
 let put_prop env plist name value =
   let p =
     try
-      H.find env.plists plist
+      Hashtbl.find env.plists plist
     with
     | Not_found ->
-      let h = H.create 5 in
-      H.add env.plists plist h;
+      let h = Hashtbl.create 5 in
+      Hashtbl.add env.plists plist h;
       h
   in
-  H.replace p name value
+  Hashtbl.replace p name value
 
 let get_prop env plist name =
   try
-    let p = H.find env.plists plist in
-    Some (H.find p name)
+    let p = Hashtbl.find env.plists plist in
+    Some (Hashtbl.find p name)
   with
   | Not_found -> None
 
 let remove_prop env plist name =
   try
-    let p = H.find env.plists plist in
-    H.remove p name;
-    if H.length p = 0 then H.remove env.plists plist
+    let p = Hashtbl.find env.plists plist in
+    Hashtbl.remove p name;
+    if Hashtbl.length p = 0 then Hashtbl.remove env.plists plist
   with
   | Not_found -> ()
 
 let prop_list env plist =
   try
-    H.fold (fun k v l -> (k, v) :: l) (H.find env.plists plist) []
+    Hashtbl.fold (fun k v l -> (k, v) :: l) (Hashtbl.find env.plists plist) []
   with
   | Not_found -> []
 
 let has_plist env plistname =
   try
-    let p = H.find env.plists plistname in
-    H.length p > 0
+    let p = Hashtbl.find env.plists plistname in
+    Hashtbl.length p > 0
   with
   | Not_found -> false
 
@@ -153,8 +153,8 @@ let set_var env name data =
     | [] ->
       set_global env name data
     | top :: rest ->
-      if H.mem top name then
-        H.replace top name (Some data)
+      if Hashtbl.mem top name then
+        Hashtbl.replace top name (Some data)
       else
         loop rest
   in
@@ -165,7 +165,7 @@ let get_var env name =
     | [] ->
       get_global env name
     | top :: rest ->
-      try match H.find top name with
+      try match Hashtbl.find top name with
         | None ->
           error "variable %s does not have a value" name
         | Some a -> a
@@ -179,7 +179,7 @@ let has_var env name =
     | [] ->
       has_global env name
     | top :: rest ->
-      H.mem top name || loop rest
+      Hashtbl.mem top name || loop rest
   in
   loop env.locals
 

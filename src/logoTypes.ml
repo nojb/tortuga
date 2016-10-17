@@ -27,39 +27,12 @@ type atom =
 
 exception Error of string
 
-module HashWord =
-struct
-  type t = atom
-  let equal a b =
-    match a, b with
-    | Word s1, Word s2 -> s1 = s2
-    | _ -> false
-  let hash = Hashtbl.hash
-end
-
-module WordTable = Weak.Make (HashWord)
-
-let word_tbl = WordTable.create 101
-
-let get_word s =
-  WordTable.merge word_tbl (Word s)
-
-module NoCaseString = struct
-  type t = string
-  let equal s1 s2 =
-    String.uppercase s1 = String.uppercase s2
-  let hash =
-    Hashtbl.hash
-end
-
-module H = Hashtbl.Make (NoCaseString)
-
 type env =
   {
-    globals : atom H.t;
-    palette : Gg.color H.t;
-    plists : atom H.t H.t;
-    locals : atom option H.t list;
+    globals : (string, atom) Hashtbl.t;
+    palette : (string, Gg.color) Hashtbl.t;
+    plists : (string, (string, atom) Hashtbl.t) Hashtbl.t;
+    locals : (string, atom option) Hashtbl.t list;
     repcount : int list;
     mutable test : bool option;
   }
@@ -83,7 +56,6 @@ type exp =
   | Repeat of exp * exp
   | While of exp * exp
   | Do of exp * exp
-
 
 type proc =
   | Pf of pf

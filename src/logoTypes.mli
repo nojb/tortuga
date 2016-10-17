@@ -27,14 +27,12 @@ type atom =
 
 exception Error of string
 
-module H : Hashtbl.S with type key = string
-
 type env =
   {
-    globals : atom H.t;
-    palette : Gg.color H.t;
-    plists : atom H.t H.t;
-    locals : atom option H.t list;
+    globals : (string, atom) Hashtbl.t;
+    palette : (string, Gg.color) Hashtbl.t;
+    plists : (string, (string, atom) Hashtbl.t) Hashtbl.t;
+    locals : (string, atom option) Hashtbl.t list;
     repcount : int list;
     mutable test : bool option;
   }

@@ -21,29 +21,26 @@
 
 open LogoTypes
 
-val error : ('a, unit, string, 'b) format4 -> 'a
+module HashWord = struct
+  type t = atom
+  let equal a b =
+    match a, b with
+    | Word a, Word b -> a = b
+    | _ -> false
+  let hash = Hashtbl.hash
+end
 
-val isnumber : string -> bool
-val isint : string -> bool
+module WordTable = Weak.Make (HashWord)
 
-val string_of_datum : atom -> string
+let wordt = WordTable.create 307
 
-val string_of_datum_list : atom list -> string
+let get_word s =
+  WordTable.merge wordt (Sword s)
 
-val true_word : atom
-val false_word : atom
-val minus_word : atom
+let word_name = function
+  | Word s -> s
+  | _ -> raise (Error "word_name: not a word")
 
-val equalaux : atom -> atom -> bool
-
-val parse : string -> atom list
-
-val reparse : atom list -> atom list
-
-val pp_atom : Format.formatter -> atom -> unit
-
-val print_datum : atom -> unit
-val print_datum_list : atom list -> unit
-
-val cprint_datum : atom -> unit
-val cprint_datum_list : atom list -> unit
+let word_true = get_word "true"
+let word_false = get_word "false"
+let word_nil = get_word "nil"
