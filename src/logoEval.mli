@@ -21,33 +21,33 @@
 
 open LogoTypes
 
-val create_env : unit -> env
+val create_env: unit -> env
 
-val new_frame : env -> env
+val new_frame: env -> env
 
-val set_var : env -> string -> atom -> unit
-val create_var : env -> string -> atom option -> unit
-val get_var : env -> string -> atom
-val has_var : env -> string -> bool
+val set_var: env -> atom -> atom -> unit
+val create_var: env -> atom -> atom option -> unit
+val get_var: env -> atom -> atom
+val has_var: env -> atom -> bool
 
-val repcount : env -> int
-val start_repcount : env -> env
-val step_repcount : env -> env
+val repcount: env -> int
+val start_repcount: env -> env
+val step_repcount: env -> env
 
-val set_test : env -> bool -> unit
-val get_test : env -> bool
+val set_test: env -> bool -> unit
+val get_test: env -> bool
 
-val set_global : env -> string -> atom -> unit
-val get_global : env -> string -> atom
-val has_global : env -> string -> bool
+val set_global: env -> atom -> atom -> unit
+val get_global: env -> atom -> atom
+val has_global: env -> atom -> bool
 
-val set_palette : env -> string -> color -> unit
-val get_palette : env -> string -> color option
+val set_palette: env -> string -> color -> unit
+val get_palette: env -> string -> color option
 
-val put_prop : env -> string -> string -> atom -> unit
-val get_prop : env -> string -> string -> atom option
-val remove_prop : env -> string -> string -> unit
-val prop_list : env -> string -> (string * atom) list
-val has_plist : env -> string -> bool
+val put_prop: env -> string -> string -> atom -> unit
+val get_prop: env -> string -> string -> atom option
+val remove_prop: env -> string -> string -> unit
+val prop_list: env -> string -> (string * atom) list
+val has_plist: env -> string -> bool
 
-val eval : env -> exp -> (atom -> unit) -> unit
+val eval: env -> exp -> (atom -> unit) -> unit

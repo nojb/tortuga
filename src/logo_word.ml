@@ -35,7 +35,7 @@ module WordTable = Weak.Make (HashWord)
 let wordt = WordTable.create 307
 
 let get_word s =
-  WordTable.merge wordt (Sword s)
+  WordTable.merge wordt (Word s)
 
 let word_name = function
   | Word s -> s

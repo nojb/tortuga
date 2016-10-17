@@ -21,6 +21,7 @@
 
 open LogoTypes
 open LogoAtom
+open Logo_word
 
 let default_colors =
   let rgba red green blue alpha = {red; green; blue; alpha} in
@@ -66,7 +67,7 @@ let create_var env name data =
   | [] ->
     failwith "create_var"
   | top :: _ ->
-    Hashtbl.add top name data
+    Hashtbl.add top (word_name name) data
 
 let repcount env =
   match env.repcount with
@@ -90,17 +91,17 @@ let get_test env =
   | None -> error "no TEST"
 
 let set_global env name data =
-  Hashtbl.replace env.globals name data
+  Hashtbl.replace env.globals (word_name name) data
 
 let get_global env name =
   try
-    Hashtbl.find env.globals name
+    Hashtbl.find env.globals (word_name name)
   with
   | Not_found ->
-    error "Don't know about variable %s" name
+    error "Don't know about variable %s" (word_name name)
 
 let has_global env name =
-  Hashtbl.mem env.globals name
+  Hashtbl.mem env.globals (word_name name)
 
 let set_palette env name c =
   Hashtbl.replace env.palette name c
@@ -153,8 +154,8 @@ let set_var env name data =
     | [] ->
       set_global env name data
     | top :: rest ->
-      if Hashtbl.mem top name then
-        Hashtbl.replace top name (Some data)
+      if Hashtbl.mem top (word_name name) then
+        Hashtbl.replace top (word_name name) (Some data)
       else
         loop rest
   in
@@ -165,9 +166,9 @@ let get_var env name =
     | [] ->
       get_global env name
     | top :: rest ->
-      try match Hashtbl.find top name with
+      try match Hashtbl.find top (word_name name) with
         | None ->
-          error "variable %s does not have a value" name
+            error "variable %s does not have a value" (word_name name)
         | Some a -> a
       with
       | Not_found -> loop rest
@@ -179,7 +180,7 @@ let has_var env name =
     | [] ->
       has_global env name
     | top :: rest ->
-      Hashtbl.mem top name || loop rest
+      Hashtbl.mem top (word_name name) || loop rest
   in
   loop env.locals
 
@@ -213,9 +214,9 @@ let rec eval env e k =
       in
       loop [] el
   | Make (id, e) ->
-      eval env e (fun x -> set_var env id x; k (Word "NIL"))
+      eval env e (fun x -> set_var env (get_word id) x; k word_nil)
   | Var id ->
-      k (get_var env id)
+      k (get_var env (get_word id))
   | Atom a ->
       k a
   | If (e1, e2, e3) ->
@@ -231,7 +232,7 @@ let rec eval env e k =
       in
       eval env e1 (function
           | Num n ->
-              loop (start_repcount env) 1 (truncate n) (Word "NIL")
+              loop (start_repcount env) 1 (truncate n) word_nil
           | _ ->
               failwith "number expected"
         )
