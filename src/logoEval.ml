@@ -23,24 +23,24 @@ open LogoTypes
 open LogoAtom
 
 let default_colors =
-  let open Gg.Color in
+  let rgba red green blue alpha = {red; green; blue; alpha} in
   [
-    0 , "black"     , black;
-    1 , "blue"      , blue;
-    2 , "lime"      , v_srgbi 191 255 0;
-    3 , "cyan"      , v_srgbi 0 255 255;
-    4 , "red"       , red;
-    5 , "magenta"   , v_srgbi 255 0 255;
-    6 , "yellow"    , v_srgbi 255 255 0;
-    7 , "white"     , white;
-    8 , "brown"     , v_srgbi 150 75 0;
-    9 , "tan"       , v_srgbi 210 180 140;
-    10, "green"     , green;
-    11, "aquamarine", v_srgbi 127 255 212;
-    12, "salmon"    , v_srgbi 250 128 114;
-    13, "purple"    , v_srgbi 128 0 128;
-    14, "orange"    , v_srgbi 255 127 0;
-    15, "grey"      , v_srgbi 128 128 128
+    0 , "black"     , rgba 0.0 0.0 0.0 1.0;
+    1 , "blue"      , rgba 0.0 0.0 1.0 1.0;
+    (* 2 , "lime"      , v_srgbi 191 255 0; *)
+    3 , "cyan"      , rgba 0.0 1.0 1.0 1.0;
+    4 , "red"       , rgba 1.0 0.0 0.0 1.0;
+    (* 5 , "magenta"   , v_srgbi 255 0 255; *)
+    6 , "yellow"    , rgba 1.0 1.0 0.0 1.0;
+    7 , "white"     , rgba 1.0 1.0 1.0 1.0;
+    (* 8 , "brown"     , v_srgbi 150 75 0; *)
+    (* 9 , "tan"       , v_srgbi 210 180 140; *)
+    10, "green"     , rgba 0.0 1.0 0.0 1.0;
+    (* 11, "aquamarine", v_srgbi 127 255 212; *)
+    (* 12, "salmon"    , v_srgbi 250 128 114; *)
+    (* 13, "purple"    , v_srgbi 128 0 128; *)
+    (* 14, "orange"    , v_srgbi 255 127 0; *)
+    (* 15, "grey"      , v_srgbi 128 128 128 *)
   ]
 
 let create_env turtle =

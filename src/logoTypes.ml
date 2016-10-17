@@ -27,10 +27,18 @@ type atom =
 
 exception Error of string
 
+type color =
+  {
+    red: float;
+    green: float;
+    blue: float;
+    alpha: float;
+  }
+
 type env =
   {
     globals : (string, atom) Hashtbl.t;
-    palette : (string, Gg.color) Hashtbl.t;
+    palette : (string, color) Hashtbl.t;
     plists : (string, (string, atom) Hashtbl.t) Hashtbl.t;
     locals : (string, atom option) Hashtbl.t list;
     repcount : int list;

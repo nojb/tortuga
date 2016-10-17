@@ -41,8 +41,8 @@ val set_global : env -> string -> atom -> unit
 val get_global : env -> string -> atom
 val has_global : env -> string -> bool
 
-val set_palette : env -> string -> Gg.color -> unit
-val get_palette : env -> string -> Gg.color option
+val set_palette : env -> string -> color -> unit
+val get_palette : env -> string -> color option
 
 val put_prop : env -> string -> string -> atom -> unit
 val get_prop : env -> string -> string -> atom option
