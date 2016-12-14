@@ -23,167 +23,196 @@ open LogoTypes
 open LogoAtom
 open LogoGlobals
 
-let stringfrom pos str =
-  String.sub str pos (String.length str - pos)
+(* let stringfrom pos str = *)
+(*   String.sub str pos (String.length str - pos) *)
 
 open LogoArithmetic
 
-let lessp lhs rhs = App (Pf2 lessp, [lhs; rhs])
-let greaterp lhs rhs = App (Pf2 greaterp, [lhs; rhs])
-let lessequalp lhs rhs = App (Pf2 lessequalp, [lhs; rhs])
-let greaterequalp lhs rhs = App (Pf2 greaterequalp, [lhs; rhs])
-let sum lhs rhs = App (Pfn (2, sum), [lhs; rhs])
-let difference lhs rhs = App (Pf2 difference, [lhs; rhs])
-let product lhs rhs = App (Pfn (2, product), [lhs; rhs])
-let power lhs rhs = App (Pf2 power, [lhs; rhs])
-let minus lhs = App (Pf1 minus, [lhs])
+(* let lessp lhs rhs = App (Pf2 lessp, [lhs; rhs]) *)
+(* let greaterp lhs rhs = App (Pf2 greaterp, [lhs; rhs]) *)
+(* let lessequalp lhs rhs = App (Pf2 lessequalp, [lhs; rhs]) *)
+(* let greaterequalp lhs rhs = App (Pf2 greaterequalp, [lhs; rhs]) *)
+(* let sum lhs rhs = App (Pfn (2, sum), [lhs; rhs]) *)
+(* let difference lhs rhs = App (Pf2 difference, [lhs; rhs]) *)
+(* let product lhs rhs = App (Pfn (2, product), [lhs; rhs]) *)
+(* let power lhs rhs = App (Pf2 power, [lhs; rhs]) *)
+(* let minus lhs = App (Pf1 minus, [lhs]) *)
 
-let rec parse lst =
-  relational_expression lst
+let word_lessthan = intern "<"
+let word_greaterthan = intern ">"
+let word_lessequal = intern "<="
+let word_greaterequal = intern ">="
+let word_plus = intern "+"
+let word_minus = intern "-"
+let word_star = intern "*"
+let word_caret = intern "^"
+let word_equal = intern "="
+let word_lessgreater = intern "<>"
+let word_slash = intern "/"
+let word_percent = intern "%"
+let word_leftbracket = intern "["
+let word_rightbracket = intern "]"
+let word_leftparen = intern "("
+let word_rightparen = intern ")"
 
-and relational_expression lst =
-  let rec loop lhs = function
-    (* | Word "=" :: lst -> *)
-    (*     additive_expression env lst *)
-    (*       (fun rhs lst -> loop (infix_pred equalp Kany lhs rhs) lst) *)
-    | Word "<" :: lst ->
-        let rhs, lst = additive_expression lst in
-        loop (lessp lhs rhs) lst
-    | Word ">" :: lst ->
-        let rhs, lst = additive_expression lst in
-        loop (greaterp lhs rhs) lst
-    | Word "<=" :: lst ->
-        let rhs, lst = additive_expression lst in
-        loop (lessequalp lhs rhs) lst
-    | Word ">=" :: lst ->
-        let rhs, lst = additive_expression lst in
-        loop (greaterequalp lhs rhs) lst
-    (* | Word "<>" :: lst -> *)
-    (*     additive_expression env lst *)
-    (*       (fun rhs lst -> loop (infix_pred notequalp Kany lhs rhs) lst) *)
-    | lst ->
-        lhs, lst
-  in
-  let lhs, lst = additive_expression lst in
-  loop lhs lst
+let next g =
+  match g with
+  | ({contents = None} as u, h) -> u := Some (h ()); g
+  | ({contents = Some x} as u, _) -> u := None; g
 
-and additive_expression lst =
-  let rec loop lhs = function
-    | Word "+" :: lst ->
-        let rhs, lst = multiplicative_expression lst in
-        loop (sum lhs rhs) lst
-    | Word "-" :: lst ->
-        let rhs, lst = multiplicative_expression lst in
-        loop (difference lhs rhs) lst
-    | lst ->
-        lhs, lst
-  in
-  let lhs, lst = multiplicative_expression lst in
-  loop lhs lst
+let peek = function
+  | ({contents = None} as u, g) -> let x = g () in u := Some x; x
+  | ({contents = Some x}, _) -> x
 
-and multiplicative_expression lst =
-  let rec loop lhs = function
-    | Word "*" :: lst ->
-        let rhs, lst = power_expression lst in
-        loop (product lhs rhs) lst
-    (* | Word "/" :: lst -> *)
-    (*     power_expression env lst *)
-    (*       (fun rhs lst -> loop (infix_float_bin ( /. ) lhs rhs) lst) *)
-    (* | Word "%" :: lst -> *)
-    (*     power_expression env lst *)
-    (*       (fun rhs lst -> loop (infix_float_bin mod_float lhs rhs) lst) *)
-    | lst ->
-        lhs, lst
-  in
-  let lhs, lst = power_expression lst in
-  loop lhs lst
-
-and power_expression lst =
-  let rec loop lhs = function
-    | Word "^" :: lst ->
-        let rhs, lst = unary_expression lst in
-        loop (power lhs rhs) lst
-    | lst ->
-        lhs, lst
-  in
-  let lhs, lst = unary_expression lst in
-  loop lhs lst
-
-and unary_expression lst =
-  match lst with
-  | w :: lst when w == minus_word ->
-      let rhs, lst = unary_expression lst in
-      minus rhs, lst
-  | lst ->
-      instruction lst
-
-and instruction lst : exp * _ list =
-  match lst with
-  | (Num _ as a) :: lst
-  | (List _ as a) :: lst
-  | (Array _ as a) :: lst ->
-      Atom a, lst
-  | Word "(" :: Word proc :: lst when has_routine proc ->
-      parse_call proc lst false
-  | Word "(" :: lst ->
-      let res, lst = parse lst in
-      begin match lst with
-      | Word ")" :: lst ->
-          res, lst
-      | a :: _ ->
-          error "expected ')', found %s" (string_of_datum a)
-      | [] ->
-          error "expected ')'"
-      end
-  | Word w :: lst ->
-      if isnumber w then
-        let n = float_of_string w in
-        Atom (Num n), lst
-      else if w.[0] = '\"' then
-        let w = stringfrom 1 w in
-        Atom (Word w), lst
-      else if w.[0] = ':' then
-        let w = stringfrom 1 w in
-        Var w, lst
-      else
-        parse_call w lst true
-  | [] ->
-      assert false
-
-and parse_args proc len natural lst =
-  if natural then
-    let rec loop acc lst =
-      if List.length acc >= len then
-        List.rev acc, lst
-      else begin
-        match lst with
-        | _ :: _ ->
-            let arg1, lst = parse lst in
-            loop (arg1 :: acc) lst
-        | [] ->
-            error "not enough arguments for %s" (String.uppercase proc)
-      end
-    in
-    loop [] lst
+let rec relexpr env g =
+  let lhs = addexpr g in
+  let o = peek g in
+  if o == word_equal then
+    let rhs, lst = addexpr (next g) in
+    infix_pred equalp Kany lhs rhs
+  else if o == word_lessthan then
+    let rhs, lst = addexpr (next g) in
+    lessp lhs rhs
+  else if o == word_greaterthan then
+    let rhs, lst = addexpr (next g) in
+    greaterp lhs rhs
+  else if o == word_lessequal then
+    let rhs, lst = addexpr (next g) in
+    lessequalp lhs rhs
+  else if o == word_greaterequal then
+    let rhs, lst = addexpr (next g) in
+    greaterequalp lhs rhs
+  else if o == word_lessgreater then
+    let rhs, lst = addexpr (next g) in
+    infix_pred notequalp lhs rhs
   else
-    let rec loop acc = function
-      | Word ")" :: lst ->
-          List.rev acc, lst
-      | _ :: _ as lst ->
-          let arg1, lst = parse lst in
-          loop (arg1 :: acc) lst
-      | [] ->
-          error "expected ')'"
-    in
-    loop [] lst
+    lhs
 
-and parse_call name lst natural =
-  match get_routine name with
+and addexpr env g =
+  let lhs = mulexpr env g in
+  let o = peek g in
+  if o == word_plus then
+    let rhs = addexpr env (next g) in
+    sum [lhs; rhs]
+  else if o == word_minus then
+    let rhs = addexpr env (next g) in
+    difference lhs rhs
+  else
+    lhs
+
+and mulexpr env g =
+  let lhs = powexpr env g in
+  let o = peek g in
+  if o == word_star then
+    let rhs = mulexpr env (next g) in
+    product lhs rhs
+  else if o == word_slash then
+    let rhs = mulexpr env (next g) in
+    infix_float_bin ( /. ) lhs rhs
+  else if o == word_percent then
+    let rhs = mulexpr env (next g) in
+    infix_float_bin mod_float lhs rhs
+  else
+    lhs
+
+and powexpr env g =
+  let lhs = unexpr env g in
+  let o = peek g in
+  if o == word_caret then
+    let rhs = powerexp env (next g) in
+    power lhs rhs
+  else
+    lhs
+
+and unexpr env g =
+  let o = peek g in
+  if o == minus_word then
+    let rhs = unexpr env (next g) in
+    minus rhs
+  else
+    atomexpr env g
+
+and listexpr env g =
+  let rec loop n acc =
+    let o = peek g in
+    if o == word_rightbracket then
+      if n = 0 then
+        (ignore (next g); List (List.rev acc))
+      else
+        loop (n-1) (o :: acc)
+    else if o == word_leftbracket then
+      loop (n+1) (o :: acc)
+    else
+      loop n (o :: acc)
+  in
+  loop 0 []
+
+and atomexpr env g =
+  let o = peek g in
+  if o == word_leftbracket then
+    listexpr env g
+  else if o == word_leftparen then begin
+    match peek (next g) with
+    | Word w when has_routine env w ->
+        parse_call proc (next g) false
+    | _ ->
+        let res = relexpr env g in
+        let o = peek g in
+        if o == word_rightparen then
+          (ignore (next g); res)
+        else
+          error "expected ')', found %s" (string_of_datum o)
+        (* | [] -> *)
+        (*     error "expected ')'" *)
+  end else begin
+    match o with
+    | Int _ | Real _ ->
+        o
+    | Word w ->
+        if String.length w > 0 && w.[0] = '\"' then
+          let w = stringfrom 1 w in
+          Word (intern w)
+        else if String.length w > 0 && w.[0] = ':' then
+          let w = stringfrom 1 w in
+          getvar (Word (intern w)) env
+        else
+          callexpr env o (next g) true
+  end
+(* | [] -> *)
+(*     assert false *)
+
+and arglist env proc len natural g =
+  if natural then
+    let rec loop acc =
+      if List.length acc >= len then
+        List.rev acc
+      else
+        let arg1 = relexpr env g in
+        loop (arg1 :: acc)
+        (* | [] -> *)
+        (*     error "not enough arguments for %s" (String.uppercase proc) *)
+    in
+    loop []
+  else
+    let rec loop acc =
+      let o = peek g in
+      if o == word_rightparen then
+        (next g; List.rev acc)
+      else
+        let arg1 = relexpr env g in
+        loop (arg1 :: acc)
+      (* | [] -> *)
+      (*     error "expected ')'" *)
+    in
+    loop []
+
+and callexpr env o g natural =
+  match get_routine env o with
   | Pf proc as pf ->
-      let args, lst = parse_args name (arity pf) natural lst in
+      let args, lst = arglist env name (arity pf) natural lst in
       App (proc, args), lst
   | Pr (_, prim) as pr ->
-      let args, lst = parse_args name (arity pr) natural lst in
+      let args, lst = arglist env name (arity pr) natural lst in
       prim args, lst
   | exception Not_found ->
       error "Don't know how to %s" (String.uppercase name)

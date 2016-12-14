@@ -50,4 +50,4 @@ val remove_prop: env -> string -> string -> unit
 val prop_list: env -> string -> (string * atom) list
 val has_plist: env -> string -> bool
 
-val eval: env -> exp -> (atom -> unit) -> unit
+(* val eval: env -> exp -> (atom -> unit) -> unit *)

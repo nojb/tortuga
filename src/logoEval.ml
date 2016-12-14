@@ -24,24 +24,15 @@ open LogoAtom
 open Logo_word
 
 let default_colors =
-  let rgba red green blue alpha = {red; green; blue; alpha} in
+  let def i name r g b a = i, name, {red; green; blue; alpha} in
   [
-    0 , "black"     , rgba 0.0 0.0 0.0 1.0;
-    1 , "blue"      , rgba 0.0 0.0 1.0 1.0;
-    (* 2 , "lime"      , v_srgbi 191 255 0; *)
-    3 , "cyan"      , rgba 0.0 1.0 1.0 1.0;
-    4 , "red"       , rgba 1.0 0.0 0.0 1.0;
-    (* 5 , "magenta"   , v_srgbi 255 0 255; *)
-    6 , "yellow"    , rgba 1.0 1.0 0.0 1.0;
-    7 , "white"     , rgba 1.0 1.0 1.0 1.0;
-    (* 8 , "brown"     , v_srgbi 150 75 0; *)
-    (* 9 , "tan"       , v_srgbi 210 180 140; *)
-    10, "green"     , rgba 0.0 1.0 0.0 1.0;
-    (* 11, "aquamarine", v_srgbi 127 255 212; *)
-    (* 12, "salmon"    , v_srgbi 250 128 114; *)
-    (* 13, "purple"    , v_srgbi 128 0 128; *)
-    (* 14, "orange"    , v_srgbi 255 127 0; *)
-    (* 15, "grey"      , v_srgbi 128 128 128 *)
+    def 00 "black" 0. 0. 0. 1.;
+    def 01 "blue" 0. 0. 1. 1.;
+    def 03 "cyan" 0. 1. 1. 1.;
+    def 04 "red" 1. 0. 0. 1.;
+    def 06 "yellow" 1. 1. 0. 1.;
+    def 07 "white" 1. 1. 1. 1.;
+    def 10 "green" 0. 1. 0. 1.;
   ]
 
 let create_env turtle =
@@ -65,9 +56,9 @@ let new_frame env =
 let create_var env name data =
   match env.locals with
   | [] ->
-    failwith "create_var"
+      failwith "create_var"
   | top :: _ ->
-    Hashtbl.add top (word_name name) data
+      Hashtbl.add top (word_name name) data
 
 let repcount env =
   match env.repcount with
@@ -98,7 +89,7 @@ let get_global env name =
     Hashtbl.find env.globals (word_name name)
   with
   | Not_found ->
-    error "Don't know about variable %s" (word_name name)
+      error "Don't know about variable %s" (word_name name)
 
 let has_global env name =
   Hashtbl.mem env.globals (word_name name)
@@ -115,9 +106,9 @@ let put_prop env plist name value =
       Hashtbl.find env.plists plist
     with
     | Not_found ->
-      let h = Hashtbl.create 5 in
-      Hashtbl.add env.plists plist h;
-      h
+        let h = Hashtbl.create 5 in
+        Hashtbl.add env.plists plist h;
+        h
   in
   Hashtbl.replace p name value
 
@@ -152,35 +143,35 @@ let has_plist env plistname =
 let set_var env name data =
   let rec loop = function
     | [] ->
-      set_global env name data
+        set_global env name data
     | top :: rest ->
-      if Hashtbl.mem top (word_name name) then
-        Hashtbl.replace top (word_name name) (Some data)
-      else
-        loop rest
+        if Hashtbl.mem top (word_name name) then
+          Hashtbl.replace top (word_name name) (Some data)
+        else
+          loop rest
   in
   loop env.locals
 
 let get_var env name =
   let rec loop = function
     | [] ->
-      get_global env name
+        get_global env name
     | top :: rest ->
-      try match Hashtbl.find top (word_name name) with
-        | None ->
-            error "variable %s does not have a value" (word_name name)
-        | Some a -> a
-      with
-      | Not_found -> loop rest
+        try match Hashtbl.find top (word_name name) with
+          | None ->
+              error "variable %s does not have a value" (word_name name)
+          | Some a -> a
+        with
+        | Not_found -> loop rest
   in
   loop env.locals
 
 let has_var env name =
   let rec loop = function
     | [] ->
-      has_global env name
+        has_global env name
     | top :: rest ->
-      Hashtbl.mem top (word_name name) || loop rest
+        Hashtbl.mem top (word_name name) || loop rest
   in
   loop env.locals
 
@@ -198,57 +189,57 @@ let is_true = function
   | Word "TRUE" | Word "true" -> true
   | _ -> false
 
-let rec eval env e k =
-  match e with
-  | App (Pf0 pf, []) ->
-      k (pf ())
-  | App (Pf1 pf, [e]) ->
-      eval env e (fun x -> k (pf x))
-  | App (Pf2 pf, [e1; e2]) ->
-      eval env e1 (fun x1 -> eval env e2 (fun x2 -> k (pf x1 x2)))
-  | App (Pfn (_, pf), el) ->
-      let rec loop args = function
-        | [] -> k (pf (List.rev args))
-        | e :: el ->
-            eval env e (fun x -> loop (x :: args) el)
-      in
-      loop [] el
-  | Make (id, e) ->
-      eval env e (fun x -> set_var env (get_word id) x; k word_nil)
-  | Var id ->
-      k (get_var env (get_word id))
-  | Atom a ->
-      k a
-  | If (e1, e2, e3) ->
-      eval env e1 (fun x1 -> if is_true x1 then eval env e2 k else eval env e3 k)
-  | Seq (e1, e2) ->
-      eval env e1 (fun _ -> eval env e2 k)
-  | Repeat (e1, e2) ->
-      let rec loop env i n x =
-        if i > n then
-          k x
-        else
-          eval env e2 (fun x -> loop (step_repcount env) (i+1) n x)
-      in
-      eval env e1 (function
-          | Num n ->
-              loop (start_repcount env) 1 (truncate n) word_nil
-          | _ ->
-              failwith "number expected"
-        )
-  | While (e1, e2) ->
-      let rec loop x =
-        if is_true x then
-          eval env e2 loop
-        else
-          k (Word "NIL")
-      in
-      eval env e1 loop
-  | Do (e1, e2) ->
-      let rec loop x =
-        if is_true x then
-          k (Word "NIL")
-        else
-          eval env e1 (fun _ -> eval env e2 loop)
-      in
-      eval env e1 (fun _ -> eval env e2 loop)
+(* let rec eval env e k = *)
+(*   match e with *)
+(*   | App (Pf0 pf, []) -> *)
+(*       k (pf ()) *)
+(*   | App (Pf1 pf, [e]) -> *)
+(*       eval env e (fun x -> k (pf x)) *)
+(*   | App (Pf2 pf, [e1; e2]) -> *)
+(*       eval env e1 (fun x1 -> eval env e2 (fun x2 -> k (pf x1 x2))) *)
+(*   | App (Pfn (_, pf), el) -> *)
+(*       let rec loop args = function *)
+(*         | [] -> k (pf (List.rev args)) *)
+(*         | e :: el -> *)
+(*             eval env e (fun x -> loop (x :: args) el) *)
+(*       in *)
+(*       loop [] el *)
+(*   | Make (id, e) -> *)
+(*       eval env e (fun x -> set_var env (get_word id) x; k word_nil) *)
+(*   | Var id -> *)
+(*       k (get_var env (get_word id)) *)
+(*   | Atom a -> *)
+(*       k a *)
+(*   | If (e1, e2, e3) -> *)
+(*       eval env e1 (fun x1 -> if is_true x1 then eval env e2 k else eval env e3 k) *)
+(*   | Seq (e1, e2) -> *)
+(*       eval env e1 (fun _ -> eval env e2 k) *)
+(*   | Repeat (e1, e2) -> *)
+(*       let rec loop env i n x = *)
+(*         if i > n then *)
+(*           k x *)
+(*         else *)
+(*           eval env e2 (fun x -> loop (step_repcount env) (i+1) n x) *)
+(*       in *)
+(*       eval env e1 (function *)
+(*           | Num n -> *)
+(*               loop (start_repcount env) 1 (truncate n) word_nil *)
+(*           | _ -> *)
+(*               failwith "number expected" *)
+(*         ) *)
+(*   | While (e1, e2) -> *)
+(*       let rec loop x = *)
+(*         if is_true x then *)
+(*           eval env e2 loop *)
+(*         else *)
+(*           k (Word "NIL") *)
+(*       in *)
+(*       eval env e1 loop *)
+(*   | Do (e1, e2) -> *)
+(*       let rec loop x = *)
+(*         if is_true x then *)
+(*           k (Word "NIL") *)
+(*         else *)
+(*           eval env e1 (fun _ -> eval env e2 loop) *)
+(*       in *)
+(*       eval env e1 (fun _ -> eval env e2 loop) *)

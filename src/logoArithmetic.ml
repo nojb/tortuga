@@ -27,6 +27,9 @@ open LogoGlobals
 
 (** 4.1 Numeric Operations *)
 
+let word_true = intern "true"
+let word_false = intern "false"
+
 let sum args =
   let rec loop acc = function
     | [ ] -> Num acc
@@ -39,58 +42,62 @@ let sum args =
 
 let difference n1 n2 =
   match n1, n2 with
-  | Num n1, Num n2 ->
-      Num (n1 -. n2)
-  | _ ->
-      error "difference: wrong no of arguments"
+  | Int n1, Int n2 -> Int (n1 - n2)
+  | Int n1, Real f2 -> Float (float n1 -. f2)
+  | Real f1, Int n2 -> Float (f1 -. float n2)
+  | Real f1, Real f2 -> Float (f1 -. f2)
+  | _ -> error "difference: wrong no of arguments"
 
 let minus = function
-  | Num n ->
-      Num (-. n)
+  | Int n -> Int (- n)
+  | Real f -> Real (-. f)
   | _ ->
       error "minus: wrong type of argument"
 
 let product args =
-  let rec loop acc = function
-    | [ ] -> Num acc
-    | Num x :: xs ->
-        loop (acc *. x) xs
+  let rec aux n1 n2 =
+    match n1, n2 with
+    | Int n1, Int n2 -> Int (n1 * n2)
+    | Int n1, Real f2 -> Real (float n1 *. f2)
+    | Real f1, Int n2 -> Real (f1 *. float n2)
+    | Real f1, Real f2 -> Real (f1 *. f2)
     | _ ->
         error "product: wrong arg list"
   in
-  loop 1.0 args
+  List.fold_left aux (Int 1) args
 
-let remainder num1 num2 =
-  match num1, num2 with
-  | Num n1, Num n2 ->
-      Num (mod_float n1 n2)
+let remainder n1 n2 =
+  match n1, n2 with
+  | Int n1, Int n2 -> Int (n1 mod n2)
   | _ ->
       error "remainder: wrong arg list"
 
 (* modulo: not implemented *)
 
 let int = function
-  | Num n ->
-      Num (float (truncate n))
+  | Int _ as n -> n
+  | Real f -> Int (int_of_float f)
   | _ ->
       error "int: wrong arg list"
 
 let round = function
-  | Num n ->
-      Num (floor (n +. 0.5))
+  | Int _ as n -> n
+  | Real f -> Int (int_of_float (floor (n +. 0.5)))
   | _ ->
       error "round: bad arg list"
 
 let sqrt = function
-  | Num n ->
-      Num (sqrt n)
+  | Int n -> Real (sqrt (float n))
+  | Real f -> Real (sqrt f)
   | _ ->
       error "sqrt: bad arg list"
 
 let power n1 n2 =
   match n1, n2 with
-  | Num n1, Num n2 ->
-      Num (n1 ** n2)
+  | Int n1, Int n2 -> Real (float n1 ** float n2)
+  | Int n1, Real f2 -> Real (float n1 ** f2)
+  | Real f1, Int n2 -> Real (f1 ** float n2)
+  | Real f1, Real f2 -> Real (f1 ** f2)
   | _ ->
       error "power: bad arg list"
 
@@ -98,29 +105,31 @@ let power n1 n2 =
 
 let lessp n1 n2 =
   match n1, n2 with
-  | Num n1, Num n2 ->
-      if n1 < n2 then true_word else false_word
+  | Int n1, Int n2 -> if n1 < n2 then word_true else word_false
+  | Int n1, Real f2 -> if float n1 < f2 then word_true else word_false
+  | Real f1, Int n2 -> if f1 < float n2 then word_true else word_false
+  | Real f1, Real f2 -> if f1 < f2 then word_true else word_false
   | _ ->
       error "lessp: bad arg list"
 
 let greaterp n1 n2 =
   match n1, n2 with
-  | Num n1, Num n2 ->
-      if n1 > n2 then true_word else false_word
+  | Int n1, Int n2 -> if n1 > n2 then word_true else word_false
+  | Int n1, Real f2 -> if float n1 > f2 then word_true else word_false
+  | Real f1, Int n2 -> if f1 > float n2 then word_true else word_false
+  | Real f1, Real f2 -> if f1 > f2 then word_true else word_false
   | _ ->
       error "greaterp: bad arg list"
 
 let lessequalp n1 n2 =
   match n1, n2 with
-  | Num n1, Num n2 ->
-      if n1 <= n2 then true_word else false_word
+  | Int n1, Int n2 -> if n1 <= n2 then word_true else word_false
   | _ ->
       error "lessequalp: bad arg list"
 
 let greaterequalp n1 n2 =
   match n1, n2 with
-  | Num n1, Num n2 ->
-      if n1 >= n2 then true_word else false_word
+  | Int n1, Int n2 -> if n1 >= n2 then word_true else word_false
   | _ ->
       error "greaterp: bad arg list"
 
