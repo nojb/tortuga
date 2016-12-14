@@ -40,37 +40,31 @@ let report_error = function
       Printf.sprintf "Unexpected character (%s)" (Char.escaped c)
   | Expected_character c ->
       Printf.sprintf "Expected character (%s)" (Char.escaped c)
-
-let is_infix = function
-  | "<=" | ">=" | "<>" | "+" | "-" | "*"
-  | "/" | "%" | "^" | "=" | "<" | ">" -> true
-  | _ -> false
 }
 
 let space = [' ' '\t']
 let nonspace = [^ ' ' '\t']
-let identifier = '`' | '.'? ['a'-'z' 'A'-'Z' ','] ['a'-'z' 'A'-'Z' '0'-'9' '_' '.' '?' ',' ':' '\"']*
-let string_literal = '\"' [^ ' ' '[' ']' '{' '}' '(' ')']*
-let variable = ':' ['a'-'z' 'A'-'Z']['a'-'z' 'A'-'Z' '0'-'9' '_']*
+let identifier = [':''"']? ['a'-'z' 'A'-'Z']['a'-'z' 'A'-'Z' '0'-'9' '_' '-']*
 let number_literal = ['0'-'9']* '.'? ['0'-'9']+ (['e' 'E'] ['-' '+']? ['0'-'9']+)?
 let operator = "<=" | ">=" | "<>" | ['+' '-' '*' '/' '%' '^' '=' '<' '>' '[' ']' '{' '}' '(' ')']
 
 rule token = parse
-| space+
-    { parse_atoms acc true lexbuf }
-| ';' [^ '~' '\n']*
-    { parse_atoms acc leading_space lexbuf }
+| space
+    { token lexbuf }
+| ';'
+    { comment lexbuf }
 | ['-''+']?['0'-'9']+ as n
     { Int (int_of_string n) }
-| identifier
-| string_literal
-| variable
-    { parse_atoms (Word (Lexing.lexeme lexbuf) :: acc) false lexbuf }
-| '['
-    { Word word_leftbracket }
+| identifier as v
+    { intern v }
 | operator
-    { parse_atoms (Word (Lexing.lexeme lexbuf) :: acc) false lexbuf }
+    { intern (Lexing.lexeme lexbuf) }
 | eof
-    { List.rev acc }
+    { raise End_of_file }
 | _ as c
     { unexpected c }
+
+and comment lexbuf = parse
+  | '\n' { token lexbuf }
+  | _ { comment lexbuf }
+  | eof { raise End_of_file }

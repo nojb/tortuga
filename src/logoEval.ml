@@ -22,21 +22,10 @@
 open LogoTypes
 open LogoAtom
 open LogoGlobals
-
-(* let stringfrom pos str = *)
-(*   String.sub str pos (String.length str - pos) *)
-
 open LogoArithmetic
 
-(* let lessp lhs rhs = App (Pf2 lessp, [lhs; rhs]) *)
-(* let greaterp lhs rhs = App (Pf2 greaterp, [lhs; rhs]) *)
-(* let lessequalp lhs rhs = App (Pf2 lessequalp, [lhs; rhs]) *)
-(* let greaterequalp lhs rhs = App (Pf2 greaterequalp, [lhs; rhs]) *)
-(* let sum lhs rhs = App (Pfn (2, sum), [lhs; rhs]) *)
-(* let difference lhs rhs = App (Pf2 difference, [lhs; rhs]) *)
-(* let product lhs rhs = App (Pfn (2, product), [lhs; rhs]) *)
-(* let power lhs rhs = App (Pf2 power, [lhs; rhs]) *)
-(* let minus lhs = App (Pf1 minus, [lhs]) *)
+let stringfrom pos str =
+  String.sub str pos (String.length str - pos)
 
 let next g =
   match g with
@@ -209,16 +198,15 @@ and callexpr env o g natural =
   (* eval_args (default_num_args fn) natural lst *)
   (*   (fun args lst -> apply env proc fn f args (fun res -> k res lst)) *)
 
-let parse_list lst =
-  let rec loop last = function
-    | [] ->
+let listeval env g =
+  let rec loop last =
+    match peek g with
+    | _ ->
+        loop (relexpr env g)
+    | exception _ ->
         last
-    | _ :: _ as lst ->
-        let e', lst = parse lst in
-        loop (Seq (last, e')) lst
   in
-  let e, lst = parse lst in
-  loop e lst
+  loop word_nil g
 
 (* let define ~name ~inputs ~body = *)
 (*   let body1 = *)

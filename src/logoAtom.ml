@@ -25,59 +25,22 @@ open LogoPrint
 let error fmt =
   Printf.ksprintf (fun err -> raise (Error err)) fmt
 
-let isnumber s =
-  (* (\* keep in sync with [number_literal] in LogoLex.mll *\) *)
-  (* let open Re in *)
-  (* let re = whole_string (seq [rep digit; opt (char '.'); rep1 digit; *)
-  (*                             opt (seq [set "eE"; opt (set "-+"); rep1 digit])]) in *)
-  (* let re = compile re in *)
-  (* fun w -> execp re w *)
-  try ignore (LogoLex.number (Lexing.from_string s)); true with _ -> false
-
-let isint s =
-  let rec loop i =
-    if i >= String.length s then i > 0
-    else
-      match s.[i] with
-      | '0' .. '9' -> loop (i+1)
-      | _ -> false
-  in
-  loop 0
-
 let rec bprint_datum b = function
-  | Num n ->
-      Printf.bprintf b "%g" n
+  | Int n ->
+      Printf.bprintf b "%d" n
+  | Real f ->
+      Printf.bprintf b "%f" f
   | Word s ->
       Buffer.add_string b s
   | List l ->
-      Printf.bprintf b "[%a]" bprint_datum_list l
-  | Array (a, orig) ->
-      Buffer.add_char b '{';
-      bprint_datum b a.(0);
-      for i = 1 to Array.length a - 1 do
-        Buffer.add_char b ' ';
-        bprint_datum b a.(i)
-      done;
-      Buffer.add_char b '}';
-      if orig <> 1 then Printf.bprintf b "@%d" orig
-
-and bprint_datum_list b = function
-  | [] -> ()
-  | x :: xs ->
-      bprint_datum b x;
-      List.iter (fun x -> Buffer.add_char b ' '; bprint_datum b x) xs
+      let aux b =
+        List.iteri (fun i x -> if i > 0 then bprintf b " "; bprint_datum b x) l
+      in
+      Printf.bprintf b "[%t]" aux
 
 let string_of_datum a =
-  let b = Buffer.create 17 in
+  let b = Buffer.create 0 in
   bprint_datum b a;
-  Buffer.contents b
-
-let pp_atom fmt a =
-  Format.pp_print_string fmt (string_of_datum a)
-
-let string_of_datum_list al =
-  let b = Buffer.create 17 in
-  bprint_datum_list b al;
   Buffer.contents b
 
 let word_true = intern "true"
@@ -111,13 +74,6 @@ let rec equalaux a b =
   | List l1, List l2 -> List.length l1 = List.length l2 && List.for_all2 equalaux l1 l2
   | Array (a1, _), Array (a2, _) -> a1 == a2
   | _ -> false
-
-let parse str =
-  let lexbuf = Lexing.from_string str in
-  LogoLex.parse_atoms [] false lexbuf
-
-let reparse list =
-  parse (string_of_datum_list list)
 
 let print_datum d = print (string_of_datum d)
 

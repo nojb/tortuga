@@ -23,12 +23,7 @@ open LogoTypes
 
 val error : ('a, unit, string, 'b) format4 -> 'a
 
-val isnumber : string -> bool
-val isint : string -> bool
-
 val string_of_datum : atom -> string
-
-val string_of_datum_list : atom list -> string
 
 val word_true: atom
 val word_false: atom
@@ -51,12 +46,6 @@ val word_leftparen: atom
 val word_rightparen: atom
 
 val equalaux : atom -> atom -> bool
-
-val parse : string -> atom list
-
-val reparse : atom list -> atom list
-
-val pp_atom : Format.formatter -> atom -> unit
 
 val print_datum : atom -> unit
 val print_datum_list : atom list -> unit

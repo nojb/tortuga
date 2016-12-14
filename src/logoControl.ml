@@ -24,7 +24,7 @@
 open LogoTypes
 open LogoAtom
 open LogoGlobals
-open LogoCompile
+open LogoEnv
 open LogoEval
 
 exception Throw of string * atom option
@@ -43,12 +43,12 @@ exception Pause of env
 
 let repeat env = function
   | Int n :: List lst :: [] ->
-      let lst = reparse lst in
+      let g = reparse lst in
       let rec loop env i x =
         if i > n then
           x
         else
-          eval_list env lst (loop (step_repcount env) (i + 1))
+          loop (step_repcount env) (i+1) (listeval env g)
       in
       loop (start_repcount env) 1 word_nil
   | _ ->
@@ -78,10 +78,6 @@ let repeat env = function
 (*   | `L w -> k w *)
 (*   | `R lst -> *)
 (*       bool_expression env lst k *)
-
-let is_true = function
-  | Word "FALSE" -> false
-  | _ -> true
 
 let if_ = function
   | tf :: List yay :: [] ->

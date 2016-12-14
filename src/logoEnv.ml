@@ -21,7 +21,6 @@
 
 open LogoTypes
 open LogoAtom
-open Logo_word
 
 let default_colors =
   let def i name r g b a = i, name, {red; green; blue; alpha} in
