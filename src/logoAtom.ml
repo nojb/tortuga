@@ -46,26 +46,26 @@ let isint s =
 
 let rec bprint_datum b = function
   | Num n ->
-    Printf.bprintf b "%g" n
+      Printf.bprintf b "%g" n
   | Word s ->
-    Buffer.add_string b s
+      Buffer.add_string b s
   | List l ->
-    Printf.bprintf b "[%a]" bprint_datum_list l
+      Printf.bprintf b "[%a]" bprint_datum_list l
   | Array (a, orig) ->
-    Buffer.add_char b '{';
-    bprint_datum b a.(0);
-    for i = 1 to Array.length a - 1 do
-      Buffer.add_char b ' ';
-      bprint_datum b a.(i)
-    done;
-    Buffer.add_char b '}';
-    if orig <> 1 then Printf.bprintf b "@%d" orig
+      Buffer.add_char b '{';
+      bprint_datum b a.(0);
+      for i = 1 to Array.length a - 1 do
+        Buffer.add_char b ' ';
+        bprint_datum b a.(i)
+      done;
+      Buffer.add_char b '}';
+      if orig <> 1 then Printf.bprintf b "@%d" orig
 
 and bprint_datum_list b = function
   | [] -> ()
   | x :: xs ->
-    bprint_datum b x;
-    List.iter (fun x -> Buffer.add_char b ' '; bprint_datum b x) xs
+      bprint_datum b x;
+      List.iter (fun x -> Buffer.add_char b ' '; bprint_datum b x) xs
 
 let string_of_datum a =
   let b = Buffer.create 17 in
@@ -80,14 +80,28 @@ let string_of_datum_list al =
   bprint_datum_list b al;
   Buffer.contents b
 
-let true_word =
-  Word "true"
+let word_true = intern "true"
+let word_false = intern "false"
+let word_nil = intern "nil"
+let word_lessthan = intern "<"
+let word_greaterthan = intern ">"
+let word_lessequal = intern "<="
+let word_greaterequal = intern ">="
+let word_plus = intern "+"
+let word_minus = intern "-"
+let word_star = intern "*"
+let word_caret = intern "^"
+let word_equal = intern "="
+let word_lessgreater = intern "<>"
+let word_slash = intern "/"
+let word_percent = intern "%"
+let word_leftbracket = intern "["
+let word_rightbracket = intern "]"
+let word_leftparen = intern "("
+let word_rightparen = intern ")"
 
-let false_word =
-  Word "false"
-
-let minus_word =
-  Word "minus"
+(* let word_minus = *)
+(*   intern "minus" *)
 
 (* TODO fix conversion between numbers and words *)
 let rec equalaux a b =

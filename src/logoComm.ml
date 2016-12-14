@@ -31,7 +31,7 @@ open LogoEval
 
 let print = function
   | [] ->
-      Word "NIL"
+      word_nil
   | thing :: things ->
       let pr = function
         | List l -> print_datum_list l
@@ -40,7 +40,7 @@ let print = function
       pr thing;
       List.iter (fun d -> print " "; pr d) things;
       print "\n";
-      Word "NIL"
+      word_nil
 
 (*
 let type_ =
@@ -151,10 +151,12 @@ SHOW thing
 (*   in *)
 (*   prim ~names ~doc ~args ~f *)
 *)
-let () =
-  add_pfn "print" 1 print;
-  add_pfn "pr" 1 print
-  (* List.iter add_prim *)
+
+(* let () = *)
+(*   add_pfn "print" 1 print; *)
+(*   add_pfn "pr" 1 print *)
+
+(* List.iter add_prim *)
   (*   [ *)
   (*     print; *)
   (*     type_; *)

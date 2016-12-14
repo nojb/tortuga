@@ -41,19 +41,16 @@ exception Pause of env
 (*   | _ -> *)
 (*       error "run: bad arg list" *)
 
-let is_int x = floor x = x
-
 let repeat env = function
-  | num :: Atom (List lst) :: [] ->
-      Repeat (num, parse_list (reparse lst))
-      (* let n = truncate num in *)
-      (* let lst = reparse lst in *)
-      (* let rec loop env i x = *)
-      (*   if i > n then k x *)
-      (*   else *)
-      (*     eval_list env lst (loop (step_repcount env) (i + 1)) *)
-      (* in *)
-      (* loop (start_repcount env) 1 (Word "NIL") *)
+  | Int n :: List lst :: [] ->
+      let lst = reparse lst in
+      let rec loop env i x =
+        if i > n then
+          x
+        else
+          eval_list env lst (loop (step_repcount env) (i + 1))
+      in
+      loop (start_repcount env) 1 word_nil
   | _ ->
       error "repeat: bad arg list"
 
@@ -87,13 +84,13 @@ let is_true = function
   | _ -> true
 
 let if_ = function
-  | tf :: Atom (List yay) :: [] ->
+  | tf :: List yay :: [] ->
       If (tf, parse_list (reparse yay), Atom (Word "NIL"))
       (* if is_true tf then *)
       (*   eval_list env (reparse yay) k *)
       (* else *)
       (*   k (Word "NIL") *)
-  | tf :: Atom (List yay) :: Atom (List nay) :: [] ->
+  | tf :: List yay :: List nay :: [] ->
       If (tf, parse_list (reparse yay), parse_list (reparse nay))
       (* if is_true tf then *)
       (*   eval_list env (reparse yay) k *)
@@ -328,7 +325,7 @@ IGNORE value					(library procedure)
 *)
 
 let do_while = function
-  | Atom (List body) :: Atom (List tf) :: [] ->
+  | List body :: List tf :: [] ->
       Do (parse_list (reparse body), parse_list (reparse tf))
   | _ ->
       failwith "DO.WHILE: bad args"
@@ -361,7 +358,7 @@ DO.WHILE instructionlist tfexpression		(library procedure)
 *)
 
 let while_ = function
-  | Atom (List tf) :: Atom (List body) :: [] ->
+  | List tf :: List body :: [] ->
       While (parse_list (reparse tf), parse_list (reparse body))
   | _ ->
       failwith "WHILE: bad args"
@@ -451,16 +448,19 @@ UNTIL tfexpression instructionlist		(library procedure)
   in
     prim ~names ~doc ~args ~f *)
 
-let () =
-(*   add_pfcn "run" 1 run; *)
+(* let () = *)
+
+  (*   add_pfcn "run" 1 run; *)
 (*   add_pfcn "repeat" 2 repeat; *)
 (*   add_pfcn "forever" 1 forever; *)
 (*   add_pfcn "repcount" 0 repcount; *)
 (*   add_pfcn "#" 0 repcount; *)
-  add_pr2 "if" if_;
-  add_pr2 "while" while_;
-  add_pr2 "do.while" do_while
-  (* add_pr2 "until" until; *)
+
+  (*       add_pr2 "if" if_; *)
+  (* add_pr2 "while" while_; *)
+  (* add_pr2 "do.while" do_while *)
+
+(* add_pr2 "until" until; *)
   (* add_pr2 "do.until" do_until *)
 
 (*   add_pfcn "ifelse" 3 ifelse; *)

@@ -21,225 +21,223 @@
 
 open LogoTypes
 open LogoAtom
-open Logo_word
+open LogoGlobals
 
-let default_colors =
-  let def i name r g b a = i, name, {red; green; blue; alpha} in
-  [
-    def 00 "black" 0. 0. 0. 1.;
-    def 01 "blue" 0. 0. 1. 1.;
-    def 03 "cyan" 0. 1. 1. 1.;
-    def 04 "red" 1. 0. 0. 1.;
-    def 06 "yellow" 1. 1. 0. 1.;
-    def 07 "white" 1. 1. 1. 1.;
-    def 10 "green" 0. 1. 0. 1.;
-  ]
+(* let stringfrom pos str = *)
+(*   String.sub str pos (String.length str - pos) *)
 
-let create_env turtle =
-  let palette = Hashtbl.create 17 in
-  List.iter (fun (id, name, col) ->
-      Hashtbl.add palette (string_of_int id) col;
-      Hashtbl.add palette name col
-    ) default_colors;
-  {
-    globals = Hashtbl.create 17;
-    palette;
-    plists = Hashtbl.create 3;
-    locals = [];
-    repcount = [];
-    test = None;
-  }
+open LogoArithmetic
 
-let new_frame env =
-  { env with locals = Hashtbl.create 17 :: env.locals }
+(* let lessp lhs rhs = App (Pf2 lessp, [lhs; rhs]) *)
+(* let greaterp lhs rhs = App (Pf2 greaterp, [lhs; rhs]) *)
+(* let lessequalp lhs rhs = App (Pf2 lessequalp, [lhs; rhs]) *)
+(* let greaterequalp lhs rhs = App (Pf2 greaterequalp, [lhs; rhs]) *)
+(* let sum lhs rhs = App (Pfn (2, sum), [lhs; rhs]) *)
+(* let difference lhs rhs = App (Pf2 difference, [lhs; rhs]) *)
+(* let product lhs rhs = App (Pfn (2, product), [lhs; rhs]) *)
+(* let power lhs rhs = App (Pf2 power, [lhs; rhs]) *)
+(* let minus lhs = App (Pf1 minus, [lhs]) *)
 
-let create_var env name data =
-  match env.locals with
-  | [] ->
-      failwith "create_var"
-  | top :: _ ->
-      Hashtbl.add top (word_name name) data
+let next g =
+  match g with
+  | ({contents = None} as u, h) -> u := Some (h ()); g
+  | ({contents = Some x} as u, _) -> u := None; g
 
-let repcount env =
-  match env.repcount with
-  | [] -> -1
-  | top :: _ -> top
+let peek = function
+  | ({contents = None} as u, g) -> let x = g () in u := Some x; x
+  | ({contents = Some x}, _) -> x
 
-let start_repcount env =
-  { env with repcount = 1 :: env.repcount }
+let rec relexpr env g =
+  let lhs = addexpr g in
+  let o = peek g in
+  if o == word_equal then
+    let rhs, lst = addexpr (next g) in
+    infix_pred equalp Kany lhs rhs
+  else if o == word_lessthan then
+    let rhs, lst = addexpr (next g) in
+    lessp lhs rhs
+  else if o == word_greaterthan then
+    let rhs, lst = addexpr (next g) in
+    greaterp lhs rhs
+  else if o == word_lessequal then
+    let rhs, lst = addexpr (next g) in
+    lessequalp lhs rhs
+  else if o == word_greaterequal then
+    let rhs, lst = addexpr (next g) in
+    greaterequalp lhs rhs
+  else if o == word_lessgreater then
+    let rhs, lst = addexpr (next g) in
+    infix_pred notequalp lhs rhs
+  else
+    lhs
 
-let step_repcount env =
-  match env.repcount with
-  | [] -> invalid_arg "next_repcount"
-  | top :: rest -> { env with repcount = (top + 1) :: rest }
+and addexpr env g =
+  let lhs = mulexpr env g in
+  let o = peek g in
+  if o == word_plus then
+    let rhs = addexpr env (next g) in
+    sum [lhs; rhs]
+  else if o == word_minus then
+    let rhs = addexpr env (next g) in
+    difference lhs rhs
+  else
+    lhs
 
-let set_test env b =
-  env.test <- Some b
+and mulexpr env g =
+  let lhs = powexpr env g in
+  let o = peek g in
+  if o == word_star then
+    let rhs = mulexpr env (next g) in
+    product lhs rhs
+  else if o == word_slash then
+    let rhs = mulexpr env (next g) in
+    infix_float_bin ( /. ) lhs rhs
+  else if o == word_percent then
+    let rhs = mulexpr env (next g) in
+    infix_float_bin mod_float lhs rhs
+  else
+    lhs
 
-let get_test env =
-  match env.test with
-  | Some b -> b
-  | None -> error "no TEST"
+and powexpr env g =
+  let lhs = unexpr env g in
+  let o = peek g in
+  if o == word_caret then
+    let rhs = powerexp env (next g) in
+    power lhs rhs
+  else
+    lhs
 
-let set_global env name data =
-  Hashtbl.replace env.globals (word_name name) data
+and unexpr env g =
+  let o = peek g in
+  if o == minus_word then
+    let rhs = unexpr env (next g) in
+    minus rhs
+  else
+    atomexpr env g
 
-let get_global env name =
-  try
-    Hashtbl.find env.globals (word_name name)
-  with
-  | Not_found ->
-      error "Don't know about variable %s" (word_name name)
-
-let has_global env name =
-  Hashtbl.mem env.globals (word_name name)
-
-let set_palette env name c =
-  Hashtbl.replace env.palette name c
-
-let get_palette env name =
-  try Some (Hashtbl.find env.palette name) with Not_found -> None
-
-let put_prop env plist name value =
-  let p =
-    try
-      Hashtbl.find env.plists plist
-    with
-    | Not_found ->
-        let h = Hashtbl.create 5 in
-        Hashtbl.add env.plists plist h;
-        h
+and listexpr env g =
+  let rec loop n acc =
+    let o = peek g in
+    if o == word_rightbracket then
+      if n = 0 then
+        (ignore (next g); List (List.rev acc))
+      else
+        loop (n-1) (o :: acc)
+    else if o == word_leftbracket then
+      loop (n+1) (o :: acc)
+    else
+      loop n (o :: acc)
   in
-  Hashtbl.replace p name value
+  loop 0 []
 
-let get_prop env plist name =
-  try
-    let p = Hashtbl.find env.plists plist in
-    Some (Hashtbl.find p name)
-  with
-  | Not_found -> None
-
-let remove_prop env plist name =
-  try
-    let p = Hashtbl.find env.plists plist in
-    Hashtbl.remove p name;
-    if Hashtbl.length p = 0 then Hashtbl.remove env.plists plist
-  with
-  | Not_found -> ()
-
-let prop_list env plist =
-  try
-    Hashtbl.fold (fun k v l -> (k, v) :: l) (Hashtbl.find env.plists plist) []
-  with
-  | Not_found -> []
-
-let has_plist env plistname =
-  try
-    let p = Hashtbl.find env.plists plistname in
-    Hashtbl.length p > 0
-  with
-  | Not_found -> false
-
-let set_var env name data =
-  let rec loop = function
-    | [] ->
-        set_global env name data
-    | top :: rest ->
-        if Hashtbl.mem top (word_name name) then
-          Hashtbl.replace top (word_name name) (Some data)
+and atomexpr env g =
+  let o = peek g in
+  if o == word_leftbracket then
+    listexpr env g
+  else if o == word_leftparen then begin
+    match peek (next g) with
+    | Word w when has_routine env w ->
+        parse_call proc (next g) false
+    | _ ->
+        let res = relexpr env g in
+        let o = peek g in
+        if o == word_rightparen then
+          (ignore (next g); res)
         else
-          loop rest
-  in
-  loop env.locals
+          error "expected ')', found %s" (string_of_datum o)
+        (* | [] -> *)
+        (*     error "expected ')'" *)
+  end else begin
+    match o with
+    | Int _ | Real _ ->
+        o
+    | Word w ->
+        if String.length w > 0 && w.[0] = '\"' then
+          let w = stringfrom 1 w in
+          Word (intern w)
+        else if String.length w > 0 && w.[0] = ':' then
+          let w = stringfrom 1 w in
+          getvar (Word (intern w)) env
+        else
+          callexpr env o (next g) true
+  end
+(* | [] -> *)
+(*     assert false *)
 
-let get_var env name =
-  let rec loop = function
+and arglist env proc len natural g =
+  if natural then
+    let rec loop acc =
+      if List.length acc >= len then
+        List.rev acc
+      else
+        let arg1 = relexpr env g in
+        loop (arg1 :: acc)
+        (* | [] -> *)
+        (*     error "not enough arguments for %s" (String.uppercase proc) *)
+    in
+    loop []
+  else
+    let rec loop acc =
+      let o = peek g in
+      if o == word_rightparen then
+        (next g; List.rev acc)
+      else
+        let arg1 = relexpr env g in
+        loop (arg1 :: acc)
+      (* | [] -> *)
+      (*     error "expected ')'" *)
+    in
+    loop []
+
+and callexpr env o g natural =
+  match get_routine env o with
+  | Pf proc as pf ->
+      let args, lst = arglist env name (arity pf) natural lst in
+      App (proc, args), lst
+  | Pr (_, prim) as pr ->
+      let args, lst = arglist env name (arity pr) natural lst in
+      prim args, lst
+  | exception Not_found ->
+      error "Don't know how to %s" (String.uppercase name)
+
+  (* let Pf (fn, f) = *)
+  (*   try *)
+  (*     get_routine proc *)
+  (*   with *)
+  (*   | Not_found -> error "Don't know how to %s" (String.uppercase proc) *)
+  (* in *)
+  (* eval_args (default_num_args fn) natural lst *)
+  (*   (fun args lst -> apply env proc fn f args (fun res -> k res lst)) *)
+
+let parse_list lst =
+  let rec loop last = function
     | [] ->
-        get_global env name
-    | top :: rest ->
-        try match Hashtbl.find top (word_name name) with
-          | None ->
-              error "variable %s does not have a value" (word_name name)
-          | Some a -> a
-        with
-        | Not_found -> loop rest
+        last
+    | _ :: _ as lst ->
+        let e', lst = parse lst in
+        loop (Seq (last, e')) lst
   in
-  loop env.locals
+  let e, lst = parse lst in
+  loop e lst
 
-let has_var env name =
-  let rec loop = function
-    | [] ->
-        has_global env name
-    | top :: rest ->
-        Hashtbl.mem top (word_name name) || loop rest
-  in
-  loop env.locals
-
-let apply env proc args k =
-  match proc, args with
-  | Pf0 f, [] -> k (f ())
-  | Pf1 f, [x] -> k (f x)
-  | Pf2 f, [x; y] -> k (f x y)
-  | Pf3 f, [x; y; z] -> k (f x y z)
-  | Pfn (_, f), _ -> k (f args)
-  | Pfcn (_, f), _ -> f env args k
-  | _ -> assert false
-
-let is_true = function
-  | Word "TRUE" | Word "true" -> true
-  | _ -> false
-
-(* let rec eval env e k = *)
-(*   match e with *)
-(*   | App (Pf0 pf, []) -> *)
-(*       k (pf ()) *)
-(*   | App (Pf1 pf, [e]) -> *)
-(*       eval env e (fun x -> k (pf x)) *)
-(*   | App (Pf2 pf, [e1; e2]) -> *)
-(*       eval env e1 (fun x1 -> eval env e2 (fun x2 -> k (pf x1 x2))) *)
-(*   | App (Pfn (_, pf), el) -> *)
-(*       let rec loop args = function *)
-(*         | [] -> k (pf (List.rev args)) *)
-(*         | e :: el -> *)
-(*             eval env e (fun x -> loop (x :: args) el) *)
-(*       in *)
-(*       loop [] el *)
-(*   | Make (id, e) -> *)
-(*       eval env e (fun x -> set_var env (get_word id) x; k word_nil) *)
-(*   | Var id -> *)
-(*       k (get_var env (get_word id)) *)
-(*   | Atom a -> *)
-(*       k a *)
-(*   | If (e1, e2, e3) -> *)
-(*       eval env e1 (fun x1 -> if is_true x1 then eval env e2 k else eval env e3 k) *)
-(*   | Seq (e1, e2) -> *)
-(*       eval env e1 (fun _ -> eval env e2 k) *)
-(*   | Repeat (e1, e2) -> *)
-(*       let rec loop env i n x = *)
-(*         if i > n then *)
-(*           k x *)
-(*         else *)
-(*           eval env e2 (fun x -> loop (step_repcount env) (i+1) n x) *)
-(*       in *)
-(*       eval env e1 (function *)
-(*           | Num n -> *)
-(*               loop (start_repcount env) 1 (truncate n) word_nil *)
-(*           | _ -> *)
-(*               failwith "number expected" *)
-(*         ) *)
-(*   | While (e1, e2) -> *)
-(*       let rec loop x = *)
-(*         if is_true x then *)
-(*           eval env e2 loop *)
-(*         else *)
-(*           k (Word "NIL") *)
-(*       in *)
-(*       eval env e1 loop *)
-(*   | Do (e1, e2) -> *)
-(*       let rec loop x = *)
-(*         if is_true x then *)
-(*           k (Word "NIL") *)
-(*         else *)
-(*           eval env e1 (fun _ -> eval env e2 loop) *)
-(*       in *)
-(*       eval env e1 (fun _ -> eval env e2 loop) *)
+(* let define ~name ~inputs ~body = *)
+(*   let body1 = *)
+(*     List.map (fun l -> LogoLex.parse_atoms [] false (Lexing.from_string l)) body *)
+(*   in *)
+(*   let rec execbody env body k = *)
+(*     match body with *)
+(*     | l :: lines -> *)
+(*       commandlist env l (fun () -> execbody env lines k) *)
+(*     | [] -> *)
+(*       k () *)
+(*   in *)
+(*   let rec loop : string list -> aux -> unit = fun inputs k -> *)
+(*     match inputs with *)
+(*     | input :: inputs -> *)
+(*       loop inputs *)
+(*         { k = fun fn f -> k.k Lga.(any @-> fn) (fun env a -> create_var env input (Some a); f env) } *)
+(*     | [] -> *)
+(*       k.k Lga.(ret cont) (fun env k -> execbody (new_exit env k) body1 (fun () -> k None)) *)
+(*   in *)
+(*   loop inputs *)
+(*     { k = fun fn f -> add_proc ~name ~raw ~doc ~args:(Kenv fn) ~f:(fun env -> f (new_frame env)) } *)

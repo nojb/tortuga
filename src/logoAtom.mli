@@ -30,9 +30,25 @@ val string_of_datum : atom -> string
 
 val string_of_datum_list : atom list -> string
 
-val true_word : atom
-val false_word : atom
-val minus_word : atom
+val word_true: atom
+val word_false: atom
+val word_nil: atom
+val word_lessthan: atom
+val word_greaterthan: atom
+val word_lessequal: atom
+val word_greaterequal: atom
+val word_plus: atom
+val word_minus: atom
+val word_star: atom
+val word_caret: atom
+val word_equal: atom
+val word_lessgreater: atom
+val word_slash: atom
+val word_percent: atom
+val word_leftbracket: atom
+val word_rightbracket: atom
+val word_leftparen: atom
+val word_rightparen: atom
 
 val equalaux : atom -> atom -> bool
 

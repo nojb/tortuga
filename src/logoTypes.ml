@@ -34,11 +34,11 @@ and primitive =
   | PrimN of (atom list -> atom)
 
 module HashedWord = struct
-  type t = string
+  type t = atom
   let hash = Hashtbl.hash
   let equal o1 o2 =
     match o1, o2 with
-    | Word s1, Word s2 = String.compare s1 s2 = 0
+    | Word s1, Word s2 -> String.compare s1 s2 = 0
     | _ -> assert false
 end
 

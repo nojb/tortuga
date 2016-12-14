@@ -31,21 +31,23 @@ let word_true = intern "true"
 let word_false = intern "false"
 
 let sum args =
-  let rec loop acc = function
-    | [ ] -> Num acc
-    | Num x :: xs ->
-        loop (x +. acc) xs
+  let aux n1 n2 =
+    match n1, n2 with
+    | Int n1, Int n2 -> Int (n1 + n2)
+    | Int n1, Real f2 -> Real (float n1 +. f2)
+    | Real f1, Int n2 -> Real (f1 +. float n2)
+    | Real f1, Real f2 -> Real (f1 +. f2)
     | _ ->
         error "sum: expected number argument"
   in
-  loop 0.0 args
+  List.fold_left aux (Int 0) args
 
 let difference n1 n2 =
   match n1, n2 with
   | Int n1, Int n2 -> Int (n1 - n2)
-  | Int n1, Real f2 -> Float (float n1 -. f2)
-  | Real f1, Int n2 -> Float (f1 -. float n2)
-  | Real f1, Real f2 -> Float (f1 -. f2)
+  | Int n1, Real f2 -> Real (float n1 -. f2)
+  | Real f1, Int n2 -> Real (f1 -. float n2)
+  | Real f1, Real f2 -> Real (f1 -. f2)
   | _ -> error "difference: wrong no of arguments"
 
 let minus = function
@@ -81,8 +83,8 @@ let int = function
       error "int: wrong arg list"
 
 let round = function
-  | Int _ as n -> n
-  | Real f -> Int (int_of_float (floor (n +. 0.5)))
+  | Int _ as o -> o
+  | Real f -> Int (int_of_float (floor (f +. 0.5)))
   | _ ->
       error "round: bad arg list"
 
@@ -290,24 +292,24 @@ BITNOT num
   prim ~names ~doc ~args ~f
 *)
 
-let () =
-  add_pfn "sum" 2 sum;
-  add_pf2 "difference" difference;
-  add_pf1 "minus" minus;
-  add_pfn "product" 2 product;
-  add_pf2 "remainder" remainder;
-  add_pf1 "int" int;
-  add_pf1 "round" round;
-  add_pf1 "sqrt" sqrt;
-  add_pf2 "power" power;
-  add_pf2 "lessp" lessp;
-  add_pf2 "less?" lessp;
-  add_pf2 "greaterp" greaterp;
-  add_pf2 "greater?" greaterp;
-  add_pf2 "lessequalp" lessequalp;
-  add_pf2 "lessequal?" lessequalp;
-  add_pf2 "greaterequalp" greaterequalp;
-  add_pf2 "greaterequal?" greaterequalp
+(* let () = *)
+(*   add_pfn "sum" 2 sum; *)
+(*   add_pf2 "difference" difference; *)
+(*   add_pf1 "minus" minus; *)
+(*   add_pfn "product" 2 product; *)
+(*   add_pf2 "remainder" remainder; *)
+(*   add_pf1 "int" int; *)
+(*   add_pf1 "round" round; *)
+(*   add_pf1 "sqrt" sqrt; *)
+(*   add_pf2 "power" power; *)
+(*   add_pf2 "lessp" lessp; *)
+(*   add_pf2 "less?" lessp; *)
+(*   add_pf2 "greaterp" greaterp; *)
+(*   add_pf2 "greater?" greaterp; *)
+(*   add_pf2 "lessequalp" lessequalp; *)
+(*   add_pf2 "lessequal?" lessequalp; *)
+(*   add_pf2 "greaterequalp" greaterequalp; *)
+(*   add_pf2 "greaterequal?" greaterequalp *)
 
 (*
       random;
