@@ -34,7 +34,7 @@ let rec bprint_datum b = function
       Buffer.add_string b s
   | List l ->
       let aux b =
-        List.iteri (fun i x -> if i > 0 then bprintf b " "; bprint_datum b x) l
+        List.iteri (fun i x -> if i > 0 then Printf.bprintf b " "; bprint_datum b x) l
       in
       Printf.bprintf b "[%t]" aux
 
@@ -69,16 +69,12 @@ let word_rightparen = intern ")"
 (* TODO fix conversion between numbers and words *)
 let rec equalaux a b =
   match a, b with
-  | Num n, Num m -> n = m
+  | Int n1, Int n2 -> n1 == n2
+  | Real f1, Real f2 -> f1 = f2
   | Word w1, Word w2 -> w1 == w2
   | List l1, List l2 -> List.length l1 = List.length l2 && List.for_all2 equalaux l1 l2
-  | Array (a1, _), Array (a2, _) -> a1 == a2
   | _ -> false
 
 let print_datum d = print (string_of_datum d)
 
-let print_datum_list d = print (string_of_datum_list d)
-
 let cprint_datum d = cprint (string_of_datum d)
-
-let cprint_datum_list d = cprint (string_of_datum_list d)

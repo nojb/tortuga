@@ -24,14 +24,13 @@ type atom =
   | Real of float
   | Word of string
   | List of atom list
-  | Proc of (atom list -> atom)
+  | Proc of int * (atom list -> atom)
   | Prim of primitive
 
 and primitive =
   | Prim1 of (atom -> atom)
   | Prim2 of (atom -> atom -> atom)
   | Prim3 of (atom -> atom -> atom -> atom)
-  | PrimN of (atom list -> atom)
 
 module HashedWord = struct
   type t = atom
@@ -61,10 +60,10 @@ type color =
 
 type env =
   {
-    globals: (string, atom) Hashtbl.t;
-    palette: (string, color) Hashtbl.t;
-    plists: (string, (string, atom) Hashtbl.t) Hashtbl.t;
-    locals: (string, atom option) Hashtbl.t list;
+    globals: (atom, atom) Hashtbl.t;
+    plists: (atom, (string, atom) Hashtbl.t) Hashtbl.t;
+    locals: (atom, atom option) Hashtbl.t list;
+    palette: (atom, color) Hashtbl.t;
     repcount: int list;
     mutable test: bool option;
   }
@@ -76,18 +75,6 @@ type env =
 (*   | Pf3 of (atom -> atom -> atom -> atom) *)
 (*   | Pfn of int * (atom list -> atom) *)
 (*   | Pfcn of int * (env -> atom list -> (atom -> unit) -> unit) *)
-
-(* type exp = *)
-(*   | App of pf * exp list *)
-(*   | Make of string * exp *)
-(*   | Var of string *)
-(*   | Atom of atom *)
-(*   | If of exp * exp * exp *)
-(*   | Output of exp *)
-(*   | Seq of exp * exp *)
-(*   | Repeat of exp * exp *)
-(*   | While of exp * exp *)
-(*   | Do of exp * exp *)
 
 (* type proc = *)
 (*   | Pf of pf *)
@@ -108,8 +95,8 @@ let rec pp_atom ppf = function
 and pp_atom_list fmt = function
   | [] -> ()
   | x :: xs ->
-    pp_atom fmt x;
-    List.iter (fun x -> Format.fprintf fmt "@ %a" pp_atom x) xs
+      pp_atom fmt x;
+      List.iter (fun x -> Format.fprintf fmt "@ %a" pp_atom x) xs
 
 (* let rec pp fmt = function *)
 (*   | App (_, el) -> *)

@@ -23,7 +23,7 @@
 
 open LogoTypes
 open LogoAtom
-open LogoGlobals
+open LogoEnv
 
 (** 4.1 Numeric Operations *)
 
@@ -134,6 +134,12 @@ let greaterequalp n1 n2 =
   | Int n1, Int n2 -> if n1 >= n2 then word_true else word_false
   | _ ->
       error "greaterp: bad arg list"
+
+let equalp o1 o2 =
+  assert false
+
+let notequalp o1 o2 =
+  assert false
 
 (*
 (** 4.3 Random Numbers *)

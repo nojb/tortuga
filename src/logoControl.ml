@@ -23,7 +23,6 @@
 
 open LogoTypes
 open LogoAtom
-open LogoGlobals
 open LogoEnv
 open LogoEval
 
@@ -41,14 +40,20 @@ exception Pause of env
 (*   | _ -> *)
 (*       error "run: bad arg list" *)
 
+let listgen lst =
+  let r = ref lst in
+  fun () ->
+    match !r with
+    | [] -> raise End_of_file
+    | x :: u -> r := u; x
+
 let repeat env = function
   | Int n :: List lst :: [] ->
-      let g = reparse lst in
       let rec loop env i x =
         if i > n then
           x
         else
-          loop (step_repcount env) (i+1) (listeval env g)
+          loop (step_repcount env) (i+1) (listeval env (listgen lst))
       in
       loop (start_repcount env) 1 word_nil
   | _ ->
@@ -79,19 +84,17 @@ let repeat env = function
 (*   | `R lst -> *)
 (*       bool_expression env lst k *)
 
-let if_ = function
+let if_ env = function
   | tf :: List yay :: [] ->
-      If (tf, parse_list (reparse yay), Atom (Word "NIL"))
-      (* if is_true tf then *)
-      (*   eval_list env (reparse yay) k *)
-      (* else *)
-      (*   k (Word "NIL") *)
+      if tf == word_true then
+        listeval env (listgen yay)
+      else
+        word_nil
   | tf :: List yay :: List nay :: [] ->
-      If (tf, parse_list (reparse yay), parse_list (reparse nay))
-      (* if is_true tf then *)
-      (*   eval_list env (reparse yay) k *)
-      (* else *)
-      (*   eval_list env (reparse nay) k *)
+      if tf == word_true then
+        listeval env (listgen yay)
+      else
+        listeval env (listgen nay)
   | _ ->
       error "if: bad arg list"
 
@@ -320,11 +323,12 @@ IGNORE value					(library procedure)
   prim ~names ~doc ~args ~f
 *)
 
-let do_while = function
-  | List body :: List tf :: [] ->
-      Do (parse_list (reparse body), parse_list (reparse tf))
-  | _ ->
-      failwith "DO.WHILE: bad args"
+(* let do_while = function *)
+(*   | List body :: List tf :: [] -> *)
+(*       Do (parse_list (reparse body), parse_list (reparse tf)) *)
+(*   | _ -> *)
+(*       failwith "DO.WHILE: bad args" *)
+
         (*
   let names = ["do.while"] in
   let doc =
@@ -355,7 +359,8 @@ DO.WHILE instructionlist tfexpression		(library procedure)
 
 let while_ = function
   | List tf :: List body :: [] ->
-      While (parse_list (reparse tf), parse_list (reparse body))
+      assert false
+      (* While (parse_list (reparse tf), parse_list (reparse body)) *)
   | _ ->
       failwith "WHILE: bad args"
 

@@ -48,7 +48,4 @@ val word_rightparen: atom
 val equalaux : atom -> atom -> bool
 
 val print_datum : atom -> unit
-val print_datum_list : atom list -> unit
-
 val cprint_datum : atom -> unit
-val cprint_datum_list : atom list -> unit

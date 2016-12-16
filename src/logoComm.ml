@@ -23,7 +23,6 @@
 
 open LogoTypes
 open LogoAtom
-open LogoGlobals
 open LogoPrint
 open LogoEval
 
@@ -34,7 +33,7 @@ let print = function
       word_nil
   | thing :: things ->
       let pr = function
-        | List l -> print_datum_list l
+        (* | List l -> print_datum_list l *)
         | _ as d -> print_datum d
       in
       pr thing;

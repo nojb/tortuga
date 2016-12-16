@@ -23,17 +23,16 @@
 
 open LogoTypes
 open LogoAtom
-open LogoGlobals
 open LogoPrint
 open LogoEval
 
 (** 7.2 Variable Definition *)
 
-let make = function
-  | Atom (Word id) :: e :: [] ->
-      Make (id, e)
-  | _ ->
-      failwith "MAKE: bad args"
+(* let make = function *)
+(*   | Word w :: e :: [] -> *)
+(*       Make (w, e) *)
+(*   | _ -> *)
+(*       failwith "MAKE: bad args" *)
 
 (*
   let names = ["make"] in
@@ -53,11 +52,11 @@ MAKE varname value
   prim ~names ~doc ~args ~f
 *)
 
-let name = function
-  | e :: Atom (Word id) :: [] ->
-      Make (id, e)
-  | _ ->
-      failwith "NAME: bad args"
+(* let name = function *)
+(*   | e :: Atom (Word id) :: [] -> *)
+(*       Make (id, e) *)
+(*   | _ -> *)
+(*       failwith "NAME: bad args" *)
 
 (*
   let names = ["name"] in
@@ -361,6 +360,6 @@ let () =
     ]
 *)
 
-let () =
-  add_pr2 "make" make;
-  add_pr2 "name" name
+(* let () = *)
+(*   add_pr2 "make" make; *)
+(*   add_pr2 "name" name *)

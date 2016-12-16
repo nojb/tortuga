@@ -20,7 +20,7 @@
    CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. *)
 
 open LogoTypes
-open LogoCompile
+open LogoEnv
 open LogoEval
 open LogoPrint
 open LogoAtom
@@ -130,12 +130,8 @@ let main () =
   let rec execute_phrase env l =
     try
       let lexbuf = Lexing.from_string l in
-      let list = LogoLex.parse_atoms [] false lexbuf in
-      let e = parse_list list in
-
-      Format.printf "%a@." LogoTypes.pp e;
-
-      LogoEval.eval env e print_datum
+      let g () = LogoLex.token lexbuf in
+      print_datum (listeval env g)
       (* | `GotTO (name, inputs, body) -> *)
       (*     assert false *)
     (* to_ ~raw ~name ~inputs ~body *)

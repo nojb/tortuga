@@ -39,15 +39,12 @@ val get_test: env -> bool
 
 val set_global: env -> atom -> atom -> unit
 val get_global: env -> atom -> atom
-val has_global: env -> atom -> bool
 
-val set_palette: env -> string -> color -> unit
-val get_palette: env -> string -> color option
+val set_palette: env -> atom -> color -> unit
+val get_palette: env -> atom -> color option
 
-val put_prop: env -> string -> string -> atom -> unit
-val get_prop: env -> string -> string -> atom option
-val remove_prop: env -> string -> string -> unit
-val prop_list: env -> string -> (string * atom) list
-val has_plist: env -> string -> bool
-
-(* val eval: env -> exp -> (atom -> unit) -> unit *)
+val put_prop: env -> atom -> string -> atom -> unit
+val get_prop: env -> atom -> string -> atom option
+val remove_prop: env -> atom -> string -> unit
+val prop_list: env -> atom -> (string * atom) list
+val has_plist: env -> atom -> bool

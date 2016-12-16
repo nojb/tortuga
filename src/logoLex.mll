@@ -55,16 +55,14 @@ rule token = parse
     { comment lexbuf }
 | ['-''+']?['0'-'9']+ as n
     { Int (int_of_string n) }
-| identifier as v
+| (identifier | operator) as v
     { intern v }
-| operator
-    { intern (Lexing.lexeme lexbuf) }
 | eof
     { raise End_of_file }
 | _ as c
     { unexpected c }
 
-and comment lexbuf = parse
+and comment = parse
   | '\n' { token lexbuf }
   | _ { comment lexbuf }
   | eof { raise End_of_file }

@@ -21,7 +21,7 @@
 
 open LogoTypes
 open LogoAtom
-open LogoGlobals
+open LogoEnv
 open LogoArithmetic
 
 let stringfrom pos str =
@@ -37,26 +37,26 @@ let peek = function
   | ({contents = Some x}, _) -> x
 
 let rec relexpr env g =
-  let lhs = addexpr g in
+  let lhs = addexpr env g in
   let o = peek g in
   if o == word_equal then
-    let rhs, lst = addexpr (next g) in
-    infix_pred equalp Kany lhs rhs
+    let rhs = addexpr (next g) in
+    equalp lhs rhs
   else if o == word_lessthan then
-    let rhs, lst = addexpr (next g) in
+    let rhs = addexpr env (next g) in
     lessp lhs rhs
   else if o == word_greaterthan then
-    let rhs, lst = addexpr (next g) in
+    let rhs = addexpr env (next g) in
     greaterp lhs rhs
   else if o == word_lessequal then
-    let rhs, lst = addexpr (next g) in
+    let rhs = addexpr env (next g) in
     lessequalp lhs rhs
   else if o == word_greaterequal then
-    let rhs, lst = addexpr (next g) in
+    let rhs = addexpr env (next g) in
     greaterequalp lhs rhs
   else if o == word_lessgreater then
-    let rhs, lst = addexpr (next g) in
-    infix_pred notequalp lhs rhs
+    let rhs = addexpr env (next g) in
+    notequalp lhs rhs
   else
     lhs
 
@@ -77,13 +77,13 @@ and mulexpr env g =
   let o = peek g in
   if o == word_star then
     let rhs = mulexpr env (next g) in
-    product lhs rhs
-  else if o == word_slash then
-    let rhs = mulexpr env (next g) in
-    infix_float_bin ( /. ) lhs rhs
-  else if o == word_percent then
-    let rhs = mulexpr env (next g) in
-    infix_float_bin mod_float lhs rhs
+    product [lhs; rhs]
+  (* else if o == word_slash then *)
+  (*   let rhs = mulexpr env (next g) in *)
+  (*   infix_float_bin ( /. ) lhs rhs *)
+  (* else if o == word_percent then *)
+  (*   let rhs = mulexpr env (next g) in *)
+  (*   infix_float_bin mod_float lhs rhs *)
   else
     lhs
 
@@ -91,18 +91,18 @@ and powexpr env g =
   let lhs = unexpr env g in
   let o = peek g in
   if o == word_caret then
-    let rhs = powerexp env (next g) in
+    let rhs = powexpr env (next g) in
     power lhs rhs
   else
     lhs
 
 and unexpr env g =
   let o = peek g in
-  if o == minus_word then
-    let rhs = unexpr env (next g) in
-    minus rhs
-  else
-    atomexpr env g
+  (* if o == minus_word then *)
+  (*   let rhs = unexpr env (next g) in *)
+  (*   minus rhs *)
+  (* else *)
+  atomexpr env g
 
 and listexpr env g =
   let rec loop n acc =
@@ -124,18 +124,19 @@ and atomexpr env g =
   if o == word_leftbracket then
     listexpr env g
   else if o == word_leftparen then begin
-    match peek (next g) with
-    | Word w when has_routine env w ->
-        parse_call proc (next g) false
-    | _ ->
+    let o = peek (next g) in
+    match get_var env o with
+    | Proc _ as o ->
+        callexpr env o (next g) false
+    | exception Not_found ->
         let res = relexpr env g in
         let o = peek g in
         if o == word_rightparen then
           (ignore (next g); res)
         else
           error "expected ')', found %s" (string_of_datum o)
-        (* | [] -> *)
-        (*     error "expected ')'" *)
+          (* | [] -> *)
+          (*     error "expected ')'" *)
   end else begin
     match o with
     | Int _ | Real _ ->
@@ -143,10 +144,10 @@ and atomexpr env g =
     | Word w ->
         if String.length w > 0 && w.[0] = '\"' then
           let w = stringfrom 1 w in
-          Word (intern w)
+          intern w
         else if String.length w > 0 && w.[0] = ':' then
           let w = stringfrom 1 w in
-          getvar (Word (intern w)) env
+          getvar (intern w) env
         else
           callexpr env o (next g) true
   end
@@ -179,15 +180,16 @@ and arglist env proc len natural g =
     loop []
 
 and callexpr env o g natural =
-  match get_routine env o with
-  | Pf proc as pf ->
-      let args, lst = arglist env name (arity pf) natural lst in
+  match o with
+  | Proc (n, f) ->
+      let args, lst = arglist env name n natural lst in
       App (proc, args), lst
-  | Pr (_, prim) as pr ->
-      let args, lst = arglist env name (arity pr) natural lst in
+  | Prim p ->
+      let args, lst = arglist env name (arity p) natural lst in
       prim args, lst
-  | exception Not_found ->
-      error "Don't know how to %s" (String.uppercase name)
+  | _ ->
+      assert false
+      (* error "Don't know how to %s" (String.uppercase name) *)
 
   (* let Pf (fn, f) = *)
   (*   try *)
@@ -207,6 +209,10 @@ let listeval env g =
         last
   in
   loop word_nil g
+
+let listeval env g =
+  let g = (ref None, g) in
+  listeval env g
 
 (* let define ~name ~inputs ~body = *)
 (*   let body1 = *)
