@@ -40,7 +40,7 @@ let rec relexpr env g =
   let lhs = addexpr env g in
   let o = peek g in
   if o == word_equal then
-    let rhs = addexpr (next g) in
+    let rhs = addexpr env (next g) in
     equalp lhs rhs
   else if o == word_lessthan then
     let rhs = addexpr env (next g) in
@@ -147,7 +147,7 @@ and atomexpr env g =
           intern w
         else if String.length w > 0 && w.[0] = ':' then
           let w = stringfrom 1 w in
-          getvar (intern w) env
+          get_var env (intern w)
         else
           callexpr env o (next g) true
   end
@@ -182,11 +182,11 @@ and arglist env proc len natural g =
 and callexpr env o g natural =
   match o with
   | Proc (n, f) ->
-      let args, lst = arglist env name n natural lst in
-      App (proc, args), lst
-  | Prim p ->
-      let args, lst = arglist env name (arity p) natural lst in
-      prim args, lst
+      let args = arglist env "" n natural g in
+      f args
+  (* | Prim p -> *)
+  (*     let args = arglist env name (arity p) natural g in *)
+  (*     p args *)
   | _ ->
       assert false
       (* error "Don't know how to %s" (String.uppercase name) *)
@@ -208,7 +208,7 @@ let listeval env g =
     | exception _ ->
         last
   in
-  loop word_nil g
+  loop word_nil
 
 let listeval env g =
   let g = (ref None, g) in
