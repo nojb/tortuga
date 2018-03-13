@@ -1,13 +1,5 @@
-OCAMLBUILD = ocamlbuild
-OCAMLBUILDFLAGS = -classic-display -use-ocamlfind
-
-byte:
-	$(OCAMLBUILD) $(OCAMLBUILDFLAGS) src/tortu.byte
-
-native:
-	$(OCAMLBUILD) $(OCAMLBUILDFLAGS) src/tortu.native
+all:
+	jbuilder build --dev @install
 
 clean:
-	$(OCAMLBUILD) $(OCAMLBUILDFLAGS) -clean
-
-.PHONY: byte native clean
+	jbuilder clean
