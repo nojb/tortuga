@@ -1,3 +1,5 @@
 *.byte
 *.native
 _build
+.merlin
+/tortuga.install
