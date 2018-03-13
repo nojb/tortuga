@@ -21,11 +21,11 @@
 
 (** 2. Data Structures Primitives *)
 
-open LogoTypes
-open LogoAtom
-open LogoGlobals
-open LogoEnv
-  
+open Types
+open Atom
+open Globals
+open Env
+
 (** 2.1 Constructors *)
 
 let word =
@@ -44,7 +44,7 @@ WORD word1 word2
     String.concat "" (word1 :: word2 :: words)
   in
   prim ~names ~doc ~args ~f
-    
+
 let list =
   let names = ["list"] in
   let doc =
@@ -266,14 +266,14 @@ FIRSTS list
     Outputs a list containing the FIRST of each member of the input list. It is
     an error if any member of the input list is empty. (The input itself may be
     empty, in which case the output is also empty.) This could be written as
- 	
+
       to firsts :list
         output map \"first :list
       end
 
     but is provided as a primitive in order to speed up the iteration tools MAP,
     MAP.SE, and FOREACH.
-	
+
       to transpose :matrix
         if emptyp first :matrix [op []]
         op fput firsts :matrix transpose bfs :matrix
@@ -316,7 +316,7 @@ BF wordorlist
     If the input is a word, outputs a word containing all but the first
     character of the input. If the input is a list, outputs a list containing
     all but the first member of the input."
-      
+
   in
   let args = Lga.(alt word (ne_list any) @-> ret (value any)) in
   let f = function
@@ -327,7 +327,7 @@ BF wordorlist
       List (List.tl l)
   in
   prim ~names ~doc ~args ~f
-    
+
 let item =
   let names = ["item"] in
   let doc =
@@ -508,7 +508,7 @@ DEQUEUE queuename				(library procedure)
       error "dequeue: %s is not a list" queuename
   in
   prim ~names ~doc ~args ~f
-      
+
 (** 2.4 Predicates *)
 
 let wordp =

@@ -21,9 +21,9 @@
 
 (** 4. Arithmetic *)
 
-open LogoTypes
-open LogoAtom
-open LogoEnv
+open Types
+open Atom
+open Env
 
 (** 4.1 Numeric Operations *)
 

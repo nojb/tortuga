@@ -1,6 +1,6 @@
 (* The MIT License (MIT)
 
-   Copyright (c) 2014 Nicolas Ojeda Bar <n.oje.bar@gmail.com>
+   Copyright (c) 2014-2016 Nicolas Ojeda Bar <n.oje.bar@gmail.com>
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -19,33 +19,10 @@
    IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
    CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. *)
 
-open LogoTypes
+open Types
 
-val error : ('a, unit, string, 'b) format4 -> 'a
-
-val string_of_datum : atom -> string
-
-val word_true: atom
-val word_false: atom
-val word_nil: atom
-val word_lessthan: atom
-val word_greaterthan: atom
-val word_lessequal: atom
-val word_greaterequal: atom
-val word_plus: atom
-val word_minus: atom
-val word_star: atom
-val word_caret: atom
-val word_equal: atom
-val word_lessgreater: atom
-val word_slash: atom
-val word_percent: atom
-val word_leftbracket: atom
-val word_rightbracket: atom
-val word_leftparen: atom
-val word_rightparen: atom
-
-val equalaux : atom -> atom -> bool
-
-val print_datum : atom -> unit
-val cprint_datum : atom -> unit
+val listeval: env -> (unit -> atom) -> atom
+(* val parse : atom list -> exp * atom list *)
+(* val eval_bool : env -> atom list -> (bool -> atom list -> unit) -> unit *)
+(* val parse_list : atom list -> exp *)
+(* val define : raw:string list -> name:string -> inputs:string list -> body:string list -> unit *)

@@ -2,4 +2,5 @@
 
 (executable
  ((name tortu)
-  (libraries (tortuga))))
+  (public_name tortu)
+  (libraries (logo))))

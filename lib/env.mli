@@ -19,10 +19,32 @@
    IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
    CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. *)
 
-open LogoTypes
+open Types
 
-val listeval: env -> (unit -> atom) -> atom
-(* val parse : atom list -> exp * atom list *)
-(* val eval_bool : env -> atom list -> (bool -> atom list -> unit) -> unit *)
-(* val parse_list : atom list -> exp *)
-(* val define : raw:string list -> name:string -> inputs:string list -> body:string list -> unit *)
+val create_env: unit -> env
+
+val new_frame: env -> env
+
+val set_var: env -> atom -> atom -> unit
+val create_var: env -> atom -> atom option -> unit
+val get_var: env -> atom -> atom
+val has_var: env -> atom -> bool
+
+val repcount: env -> int
+val start_repcount: env -> env
+val step_repcount: env -> env
+
+val set_test: env -> bool -> unit
+val get_test: env -> bool
+
+val set_global: env -> atom -> atom -> unit
+val get_global: env -> atom -> atom
+
+val set_palette: env -> atom -> color -> unit
+val get_palette: env -> atom -> color option
+
+val put_prop: env -> atom -> string -> atom -> unit
+val get_prop: env -> atom -> string -> atom option
+val remove_prop: env -> atom -> string -> unit
+val prop_list: env -> atom -> (string * atom) list
+val has_plist: env -> atom -> bool

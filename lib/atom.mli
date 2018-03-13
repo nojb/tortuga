@@ -19,50 +19,33 @@
    IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
    CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. *)
 
-{
-open LogoTypes
-open Lexing
+open Types
 
-type error =
-  | Unexpected_character of char
-  | Expected_character of char
+val error : ('a, unit, string, 'b) format4 -> 'a
 
-exception Error of error
+val string_of_datum : atom -> string
 
-let unexpected c =
-  raise (Error (Unexpected_character c))
+val word_true: atom
+val word_false: atom
+val word_nil: atom
+val word_lessthan: atom
+val word_greaterthan: atom
+val word_lessequal: atom
+val word_greaterequal: atom
+val word_plus: atom
+val word_minus: atom
+val word_star: atom
+val word_caret: atom
+val word_equal: atom
+val word_lessgreater: atom
+val word_slash: atom
+val word_percent: atom
+val word_leftbracket: atom
+val word_rightbracket: atom
+val word_leftparen: atom
+val word_rightparen: atom
 
-let expected c =
-  raise (Error (Expected_character c))
+val equalaux : atom -> atom -> bool
 
-let report_error = function
-  | Unexpected_character c ->
-      Printf.sprintf "Unexpected character (%s)" (Char.escaped c)
-  | Expected_character c ->
-      Printf.sprintf "Expected character (%s)" (Char.escaped c)
-}
-
-let space = [' ' '\t']
-let nonspace = [^ ' ' '\t']
-let identifier = [':''"']? ['a'-'z' 'A'-'Z']['a'-'z' 'A'-'Z' '0'-'9' '_' '-']*
-let number_literal = ['0'-'9']* '.'? ['0'-'9']+ (['e' 'E'] ['-' '+']? ['0'-'9']+)?
-let operator = "<=" | ">=" | "<>" | ['+' '-' '*' '/' '%' '^' '=' '<' '>' '[' ']' '{' '}' '(' ')']
-
-rule token = parse
-| space
-    { token lexbuf }
-| ';'
-    { comment lexbuf }
-| ['-''+']?['0'-'9']+ as n
-    { Int (int_of_string n) }
-| (identifier | operator) as v
-    { intern v }
-| eof
-    { raise End_of_file }
-| _ as c
-    { unexpected c }
-
-and comment = parse
-  | '\n' { token lexbuf }
-  | _ { comment lexbuf }
-  | eof { raise End_of_file }
+val print_datum : atom -> unit
+val cprint_datum : atom -> unit

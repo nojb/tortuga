@@ -1,5 +1,7 @@
 (jbuild_version 1)
 
+(ocamllex (lex))
+
 (library
- ((name tortuga)
-  (public_name tortuga)))
+ ((name logo)
+  (public_name logo)))

@@ -19,20 +19,20 @@
    IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
    CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. *)
 
-open LogoTypes
-open LogoEnv
-open LogoEval
-open LogoPrint
-open LogoAtom
+open Types
+open Env
+open Eval
+open Print
+open Atom
 
 (* module TurtleGraphics = LogoTurtleGraphics *)
 
 (* module L2 = LogoPrim *)
-module L3 = LogoComm
-module L4 = LogoArithmetic
+module L3 = Comm
+module L4 = Arithmetic
 (* module L5 = LogoLogic *)
 (* module L6 = LogoGraphics.Make (LogoTurtleGraphics) *)
-module L7 = LogoWork
+module L7 = Work
 (* module L8 = LogoControl *)
 
 (* open React *)
@@ -130,24 +130,24 @@ let main () =
   let rec execute_phrase env l =
     try
       let lexbuf = Lexing.from_string l in
-      let g () = LogoLex.token lexbuf in
+      let g () = Lex.token lexbuf in
       print_datum (listeval env g)
       (* | `GotTO (name, inputs, body) -> *)
       (*     assert false *)
     (* to_ ~raw ~name ~inputs ~body *)
     with
-    | LogoControl.Pause env ->
+    | Control.Pause env ->
         loop env
-    | LogoControl.Toplevel ->
+    | Control.Toplevel ->
         ()
-    | LogoControl.Throw (tag, None) ->
+    | Control.Throw (tag, None) ->
         cprintlf "Unhandled THROW with tag %s." tag
-    | LogoControl.Throw (tag, Some a) ->
+    | Control.Throw (tag, Some a) ->
         cprintlf "Unhandled THROW with tag %s, value %s." tag (string_of_datum a)
     | Error err ->
         cprintlf "Error: %s." err
-    | LogoLex.Error err ->
-        cprintlf "Lexer: %s." (LogoLex.report_error err)
+    | Lex.Error err ->
+        cprintlf "Lexer: %s." (Lex.report_error err)
 
   and loop env =
     print_string "> ";
@@ -174,7 +174,7 @@ let main () =
   try
     loop env
   with
-  | LogoControl.Bye ->
+  | Control.Bye ->
       ()
   | exn ->
       cprintlf "Internal: %s. Backtrace:\n%s" (Printexc.to_string exn) (Printexc.get_backtrace ());

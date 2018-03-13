@@ -21,10 +21,10 @@
 
 (** 3. Communication *)
 
-open LogoTypes
-open LogoAtom
-open LogoPrint
-open LogoEval
+open Types
+open Atom
+open Print
+open Eval
 
 (** 3.1 Transmitters *)
 

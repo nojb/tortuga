@@ -21,10 +21,10 @@
 
 (** 8. Control Structures *)
 
-open LogoTypes
-open LogoAtom
-open LogoEnv
-open LogoEval
+open Types
+open Atom
+open Env
+open Eval
 
 exception Throw of string * atom option
 exception Toplevel

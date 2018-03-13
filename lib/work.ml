@@ -21,10 +21,10 @@
 
 (** 7. Workspace Management *)
 
-open LogoTypes
-open LogoAtom
-open LogoPrint
-open LogoEval
+open Types
+open Atom
+open Print
+open Eval
 
 (** 7.2 Variable Definition *)
 

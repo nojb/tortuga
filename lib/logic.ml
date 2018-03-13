@@ -21,10 +21,10 @@
 
 (** 5. Logical Operations *)
 
-open LogoTypes
-open LogoAtom
-open LogoEval
-open LogoGlobals
+open Types
+open Atom
+open Eval
+open Globals
 
 let aux op env tf1 tf2 rest k =
   let ev tf k =
@@ -61,7 +61,7 @@ AND tf1 tf2
     expression must produce a TRUE or FALSE value. List expressions are
     evaluated from left to right; as soon as a FALSE value is found, the
     remaining inputs are not examined. Example:
-	
+
       MAKE \"RESULT AND [NOT (:X = 0)] [(1 / :X) > .5]
 
     to avoid the division by zero if the first part is false."
@@ -89,11 +89,11 @@ OR tf1 tf2
     expression must produce a TRUE or FALSE value. List expressions are
     evaluated from left to right; as soon as a TRUE value is found, the
     remaining inputs are not examined. Example:
-	
+
       IF OR :X=0 [some.long.computation] [...]
 
     to avoid the long computation if the first condition is met."
-      
+
   in
   let args =
     Lga.(env @@ alt bool (list any) @-> alt bool (list any) @->
